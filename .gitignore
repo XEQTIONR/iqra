@@ -1,0 +1,21 @@
+# Derived data and builds
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# CocoaPods (if you had them)
+Pods/
+Podfile.lock
+
+# WebRTC framework - it's too large (100+ MB) and pre-compiled
+WebRTC.xcframework/
+
+# iOS build artifacts
+build/
+*.app
+*.ipa
+
+# User settings
+*.xcuserstate
+*.xcsettings
