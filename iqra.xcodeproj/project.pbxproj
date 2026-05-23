@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		09A9DAC92FC20A6B00EB966D /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 09A9DAC82FC20A6B00EB966D /* CachedAsyncImage */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		09A9DA8D2FC0B4BD00EB966D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +69,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				09A9DAC92FC20A6B00EB966D /* CachedAsyncImage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +130,7 @@
 			);
 			name = iqra;
 			packageProductDependencies = (
+				09A9DAC82FC20A6B00EB966D /* CachedAsyncImage */,
 			);
 			productName = iqra;
 			productReference = 09A9DA7B2FC0B4BC00EB966D /* iqra.app */;
@@ -208,6 +214,9 @@
 			);
 			mainGroup = 09A9DA722FC0B4BC00EB966D;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				09A9DAC72FC20A6B00EB966D /* XCRemoteSwiftPackageReference "CachedAsyncImage" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 09A9DA7C2FC0B4BC00EB966D /* Products */;
 			projectDirPath = "";
@@ -575,6 +584,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		09A9DAC72FC20A6B00EB966D /* XCRemoteSwiftPackageReference "CachedAsyncImage" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/StefKors/CachedAsyncImage";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		09A9DAC82FC20A6B00EB966D /* CachedAsyncImage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 09A9DAC72FC20A6B00EB966D /* XCRemoteSwiftPackageReference "CachedAsyncImage" */;
+			productName = CachedAsyncImage;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 09A9DA732FC0B4BC00EB966D /* Project object */;
 }
