@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CachedAsyncImage
+
 struct ExploreView: View {
     var items = [1,2] // This represents the number of horizontal scroll items
     let imageUrls = [
@@ -17,10 +18,18 @@ struct ExploreView: View {
         "https://picsum.photos/600/404"
     ]
     
+    let courses = [
+        "https://picsum.photos/600/400",
+        "https://picsum.photos/600/401",
+        "https://picsum.photos/600/402",
+        "https://picsum.photos/600/403",
+        "https://picsum.photos/600/404"
+    ].map { Course(title: "\($0)", banner: $0, description: $0) }
+    
     var body: some View {
         GeometryReader { geometry in
-            List {
-//                ForEach(items, id: \.self) { _ in
+            NavigationStack {
+                List {
                     VStack(spacing: 15) {
                         HStack {
                             Text("Read the Quran in Arabic")
@@ -31,12 +40,13 @@ struct ExploreView: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 15) {
-                                ForEach(imageUrls, id: \.self) { url in
-                                    Slide(url: .constant(url), width: .constant(geometry.size.width))
+                                ForEach(courses, id: \.self.banner) { course in
+                                    NavigationLink(destination: CourseView(course: course)) {
+                                        Slide(title: course.title, url: course.banner, width: geometry.size.width)
+                                    }
                                 }
                             }
                             .scrollTargetLayout()
-//                            .padding(.horizontal)
                         }
                         .scrollTargetBehavior(.viewAligned)
                         .safeAreaPadding(.horizontal, 0)
@@ -54,12 +64,13 @@ struct ExploreView: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 15) {
-                                ForEach(imageUrls, id: \.self) { url in
-                                    Slide(url: .constant(url), width: .constant(geometry.size.width))
+                                ForEach(courses, id: \.self.banner) { course in
+                                    NavigationLink(destination: CourseView(course: course)) {
+                                        Slide(title: course.title, url: course.banner, width: geometry.size.width)
+                                    }
                                 }
                             }
                             .scrollTargetLayout()
-    //                            .padding(.horizontal)
                         }
                         .scrollTargetBehavior(.viewAligned)
                         .safeAreaPadding(.horizontal, 0)
@@ -79,20 +90,25 @@ struct ExploreView: View {
                        
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 15) {
-                                ForEach(imageUrls, id: \.self) { url in
-                                    Slide(url: .constant(url), width: .constant(geometry.size.width))
+                                ForEach(courses, id: \.self.banner) { course in
+                                    NavigationLink(destination: CourseView(course: course)) {
+                                        Slide(title: course.title, url: course.banner, width: geometry.size.width)
+                                    }
                                 }
                             }
                             .scrollTargetLayout()
                         }
                         .scrollTargetBehavior(.viewAligned)
                         .safeAreaPadding(.horizontal, 0)
+                    }
+                    .listRowSeparator(.hidden)
                 }
-//                .padding(.horizontal, -5)
-                .listRowSeparator(.hidden)
+                .listStyle(PlainListStyle())
+                .listRowSpacing(30)
             }
-            .listStyle(PlainListStyle())
-            .listRowSpacing(30)
+            .navigationDestination(for: Course.self) { course in
+                CourseView(course: course)
+            }
         }
     }
 }

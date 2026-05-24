@@ -1,0 +1,14 @@
+//
+//  Course.swift
+//  iqra
+//
+//  Created by Ovi Hussain on 2026-05-24.
+//
+
+import Foundation
+
+struct Course: Hashable {
+    let title: String
+    let banner: String
+    let description: String
+}

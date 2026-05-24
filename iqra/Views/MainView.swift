@@ -30,8 +30,6 @@ struct MainView: View {
                 Tab("Settings", systemImage: "gearshape") {
                     SettingsView()
                 }
-                
-                
             }
             .navigationTitle("Explore")
 
