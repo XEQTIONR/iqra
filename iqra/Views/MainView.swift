@@ -18,27 +18,31 @@ struct MainView: View {
                 Tab("Explore", systemImage: "magnifyingglass") {
                     ExploreView()
                 }
-    //            Tab("Calendar", systemImage: "calendar") {
-    //                CalendarView()
-    //            }
+                Tab("Calendar", systemImage: "calendar") {
+                    CalendarView()
+                }
                 Tab("Lessons", systemImage: "graduationcap") {
                     UserTypeView()
+                }
+                Tab("Resources", systemImage: "book.pages") {
+                    IntroView(currentSection: .constant(ContentSection.intro))
                 }
                 Tab("Settings", systemImage: "gearshape") {
                     SettingsView()
                 }
                 
+                
             }
             .navigationTitle("Explore")
 
-//            .navigation
+
             .toolbar {
                 // Item on the top right
                 ToolbarItem(placement: .navigationBarLeading) {
                     HStack {
                         Circle().fill(Color.red).frame(width: 30, height: 30)
                         Text("John Doe")
-                            .font(.subheadline)
+                            .font(.caption2)
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -47,7 +51,7 @@ struct MainView: View {
                     }) {
                         Image(systemName: "bell.badge")
                             .renderingMode(.original)
-                    }.padding(.trailing)
+                    }
                 }
                 
             }
