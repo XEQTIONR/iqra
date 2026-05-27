@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		09A9DAC92FC20A6B00EB966D /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 09A9DAC82FC20A6B00EB966D /* CachedAsyncImage */; };
+		09A9DB172FC3DFA700EB966D /* WrapLayout in Frameworks */ = {isa = PBXBuildFile; productRef = 09A9DB162FC3DFA700EB966D /* WrapLayout */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				09A9DB172FC3DFA700EB966D /* WrapLayout in Frameworks */,
 				09A9DAC92FC20A6B00EB966D /* CachedAsyncImage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -131,6 +133,7 @@
 			name = iqra;
 			packageProductDependencies = (
 				09A9DAC82FC20A6B00EB966D /* CachedAsyncImage */,
+				09A9DB162FC3DFA700EB966D /* WrapLayout */,
 			);
 			productName = iqra;
 			productReference = 09A9DA7B2FC0B4BC00EB966D /* iqra.app */;
@@ -216,6 +219,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				09A9DAC72FC20A6B00EB966D /* XCRemoteSwiftPackageReference "CachedAsyncImage" */,
+				09A9DB152FC3DFA700EB966D /* XCRemoteSwiftPackageReference "swiftui-WrapLayout" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 09A9DA7C2FC0B4BC00EB966D /* Products */;
@@ -594,6 +598,14 @@
 				minimumVersion = 2.1.1;
 			};
 		};
+		09A9DB152FC3DFA700EB966D /* XCRemoteSwiftPackageReference "swiftui-WrapLayout" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/FluidGroup/swiftui-WrapLayout";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.4.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -601,6 +613,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 09A9DAC72FC20A6B00EB966D /* XCRemoteSwiftPackageReference "CachedAsyncImage" */;
 			productName = CachedAsyncImage;
+		};
+		09A9DB162FC3DFA700EB966D /* WrapLayout */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 09A9DB152FC3DFA700EB966D /* XCRemoteSwiftPackageReference "swiftui-WrapLayout" */;
+			productName = WrapLayout;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
