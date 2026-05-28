@@ -31,7 +31,7 @@ struct MainView: View {
                     SettingsView()
                 }
             }
-            .navigationTitle("Explore")
+
 
 
             .toolbar {
