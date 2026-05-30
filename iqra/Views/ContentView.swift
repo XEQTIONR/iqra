@@ -25,7 +25,7 @@ struct ContentView: View {
         case .intro:
             IntroView($currentSection)
         case .main:
-            MainView($currentSection)
+            MainView(currentSection: $currentSection)
         }
     }
 }

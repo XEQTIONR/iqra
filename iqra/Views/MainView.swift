@@ -12,11 +12,8 @@ struct MainView: View {
     
     @Binding var currentSection: ContentSection
     
-    
-    init(_ currentSection: Binding<ContentSection>) {
-        self._currentSection = currentSection
-    }
-    
+    @State var courses: [Course] = []
+
     var body: some View {
         NavigationStack {
             TabView {
@@ -36,11 +33,7 @@ struct MainView: View {
                     SettingsView($currentSection)
                 }
             }
-
-
-
             .toolbar {
-                // Item on the top right
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         // Action here
@@ -49,15 +42,12 @@ struct MainView: View {
                             .renderingMode(.original)
                     }
                 }
-                
             }
-            
         }
-        
     }
 }
 
 #Preview {
-    MainView(.constant(.main))
+    MainView(currentSection: .constant(.main))
 
 }

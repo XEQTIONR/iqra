@@ -71,22 +71,6 @@ struct LoginView: View {
                     switch httpRes.statusCode {
                     case 200:
                         let user = try JSONDecoder().decode(User.self, from: data)
-                        
-                        
-                        (data, response) = try await RequestService.request(
-                            COURSES_ENDPOINT,
-                            headers: [
-                                "Content-Type": "application/json",
-                                "Accept": "application/json",
-                                "Authorization": "Bearer \(token)"
-                            ],
-                        )
-                        
-                        print("data")
-                        print(data)
-                        
-                        
-                        
                         modelContext.insert(user)
                         
                     default:
@@ -109,37 +93,6 @@ struct LoginView: View {
                 break
                 /// do nothing
             }
-//            if (httpResponse.statusCode == 200) {
-//                let token = String(data: data, encoding: .utf8)!
-//                UserDefaults.standard.set(token, forKey: "api_token")
-//                print(token)
-//                
-//                guard let url2 = URL(string: "http://localhost:8000/api/jwt") else {
-//                    print("XXXXXXXXXXXXXXXXX")
-//                    throw URLError(.badURL)
-//                }
-//                
-//                var request2 = URLRequest(url: url2)
-//                request2.httpMethod = "GET"
-//                request2.setValue( "Bearer \(token)", forHTTPHeaderField: "Authorization")
-//                request2.setValue("application/json", forHTTPHeaderField: "Accept")
-//                
-//                let (data2, code) = try await RequestService.request(
-//                    url: "http://localhost:8000/api/jwt",
-//                    headers: [
-//                        "Authorization": "Bearer \(token)",
-//                        "Accept": "application/json"
-//                    ],
-//                    type: JWTResponse.self
-//                )
-//                let (data2, response2) = try await URLSession.shared.data(for: request2)
-//                
-//                print("data2")
-//                print(data2 ?? "oops")
-//                print("code")
-//                print(code ?? "koko")
-//                
-//            }
         } else {
             /// error
         }

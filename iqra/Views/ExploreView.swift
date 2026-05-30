@@ -18,13 +18,25 @@ struct ExploreView: View {
         "https://picsum.photos/600/404"
     ]
     
-    let courses = [
-        "https://picsum.photos/600/400",
-        "https://picsum.photos/600/401",
-        "https://picsum.photos/600/402",
-        "https://picsum.photos/600/403",
-        "https://picsum.photos/600/404"
-    ].map { Course(title: "\($0)", image: $0, description: $0) }
+    @State var courses: [Course] = []
+    
+    private func loadFeed() async {
+        do {
+            let (data, _) = try await RequestService.request(
+                "http://localhost:8000/api/feed",
+                headers: [
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                ]
+            )
+            print("data")
+            print(String(data: data, encoding: .utf8) ?? "No data")
+
+            courses = try JSONDecoder().decode([Course].self, from: data)
+        } catch {
+            // do nothing
+        }
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -108,6 +120,9 @@ struct ExploreView: View {
             }
             .navigationDestination(for: Course.self) { course in
                 CourseView(course: course)
+            }
+            .task {
+                await loadFeed()
             }
         }
     }
