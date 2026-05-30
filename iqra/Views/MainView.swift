@@ -10,7 +10,12 @@ import SwiftData
 
 struct MainView: View {
     
-    @State var currentSection: ContentSection = .intro
+    @Binding var currentSection: ContentSection
+    
+    
+    init(_ currentSection: Binding<ContentSection>) {
+        self._currentSection = currentSection
+    }
     
     var body: some View {
         NavigationStack {
@@ -25,10 +30,10 @@ struct MainView: View {
                     UserTypeView()
                 }
                 Tab("Resources", systemImage: "book.pages") {
-                    IntroView(currentSection: .constant(ContentSection.intro))
+                    IntroView(.constant(ContentSection.intro))
                 }
                 Tab("Settings", systemImage: "gearshape") {
-                    SettingsView()
+                    SettingsView($currentSection)
                 }
             }
 
@@ -60,6 +65,6 @@ struct MainView: View {
 }
 
 #Preview {
-    MainView()
+    MainView(.constant(.main))
 
 }

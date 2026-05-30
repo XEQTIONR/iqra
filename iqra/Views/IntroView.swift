@@ -13,7 +13,7 @@ struct IntroView: View {
     
     let items = [1,2,3]
     
-    init(currentSection: Binding<ContentSection>) {
+    init(_ currentSection: Binding<ContentSection>) {
         self._currentSection = currentSection
         UIPageControl.appearance().currentPageIndicatorTintColor = .systemBlue
         UIPageControl.appearance().pageIndicatorTintColor = UIColor.systemGray4
@@ -48,6 +48,6 @@ struct IntroView: View {
 }
 
 #Preview {
-    @Previewable @State var section: ContentSection = .intro
-    IntroView(currentSection: $section)
+//    @Previewable @State var section: ContentSection = .intro
+    IntroView(.constant(.intro))
 }

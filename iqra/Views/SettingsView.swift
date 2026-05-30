@@ -5,9 +5,20 @@
 //  Created by Ovi Hussain on 2026-05-22.
 //
 
+import SwiftData
 import SwiftUI
 
 struct SettingsView: View {
+    
+    @Binding var currentSection: ContentSection
+    @State private var modalOpen: Bool = false
+    
+    @Query private var users: [User]
+    
+    
+    init(_ currentSection: Binding<ContentSection>) {
+        self._currentSection = currentSection
+    }
 
     let defaults = UserDefaults.standard
 
@@ -17,14 +28,23 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var content: some View {
-        if defaults.string(forKey: "userId") != nil {
+        if users.count > 0 {
             Text("Settings")
+            Text(users[0].name)
         } else {
-            LoginView()
+            Button("Something") {
+                modalOpen.toggle()
+            }.sheet(isPresented:$modalOpen) {
+                
+                
+                LoginView(completion: {() -> Void in
+                    modalOpen = false
+                })
+            }
         }
     }
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(.constant(.main))
 }
