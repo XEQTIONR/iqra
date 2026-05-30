@@ -15,7 +15,7 @@ struct CourseView: View {
     var body: some View {
         VStack {
             
-            AsyncImage(url: URL(string: course.banner)) { image in
+            AsyncImage(url: URL(string: course.image)) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -38,5 +38,5 @@ struct CourseView: View {
 }
 
 #Preview {
-    CourseView(course: Course(title: "My Course", banner: "https://picsum.photos/600/400", description: "A dummy description"))
+    CourseView(course: Course(title: "My Course", image: "https://picsum.photos/600/400", description: "A dummy description"))
 }

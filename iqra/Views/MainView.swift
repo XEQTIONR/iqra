@@ -41,13 +41,6 @@ struct MainView: View {
 
             .toolbar {
                 // Item on the top right
-                ToolbarItem(placement: .navigationBarLeading) {
-                    HStack {
-                        Circle().fill(Color.red).frame(width: 30, height: 30)
-                        Text("John Doe")
-                            .font(.caption2)
-                    }
-                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         // Action here

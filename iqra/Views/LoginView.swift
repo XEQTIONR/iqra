@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+let COURSES_ENDPOINT = "http://localhost:8000/api/courses"
 let LOGIN_ENDPOINT = "http://localhost:8000/api/sanctum/token"
 let ME_ENDPOINT = "http://localhost:8000/api/user"
 let JWT_ENDPOINT = "http://localhost:8000/api/jwt"
@@ -70,6 +71,22 @@ struct LoginView: View {
                     switch httpRes.statusCode {
                     case 200:
                         let user = try JSONDecoder().decode(User.self, from: data)
+                        
+                        
+                        (data, response) = try await RequestService.request(
+                            COURSES_ENDPOINT,
+                            headers: [
+                                "Content-Type": "application/json",
+                                "Accept": "application/json",
+                                "Authorization": "Bearer \(token)"
+                            ],
+                        )
+                        
+                        print("data")
+                        print(data)
+                        
+                        
+                        
                         modelContext.insert(user)
                         
                     default:

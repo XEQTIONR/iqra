@@ -24,7 +24,7 @@ struct ExploreView: View {
         "https://picsum.photos/600/402",
         "https://picsum.photos/600/403",
         "https://picsum.photos/600/404"
-    ].map { Course(title: "\($0)", banner: $0, description: $0) }
+    ].map { Course(title: "\($0)", image: $0, description: $0) }
     
     var body: some View {
         GeometryReader { geometry in
@@ -40,9 +40,9 @@ struct ExploreView: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 15) {
-                                ForEach(courses, id: \.self.banner) { course in
+                                ForEach(courses, id: \.self.image) { course in
                                     NavigationLink(destination: CourseView(course: course)) {
-                                        Slide(title: course.title, url: course.banner, width: geometry.size.width)
+                                        Slide(title: course.title, url: course.image, width: geometry.size.width)
                                     }
                                 }
                             }
@@ -64,9 +64,9 @@ struct ExploreView: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 15) {
-                                ForEach(courses, id: \.self.banner) { course in
+                                ForEach(courses, id: \.self.image) { course in
                                     NavigationLink(destination: CourseView(course: course)) {
-                                        Slide(title: course.title, url: course.banner, width: geometry.size.width)
+                                        Slide(title: course.title, url: course.image, width: geometry.size.width)
                                     }
                                 }
                             }
@@ -90,9 +90,9 @@ struct ExploreView: View {
                        
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 15) {
-                                ForEach(courses, id: \.self.banner) { course in
+                                ForEach(courses, id: \.self.image) { course in
                                     NavigationLink(destination: CourseView(course: course)) {
-                                        Slide(title: course.title, url: course.banner, width: geometry.size.width)
+                                        Slide(title: course.title, url: course.image, width: geometry.size.width)
                                     }
                                 }
                             }

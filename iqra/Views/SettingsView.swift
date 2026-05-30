@@ -20,8 +20,6 @@ struct SettingsView: View {
         self._currentSection = currentSection
     }
 
-    let defaults = UserDefaults.standard
-
     var body: some View {
         content
     }
@@ -31,6 +29,26 @@ struct SettingsView: View {
         if users.count > 0 {
             Text("Settings")
             Text(users[0].name)
+            Button("Conosle log", action: {
+                Task {
+                    do {
+                        let (data, _) = try await RequestService.request(
+                            COURSES_ENDPOINT,
+                            headers: [
+                                "Content-Type": "application/json",
+                                "Accept": "application/json",
+                                "Authorization": "Bearer \(UserDefaults.standard.string(forKey: "api_token") ?? "")"
+                            ],
+                        )
+                        
+                        print(String(data: data, encoding: .utf8)!)
+//                        print(response)
+                    } catch {
+                        
+                    }
+                }
+                
+            }) 
         } else {
             Button("Something") {
                 modalOpen.toggle()

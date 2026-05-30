@@ -9,6 +9,6 @@ import Foundation
 
 struct Course: Hashable {
     let title: String
-    let banner: String
+    let image: String
     let description: String
 }
