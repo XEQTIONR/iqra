@@ -1,0 +1,53 @@
+//
+//  InstructorSettings.swift
+//  iqra
+//
+//  Created by Ovi Hussain on 2026-06-04.
+//
+
+import SwiftUI
+
+enum Gender: String, CaseIterable {
+    case male
+    case female
+}
+
+enum ReadingLevel: String, CaseIterable {
+    case no
+    case withHarakat
+    case withoutHarakat
+}
+
+enum SpeakingLevel: String, CaseIterable {
+    case no
+    case wordsOnly
+    case MSA
+    case multiple
+    case native
+}
+
+enum AgeGroup: String, CaseIterable {
+    case aLessThan19
+    case a19To24
+    case a25To34
+    case a35To44
+    case a45To54
+    case a55plus
+}
+
+enum CourseCategory: String, CaseIterable {
+    case islamic
+    case arabic
+}
+
+@Observable
+class InstructorSettings {
+    var gender: Gender?
+    var ageGroup: String?
+    var reading: ReadingLevel?
+    var speaking: SpeakingLevel?
+    var writing: Bool?
+    var languages: Set<String> = []
+    var courseCategories = Set<CourseCategory>()
+    var isMuslim: Bool?
+}

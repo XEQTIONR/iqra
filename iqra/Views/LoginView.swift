@@ -9,6 +9,7 @@ import SwiftUI
 
 let COURSES_ENDPOINT = "http://localhost:8000/api/courses"
 let LOGIN_ENDPOINT = "http://localhost:8000/api/sanctum/token"
+let LOGOUT_ENDPOINT = "http://localhost:8000/api/logout"
 let ME_ENDPOINT = "http://localhost:8000/api/user"
 let JWT_ENDPOINT = "http://localhost:8000/api/jwt"
 
@@ -102,7 +103,10 @@ struct LoginView: View {
         VStack(spacing: 25){
             Text("Login!")
             TextField("Email", text: $email)
-            TextField("Password", text: $password)
+                .autocorrectionDisabled(true)
+                .textInputAutocapitalization(.never)
+                .textContentType(.emailAddress)
+            SecureField("Password", text: $password)
                 .textContentType(.password)
             
             Button("Submit", action: {

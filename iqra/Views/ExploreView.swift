@@ -17,7 +17,7 @@ struct ExploreView: View {
         "https://picsum.photos/600/403",
         "https://picsum.photos/600/404"
     ]
-    
+
     @State var courses: [Course] = []
     
     private func loadFeed() async {
@@ -114,6 +114,19 @@ struct ExploreView: View {
                         .safeAreaPadding(.horizontal, 0)
                     }
                     .listRowSeparator(.hidden)
+                    
+                    NavigationLink(destination: InstructorFormView()) {
+                        Button("Add your own course") {
+                            
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.all, 10)
+                        .background(Color.gray.opacity(0.2))
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .listRowSeparator(.hidden)
+                    }
+                    
+                    
                 }
                 .listStyle(PlainListStyle())
                 .listRowSpacing(30)

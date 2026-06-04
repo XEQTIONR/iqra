@@ -1,5 +1,5 @@
 //
-//  SettingsView.swift
+//  ReaderView.swift
 //  iqra
 //
 //  Created by Ovi Hussain on 2026-05-22.
