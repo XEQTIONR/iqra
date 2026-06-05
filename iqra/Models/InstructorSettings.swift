@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum Gender: String, CaseIterable {
+enum Gender: String, CaseIterable, Codable {
     case male
     case female
 }
@@ -40,6 +40,16 @@ enum CourseCategory: String, CaseIterable {
     case arabic
 }
 
+enum Title: String, CaseIterable {
+    case hafiz
+    case hujjat
+    case qari
+    case imaam
+    case alim
+    case mufti
+    case ayatollah
+}
+
 @Observable
 class InstructorSettings {
     var gender: Gender?
@@ -50,4 +60,5 @@ class InstructorSettings {
     var languages: Set<String> = []
     var courseCategories = Set<CourseCategory>()
     var isMuslim: Bool?
+    var titles: Set<Title> = []
 }

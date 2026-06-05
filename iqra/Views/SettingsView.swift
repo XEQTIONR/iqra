@@ -11,7 +11,8 @@ import SwiftUI
 struct SettingsView: View {
     
     @Binding var currentSection: ContentSection
-    @State private var modalOpen: Bool = false
+    @State private var loginModalOpen: Bool = false
+    @State private var signupModalOpen: Bool = false
     
     @Environment(\.modelContext) private var modelContext
     
@@ -83,14 +84,21 @@ struct SettingsView: View {
                 
             }) 
         } else {
-            Button("Login") {
-                modalOpen.toggle()
-            }.sheet(isPresented:$modalOpen) {
+            VStack(spacing: 20) {
+                Button("Login") {
+                    loginModalOpen.toggle()
+                }
+                .sheet(isPresented:$loginModalOpen) {
+                    LoginView(completion: {() -> Void in
+                        signupModalOpen = false
+                    })
+                }
                 
-                
-                LoginView(completion: {() -> Void in
-                    modalOpen = false
-                })
+                Button("Signup") {
+                    signupModalOpen.toggle()
+                }.sheet(isPresented:$signupModalOpen) {
+                    SignupView()
+                }
             }
         }
     }

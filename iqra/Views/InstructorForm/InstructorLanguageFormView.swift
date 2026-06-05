@@ -67,7 +67,7 @@ struct InstructorLanguageFormView: View {
                     .sheet(isPresented: $showOptions) {
                         NavigationStack {
                             List {
-                                ForEach(allLanguages, id: \.self) { language in
+                                ForEach(allLanguages.sorted(), id: \.self) { language in
                                     Button {
                                         toggleLanguage(language)
                                     } label: {
@@ -105,10 +105,11 @@ struct InstructorLanguageFormView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(Color.blue)
+                        .background(settings.languages.isEmpty ? .gray.opacity(0.5) : .blue)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .contentShape(RoundedRectangle(cornerRadius: 12))
                     }
+                    .disabled(settings.languages.isEmpty)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 10)
                     .padding(.bottom, 20)

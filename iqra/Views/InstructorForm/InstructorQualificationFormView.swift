@@ -9,14 +9,16 @@ import SwiftUI
 
 struct InstructorQualificationFormView: View {
     
-    let titles = [
-        "Hafiz - حفيظ ",
-        "Hujjat al Islam - حجة الإسلام",
-        "Qari - قارئ",
-        "Imaam - إمام",
-        "'Alim - عليم",
-        "Mufti - مفتي",
-        "Ayatollah - عيت الله",
+    @State private var settings = InstructorSettings()
+    
+    let titles: [(label: String, value: Title)] = [
+        ("Hafiz - حفيظ ", .hafiz),
+        ("Hujjat al Islam - حجة الإسلام", .hujjat),
+        ("Qari - قارئ", .qari),
+        ("Imaam - إمام", .imaam),
+        ("'Alim - عليم", .alim),
+        ("Mufti - مفتي", .mufti),
+        ("Ayatollah - عيت الله", .ayatollah),
     ]
     
     var body: some View {
@@ -35,17 +37,25 @@ struct InstructorQualificationFormView: View {
                         .multilineTextAlignment(.center)
                         .font(.title3)
                         .padding(.bottom, 50)
-                    ForEach(titles, id: \.self) { title in
+                    ForEach(titles, id: \.label) { item in
                         VStack() {
-                            Text(title)
+                            Text(item.label)
+                                .foregroundStyle(settings.titles.contains(item.value) ? .blue : .primary)
                                 .padding(.all, 10)
                                 .frame(maxWidth: .infinity)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .strokeBorder(Color.gray, lineWidth: 1.5)
+                                        .strokeBorder(settings.titles.contains(item.value) ? .blue : .gray, lineWidth: 1.5)
                                 )
                                 .padding(.horizontal)
                                 
+                        }
+                        .onTapGesture {
+                            if (settings.titles.contains(item.value)) {
+                                settings.titles.remove(item.value)
+                            } else {
+                                settings.titles.insert(item.value)
+                            }
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -53,10 +63,10 @@ struct InstructorQualificationFormView: View {
                     Spacer()
                     
                     NavigationLink {
-                        InstructorArabicFormView()
+                        InstructorFormCompleteView()
                     } label: {
                         ZStack {
-                            Text("Next")
+                            Text(settings.titles.count == 0 ? "Skip" : "Continue")
                             HStack {
                                 Spacer()
                                 Image(systemName: "chevron.right")
@@ -65,11 +75,16 @@ struct InstructorQualificationFormView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(Color.blue)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .background(Color.blue.opacity(settings.titles.count == 0 ? 0.001 : 1), in: RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.blue, lineWidth: settings.titles.count == 0 ? 1 : 0)
+                        )
+                        
                         .contentShape(RoundedRectangle(cornerRadius: 12))
+                        
                     }
-                    .foregroundStyle(.white)
+                    .foregroundStyle(settings.titles.count == 0 ? .blue : .white)
                     .padding(.horizontal, 10)
                     .padding(.bottom, 20)
                     
