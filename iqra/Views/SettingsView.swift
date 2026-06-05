@@ -41,7 +41,7 @@ struct SettingsView: View {
                     do {
                         print("API TOKEN")
                         print(UserDefaults.standard.string(forKey: "api_token") ?? "NO TOKEN")
-                        let (_, res) = try await RequestService.request(
+                        let (_, res, ok) = try await RequestService.request(
                             LOGOUT_ENDPOINT,
                             method: "POST",
                             headers: [
@@ -51,20 +51,15 @@ struct SettingsView: View {
                             ],
                         )
                         
-                        let response = res as! HTTPURLResponse
-                        
-                        switch response.statusCode {
-                        case 200, 204:
-                            
+                        if ok {
                             UserDefaults.standard.removeObject(forKey: "api_token")
                             let allUsers = try modelContext.fetch(FetchDescriptor<User>())
                             for user in allUsers {
                                 modelContext.delete(user)
                             }
                             try modelContext.save()
-                        default:
-                            print("error")
-                            print (response)
+                        } else {
+                            /// error handle here
                         }
 //                        let (data, _) = try await RequestService.request(
 //                            COURSES_ENDPOINT,

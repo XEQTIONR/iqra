@@ -22,7 +22,7 @@ class RequestService {
         headers: [String: String]? = [:],
         body: Data? = nil,
         
-    ) async throws -> (Data, URLResponse) {
+    ) async throws -> (Data, URLResponse, Bool) {
         
         var request = URLRequest(url: URL(string: url)!)
         request.httpMethod = method
@@ -38,8 +38,12 @@ class RequestService {
         }
         
         
-        return try await URLSession.shared.data(for: request)
+        let (data, response)  = try await URLSession.shared.data(for: request)
         
-//        return (data, response)
+        let httpResponse = response as! HTTPURLResponse
+        let isSuccess = httpResponse.statusCode >= 200 && httpResponse.statusCode < 300
+        
+        return (data, response, isSuccess)
+        
     }
 }

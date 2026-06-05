@@ -34,7 +34,7 @@ struct CourseView: View {
             Button("Enroll", action: {
                 Task {
                     let token = UserDefaults.standard.value(forKey: "api_token") as! String
-                    let (data, response) = try await RequestService.request(
+                    let (data, response, ok) = try await RequestService.request(
                         "http://localhost:8000/api/jwt",
                         headers: [
                             "Content-Type": "application/json",
@@ -43,21 +43,12 @@ struct CourseView: View {
                         ],
                     )
                     
-                    let http = response as! HTTPURLResponse
-                    
-                    switch http.statusCode {
-                        
-                    case 200:
+                    if ok {
                         UserDefaults.standard.set(String(data: data, encoding: .utf8), forKey: "jwt")
-                        
-                    default:
+                    } else {
                         /// do error handling here
-                        break
                     }
-                    
-                
                 }
-                
             })
             
             Spacer()

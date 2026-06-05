@@ -37,7 +37,7 @@ struct SignupView: View {
             device_name: UIDevice.current.name
         )
         
-        var (data, response) = try await RequestService.request(
+        let (data, response, _) = try await RequestService.request(
             SIGNUP_ENDPOINT,
             method: "POST",
             headers: [

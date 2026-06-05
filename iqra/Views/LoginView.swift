@@ -42,7 +42,7 @@ struct LoginView: View {
 
         let loginData = LoginData(email: email, password: password, device_name: "Default iOS")
         
-        var (data, response) = try await RequestService.request(
+        var (data, response, ok) = try await RequestService.request(
             LOGIN_ENDPOINT,
             method: "POST",
             headers: [
@@ -52,50 +52,42 @@ struct LoginView: View {
             body: try JSONEncoder().encode(loginData)
         )
         
-        if let httpResponse = response as? HTTPURLResponse {
-            switch httpResponse.statusCode {
-            case 200:
-                let token = String(data: data, encoding: .utf8)!
-                UserDefaults.standard.set(token, forKey: "api_token")
-                
-                
-                (data, response) = try await RequestService.request(
-                    ME_ENDPOINT,
-                    headers: [
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
-                        "Authorization": "Bearer \(token)"
-                    ],
-                )
-                
-                if let httpRes = response as? HTTPURLResponse {
-                    switch httpRes.statusCode {
-                    case 200:
-                        let user = try JSONDecoder().decode(User.self, from: data)
-                        modelContext.insert(user)
-                        
-                    default:
-                        print("ME NOT OK")
-                    }
-                }
-                
-                print(String(data:data, encoding: .utf8) ?? "OOPS")
-                print(response)
-                
-                
-                completion?()
-                break
-            case 422:
+        if ok {
+            let token = String(data: data, encoding: .utf8)!
+            UserDefaults.standard.set(token, forKey: "api_token")
+            
+            
+            (data, response, ok) = try await RequestService.request(
+                ME_ENDPOINT,
+                headers: [
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "Authorization": "Bearer \(token)"
+                ],
+            )
+            
+            if ok {
+                let user = try JSONDecoder().decode(User.self, from: data)
+                modelContext.insert(user)
+            } else {
+                /// error handle here
+                print("ME NOT OK")
+            }
+            
+            print(String(data:data, encoding: .utf8) ?? "OOPS")
+            print(response)
+            
+            completion?()
+            
+        } else if let httpResponse = response as? HTTPURLResponse {
+            
+            if httpResponse.statusCode == 422 {
                 let errs = try JSONDecoder().decode(ErrorResponse.self, from: data)
                 print(errs)
                 /// show error messages
-                break
-            default:
-                break
-                /// do nothing
+            } else {
+                /// general error handling
             }
-        } else {
-            /// error
         }
     }
     

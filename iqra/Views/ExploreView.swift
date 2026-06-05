@@ -22,7 +22,7 @@ struct ExploreView: View {
     
     private func loadFeed() async {
         do {
-            let (data, _) = try await RequestService.request(
+            let (data, _, _) = try await RequestService.request(
                 "http://localhost:8000/api/feed",
                 headers: [
                     "Content-Type": "application/json",
