@@ -10,13 +10,12 @@ import SwiftUI
 
 struct SettingsView: View {
     
+    @Environment(User.self) private var appUser
     @Binding var currentSection: ContentSection
     @State private var loginModalOpen: Bool = false
     @State private var signupModalOpen: Bool = false
     
-    @Environment(\.modelContext) private var modelContext
     
-    @Query private var users: [User]
     
     
     init(_ currentSection: Binding<ContentSection>) {
@@ -33,15 +32,19 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var content: some View {
-        if users.count > 0 {
+        if appUser.id != nil {
             Text("Settings")
-            Text(users[0].name)
+            Text(appUser.name!)
+            Button ("Log") {
+                print("appUser:")
+                print(appUser)
+            }
             Button("Logout", action: {
                 Task {
+                    // Best-effort: tell the server to revoke the token, but don't
+                    // let a failure block the local logout.
                     do {
-                        print("API TOKEN")
-                        print(UserDefaults.standard.string(forKey: "api_token") ?? "NO TOKEN")
-                        let (_, res, ok) = try await RequestService.request(
+                        let (data, res, ok) = try await RequestService.request(
                             LOGOUT_ENDPOINT,
                             method: "POST",
                             headers: [
@@ -50,42 +53,32 @@ struct SettingsView: View {
                                 "Authorization": "Bearer \(UserDefaults.standard.string(forKey: "api_token") ?? "")"
                             ],
                         )
-                        
-                        if ok {
-                            UserDefaults.standard.removeObject(forKey: "api_token")
-                            let allUsers = try modelContext.fetch(FetchDescriptor<User>())
-                            for user in allUsers {
-                                modelContext.delete(user)
-                            }
-                            try modelContext.save()
-                        } else {
-                            /// error handle here
+                        if !ok {
+                            print("Logout request returned a non-success status")
+                            print(String(data: data, encoding: .utf8) ?? "NO DATA")
+                            print(res)
                         }
-//                        let (data, _) = try await RequestService.request(
-//                            COURSES_ENDPOINT,
-//                            headers: [
-//                                "Content-Type": "application/json",
-//                                "Accept": "application/json",
-//                                "Authorization": "Bearer \(UserDefaults.standard.string(forKey: "api_token") ?? "")"
-//                            ],
-//                        )
-//                        
-//                        print(String(data: data, encoding: .utf8)!)
-//                        print(response)
                     } catch {
-                        
+                        print("Logout request failed: \(error)")
                     }
+
+                    // Always clear the local session.
+                    UserDefaults.standard.removeObject(forKey: "api_token")
+                    appUser.clear()
                 }
-                
             }) 
         } else {
             VStack(spacing: 20) {
+                Button ("Log") {
+                    print("appUser:")
+                    print(appUser)
+                }
                 Button("Login") {
                     loginModalOpen.toggle()
                 }
                 .sheet(isPresented:$loginModalOpen) {
-                    LoginView(completion: {() -> Void in
-                        signupModalOpen = false
+                    LoginView(completion: {
+                        loginModalOpen = false
                     })
                 }
                 
@@ -101,4 +94,5 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView(.constant(.main))
+        .environment(User())
 }

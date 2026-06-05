@@ -10,6 +10,14 @@ import SwiftData
 
 @main
 struct iqraApp: App {
+    
+    @State private var user: User = {
+        let user = User()
+        if let cached = User.loadCached() {
+            user.update(from: cached)
+        }
+        return user
+    }()
 //    var sharedModelContainer: ModelContainer = {
 //        let schema = Schema()
 //        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
@@ -32,7 +40,7 @@ struct iqraApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(user)
         }
-        .modelContainer(for: User.self)
     }
 }

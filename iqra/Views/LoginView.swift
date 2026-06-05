@@ -13,11 +13,6 @@ let LOGOUT_ENDPOINT = "http://localhost:8000/api/logout"
 let ME_ENDPOINT = "http://localhost:8000/api/user"
 let JWT_ENDPOINT = "http://localhost:8000/api/jwt"
 
-struct JWTResponse: Codable {
-    let user: UserDTO
-    let token: String
-}
-
 struct ErrorResponse: Decodable {
     let message: String
     let errors: [String: [String]]
@@ -32,8 +27,7 @@ struct LoginData: Codable {
 
 struct LoginView: View {
     
-    @Environment(\.modelContext) private var modelContext
-    
+    @Environment(User.self) private var appUser
     @State private var email: String = ""
     @State private var password: String = ""
     let completion: (() -> Void)?
@@ -42,7 +36,7 @@ struct LoginView: View {
 
         let loginData = LoginData(email: email, password: password, device_name: UIDevice.current.name)
         
-        var (data, response, ok) = try await RequestService.request(
+        let (data, response, ok) = try await RequestService.request(
             LOGIN_ENDPOINT,
             method: "POST",
             headers: RequestService.jsonHeaders,
@@ -50,32 +44,18 @@ struct LoginView: View {
         )
         
         if ok {
-            let token = String(data: data, encoding: .utf8)!
-            UserDefaults.standard.set(token, forKey: "api_token")
+
+            let res = try JSONDecoder().decode(SignupResponse.self, from: data)
+            UserDefaults.standard.set(res.token, forKey: "api_token")
+
             
             
-            (data, response, ok) = try await RequestService.request(
-                ME_ENDPOINT,
-                headers: [
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "Authorization": "Bearer \(token)"
-                ],
-            )
+            completion!()
             
-            if ok {
-                let user = try JSONDecoder().decode(User.self, from: data)
-                modelContext.insert(user)
-            } else {
-                /// error handle here
-                print("ME NOT OK")
-            }
+            try await Task.sleep(nanoseconds: 250_000_000)
             
-            print(String(data:data, encoding: .utf8) ?? "OOPS")
-            print(response)
-            
-            completion?()
-            
+            appUser.update(from: res.user)
+
         } else if let httpResponse = response as? HTTPURLResponse {
             
             if httpResponse.statusCode == 422 {
@@ -108,6 +88,11 @@ struct LoginView: View {
                     }
                 }
             })
+            
+            Button("Log", action: {
+                print("appUser")
+                print(appUser)
+            })
         }
         .padding()
     }
@@ -115,4 +100,5 @@ struct LoginView: View {
 
 #Preview {
     LoginView(completion: nil)
+        .environment(User())
 }

@@ -18,26 +18,21 @@ struct SignupData: Codable {
     var device_name: String
 }
 
-struct UserResponse: Codable {
-    var id: Int
-    var name: String
-    var email: String
-    var gender: String
-    var birthday: String
-}
-
 struct SignupResponse: Codable {
-    var user: UserResponse
+    var user: User
     var token: String
 }
 
 struct SignupView: View {
+    
+    @Environment(User.self) private var appUser
     
     @State private var name = ""
     @State private var email = ""
     @State private var password = ""
     @State private var birthday = Date()
     @State private var gender: Gender? = .male
+    
     
     
     private func signUp() async throws {
@@ -64,6 +59,7 @@ struct SignupView: View {
             let res = try JSONDecoder().decode(SignupResponse.self, from: data)
             print(res.token)
             print(res.user)
+            appUser.update(from: res.user)
             
         } else {
             print("Oops")
@@ -143,4 +139,5 @@ struct SignupView: View {
 
 #Preview {
     SignupView()
+        .environment(User())
 }

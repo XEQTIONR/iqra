@@ -52,8 +52,8 @@ enum Title: String, CaseIterable {
 
 @Observable
 class InstructorSettings {
-    var gender: Gender?
-    var ageGroup: String?
+    var gender: Gender? // scrap
+    var ageGroup: String? // scrap
     var reading: ReadingLevel?
     var speaking: SpeakingLevel?
     var writing: Bool?

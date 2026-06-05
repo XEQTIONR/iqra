@@ -20,9 +20,7 @@ class JSONService {
             let data = try Data(contentsOf: url)
             
             // 3. Decode the data
-            let decoder = JSONDecoder()
-            let users = try decoder.decode([T].self, from: data)
-            return users
+            return try JSONDecoder().decode([T].self, from: data)
         } catch {
             print("Error decoding JSON: \(error)")
             return nil
