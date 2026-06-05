@@ -18,6 +18,19 @@ struct SignupData: Codable {
     var device_name: String
 }
 
+struct UserResponse: Codable {
+    var id: Int
+    var name: String
+    var email: String
+    var gender: String
+    var birthday: String
+}
+
+struct SignupResponse: Codable {
+    var user: UserResponse
+    var token: String
+}
+
 struct SignupView: View {
     
     @State private var name = ""
@@ -37,19 +50,24 @@ struct SignupView: View {
             device_name: UIDevice.current.name
         )
         
-        let (data, response, _) = try await RequestService.request(
+        let (data, response, ok) = try await RequestService.request(
             SIGNUP_ENDPOINT,
             method: "POST",
-            headers: [
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            ],
+            headers: RequestService.jsonHeaders,
             body: try JSONEncoder().encode(signUpData)
         )
         
-        if let httpResponse = response as? HTTPURLResponse {
-            print(httpResponse)
-            print (String(data: data, encoding: .utf8) ?? "No data")
+        print(String(data: data, encoding: .utf8) ?? "No Data")
+        
+        if ok {
+            
+            let res = try JSONDecoder().decode(SignupResponse.self, from: data)
+            print(res.token)
+            print(res.user)
+            
+        } else {
+            print("Oops")
+            print(response)
         }
         
     }

@@ -24,10 +24,7 @@ struct ExploreView: View {
         do {
             let (data, _, _) = try await RequestService.request(
                 "http://localhost:8000/api/feed",
-                headers: [
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                ]
+                headers: RequestService.jsonHeaders
             )
             print("data")
             print(String(data: data, encoding: .utf8) ?? "No data")

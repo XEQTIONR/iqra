@@ -34,13 +34,12 @@ struct CourseView: View {
             Button("Enroll", action: {
                 Task {
                     let token = UserDefaults.standard.value(forKey: "api_token") as! String
+                    var headers = ["Authorization": "Bearer \(token)"]
+                    headers.merge(RequestService.jsonHeaders) { (current, new) in new }
+                    
                     let (data, response, ok) = try await RequestService.request(
                         "http://localhost:8000/api/jwt",
-                        headers: [
-                            "Content-Type": "application/json",
-                            "Accept": "application/json",
-                            "Authorization": "Bearer \(token)"
-                        ],
+                        headers: headers,
                     )
                     
                     if ok {

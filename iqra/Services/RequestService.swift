@@ -16,6 +16,11 @@ enum RequestError: Error {
 
 class RequestService {
     
+    public static let jsonHeaders : [String: String] = [
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    ]
+    
     public static func request(
         _ url: String,
         method: String? = "GET",

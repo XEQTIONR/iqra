@@ -40,15 +40,12 @@ struct LoginView: View {
     
     private func login() async throws {
 
-        let loginData = LoginData(email: email, password: password, device_name: "Default iOS")
+        let loginData = LoginData(email: email, password: password, device_name: UIDevice.current.name)
         
         var (data, response, ok) = try await RequestService.request(
             LOGIN_ENDPOINT,
             method: "POST",
-            headers: [
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            ],
+            headers: RequestService.jsonHeaders,
             body: try JSONEncoder().encode(loginData)
         )
         
