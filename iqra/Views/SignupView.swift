@@ -15,6 +15,7 @@ struct SignupData: Codable {
     var password: String
     var birthday: String
     var gender: String
+    var device_name: String
 }
 
 struct SignupView: View {
@@ -32,7 +33,8 @@ struct SignupView: View {
             email: email,
             password: password,
             birthday: String("\(birthday)".split(separator: " ")[0]),
-            gender: gender?.rawValue ?? "male"
+            gender: gender?.rawValue ?? "male",
+            device_name: UIDevice.current.name
         )
         
         var (data, response) = try await RequestService.request(
