@@ -118,7 +118,7 @@ struct ExploreView: View {
                             showLoginSheet = true
                         }
                     } else {
-                        NavigationLink(destination: InstructorFormView()) {
+                        NavigationLink(destination: InstructorArabicFormView()) {
                             Button("Add your own course") {
                                 
                             }
@@ -137,7 +137,7 @@ struct ExploreView: View {
                 .navigationDestination(for: Destination.self) { destination in
                     switch destination {
                     case .instructorForm:
-                        InstructorFormView()
+                        InstructorArabicFormView()
                     }
                 }
                 .navigationDestination(for: Course.self) { course in

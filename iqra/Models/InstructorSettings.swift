@@ -16,6 +16,14 @@ enum ReadingLevel: String, CaseIterable {
     case no
     case withHarakat
     case withoutHarakat
+    
+    var label: String {
+        switch self {
+        case .no: return "I cannot read Arabic"
+        case .withHarakat: return "I can read Arabic with harakat/tashkeel"
+        case .withoutHarakat: return "I can read Arabic with or without harakat/tashkeel"
+        }
+    }
 }
 
 enum SpeakingLevel: String, CaseIterable {
@@ -24,7 +32,31 @@ enum SpeakingLevel: String, CaseIterable {
     case MSA
     case multiple
     case native
+    
+    var label: String {
+        switch self {
+        case .no: return "I cannot speak Arabic"
+        case .wordsOnly: return "I can speak Arabic words but I do not understand them"
+        case .MSA: return "I can speak and I understand Modern Standard Arabic (MSA) / Fusha"
+        case .multiple: return "I can speak and I understand multiple Arabic dialects"
+        case .native: return "I am Arab, I speak and understand most Arabic dialects"
+        }
+    }
 }
+
+enum WritingLevel: String, CaseIterable {
+    case no
+    case yes
+    
+    var label: String {
+        switch self {
+        case .no: return "I cannot write in Arabic"
+        case .yes: return "I can write in Arabic"
+        }
+    }
+}
+
+
 
 enum AgeGroup: String, CaseIterable {
     case aLessThan19
@@ -54,9 +86,9 @@ enum Title: String, CaseIterable {
 class InstructorSettings {
     var gender: Gender? // scrap
     var ageGroup: String? // scrap
-    var reading: ReadingLevel?
-    var speaking: SpeakingLevel?
-    var writing: Bool?
+    var reading: ReadingLevel = .no
+    var speaking: SpeakingLevel = .no
+    var writing: WritingLevel = .no
     var languages: Set<String> = []
     var courseCategories = Set<CourseCategory>()
     var isMuslim: Bool?
