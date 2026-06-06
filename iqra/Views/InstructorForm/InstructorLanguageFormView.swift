@@ -10,7 +10,7 @@ import SwiftUI
 struct InstructorLanguageFormView: View {
     
     @Environment(Router.self) private var router
-    @State private var settings = InstructorSettings()
+    @Bindable var settings: InstructorSettings
     @State private var showOptions: Bool = false
     
 
@@ -92,7 +92,7 @@ struct InstructorLanguageFormView: View {
                     Spacer()
                     
                     Button {
-                        router.push(.instructorCourseTypeForm)
+                        router.push(.instructorCourseTypeForm(settings))
                     } label: {
                         ZStack {
                             Text("Next")
@@ -121,6 +121,6 @@ struct InstructorLanguageFormView: View {
 }
 
 #Preview {
-    InstructorLanguageFormView()
+    InstructorLanguageFormView(settings: InstructorSettings())
         .environment(Router())
 }

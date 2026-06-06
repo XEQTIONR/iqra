@@ -93,4 +93,18 @@ class InstructorSettings {
     var courseCategories = Set<CourseCategory>()
     var isMuslim: Bool?
     var titles: Set<Title> = []
+    
+    var description: String {
+        "InstructorSettings(reading: \(reading.label), speaking: \(speaking.label), writing: \(writing.label), isMuslim: \(String(describing: isMuslim))"
+    }
+}
+
+extension InstructorSettings: Hashable {
+    static func == (lhs: InstructorSettings, rhs: InstructorSettings) -> Bool {
+        lhs === rhs
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(ObjectIdentifier(self))
+    }
 }

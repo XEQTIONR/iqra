@@ -10,7 +10,7 @@ import SwiftUI
 struct InstructorQualificationFormView: View {
     
     @Environment(Router.self) private var router
-    @State private var settings = InstructorSettings()
+    @Bindable var settings: InstructorSettings
     
     let titles: [(label: String, value: Title)] = [
         ("Hafiz - حفيظ ", .hafiz),
@@ -62,7 +62,7 @@ struct InstructorQualificationFormView: View {
                     Spacer()
                     
                     Button {
-                        router.push(.instructorFormComplete)
+                        router.push(.instructorFormComplete(settings))
                     } label: {
                         ZStack {
                             Text(settings.titles.count == 0 ? "Skip" : "Continue")
@@ -95,6 +95,6 @@ struct InstructorQualificationFormView: View {
 }
 
 #Preview {
-    InstructorQualificationFormView()
+    InstructorQualificationFormView(settings: InstructorSettings())
         .environment(Router())
 }

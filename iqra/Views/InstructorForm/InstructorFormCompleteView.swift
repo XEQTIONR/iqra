@@ -8,14 +8,18 @@
 import SwiftUI
 
 struct InstructorFormCompleteView: View {
+    
+    @Bindable var settings: InstructorSettings
+
     var body: some View {
         VStack(spacing: 20) {
             ProgressView()
             Text("Creating your instructor profile...")
+            Text(settings.description)
         }
     }
 }
 
 #Preview {
-    InstructorFormCompleteView()
+    InstructorFormCompleteView(settings: InstructorSettings())
 }

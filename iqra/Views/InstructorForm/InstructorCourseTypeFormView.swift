@@ -10,7 +10,7 @@ import SwiftUI
 struct InstructorCourseTypeFormView: View {
     
     @Environment(Router.self) private var router
-    @State private var settings = InstructorSettings()
+    @Bindable var settings: InstructorSettings
     
     let types = [
         "Islamic & Quran courses",
@@ -73,9 +73,9 @@ struct InstructorCourseTypeFormView: View {
                     
                     Button {
                         if settings.courseCategories.contains(.islamic) {
-                            router.push(.instructorMuslimForm)
+                            router.push(.instructorMuslimForm(settings))
                         } else {
-                            router.push(.instructorFormComplete)
+                            router.push(.instructorFormComplete(settings))
                         }
                     } label: {
                         ZStack {
@@ -105,6 +105,6 @@ struct InstructorCourseTypeFormView: View {
 }
 
 #Preview {
-    InstructorCourseTypeFormView()
+    InstructorCourseTypeFormView(settings: InstructorSettings())
         .environment(Router())
 }

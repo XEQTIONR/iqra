@@ -85,7 +85,7 @@ struct InstructorArabicFormView: View {
                     ) {
                         router.push(.instructorUnqualified)
                     } else {
-                        router.push(.instructorLanguageForm)
+                        router.push(.instructorLanguageForm(settings))
                     }
                 } label: {
                     ZStack {

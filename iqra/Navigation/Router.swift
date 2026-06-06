@@ -10,11 +10,11 @@ import SwiftUI
 enum Route: Hashable {
     case course(Course)
     case instructorArabicForm
-    case instructorLanguageForm
-    case instructorCourseTypeForm
-    case instructorMuslimForm
-    case instructorQualificationForm
-    case instructorFormComplete
+    case instructorLanguageForm(InstructorSettings)
+    case instructorCourseTypeForm(InstructorSettings)
+    case instructorMuslimForm(InstructorSettings)
+    case instructorQualificationForm(InstructorSettings)
+    case instructorFormComplete(InstructorSettings)
     case instructorUnqualified
     case signup
 }
@@ -46,16 +46,16 @@ extension Route {
             CourseView(course: course)
         case .instructorArabicForm:
             InstructorArabicFormView()
-        case .instructorLanguageForm:
-            InstructorLanguageFormView()
-        case .instructorCourseTypeForm:
-            InstructorCourseTypeFormView()
-        case .instructorMuslimForm:
-            InstructorMuslimFormView()
-        case .instructorQualificationForm:
-            InstructorQualificationFormView()
-        case .instructorFormComplete:
-            InstructorFormCompleteView()
+        case .instructorLanguageForm(let settings):
+            InstructorLanguageFormView(settings: settings)
+        case .instructorCourseTypeForm(let settings):
+            InstructorCourseTypeFormView(settings: settings)
+        case .instructorMuslimForm(let settings):
+            InstructorMuslimFormView(settings: settings)
+        case .instructorQualificationForm(let settings):
+            InstructorQualificationFormView(settings: settings)
+        case .instructorFormComplete(let settings):
+            InstructorFormCompleteView(settings: settings)
         case .instructorUnqualified:
             InstructorUnqalifiedView()
         case .signup:

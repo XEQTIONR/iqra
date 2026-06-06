@@ -10,7 +10,7 @@ import SwiftUI
 struct InstructorMuslimFormView: View {
     
     @Environment(Router.self) private var router
-    @State private var settings = InstructorSettings()
+    @Bindable var settings: InstructorSettings
 
     var body: some View {
         VStack {
@@ -64,7 +64,7 @@ struct InstructorMuslimFormView: View {
                     Spacer()
                     
                     Button {
-                        router.push(.instructorQualificationForm)
+                        router.push(.instructorQualificationForm(settings))
                     } label: {
                         ZStack {
                             Text("Next")
@@ -93,6 +93,6 @@ struct InstructorMuslimFormView: View {
 }
 
 #Preview {
-    InstructorMuslimFormView()
+    InstructorMuslimFormView(settings: InstructorSettings())
         .environment(Router())
 }
