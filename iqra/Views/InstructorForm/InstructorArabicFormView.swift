@@ -9,6 +9,7 @@ import SwiftUI
 
 struct InstructorArabicFormView: View {
     
+    @Environment(Router.self) private var router
     @State private var settings = InstructorSettings()
     
     private var readingSelection: Binding<String> {
@@ -77,14 +78,14 @@ struct InstructorArabicFormView: View {
                 
                 Spacer()
                 
-                NavigationLink {
+                Button {
                     if (settings.reading == .no
                         && settings.writing == .no
                         && settings.speaking == .no
                     ) {
-                        InstructorUnqalifiedView()
+                        router.push(.instructorUnqualified)
                     } else {
-                        InstructorLanguageFormView()
+                        router.push(.instructorLanguageForm)
                     }
                 } label: {
                     ZStack {
@@ -149,4 +150,5 @@ private struct ProficiencyPicker: View {
 #Preview {
     InstructorArabicFormView()
         .environment(User())
+        .environment(Router())
 }

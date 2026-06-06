@@ -9,6 +9,7 @@ import SwiftUI
 
 struct InstructorQualificationFormView: View {
     
+    @Environment(Router.self) private var router
     @State private var settings = InstructorSettings()
     
     let titles: [(label: String, value: Title)] = [
@@ -60,8 +61,8 @@ struct InstructorQualificationFormView: View {
                     
                     Spacer()
                     
-                    NavigationLink {
-                        InstructorFormCompleteView()
+                    Button {
+                        router.push(.instructorFormComplete)
                     } label: {
                         ZStack {
                             Text(settings.titles.count == 0 ? "Skip" : "Continue")
@@ -95,4 +96,5 @@ struct InstructorQualificationFormView: View {
 
 #Preview {
     InstructorQualificationFormView()
+        .environment(Router())
 }

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct InstructorMuslimFormView: View {
     
+    @Environment(Router.self) private var router
     @State private var settings = InstructorSettings()
 
     var body: some View {
@@ -62,8 +63,8 @@ struct InstructorMuslimFormView: View {
                     
                     Spacer()
                     
-                    NavigationLink {
-                        InstructorQualificationFormView()
+                    Button {
+                        router.push(.instructorQualificationForm)
                     } label: {
                         ZStack {
                             Text("Next")
@@ -93,4 +94,5 @@ struct InstructorMuslimFormView: View {
 
 #Preview {
     InstructorMuslimFormView()
+        .environment(Router())
 }

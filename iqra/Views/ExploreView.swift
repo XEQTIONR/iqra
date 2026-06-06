@@ -9,17 +9,12 @@ import SwiftUI
 import CachedAsyncImage
 
 struct ExploreView: View {
-    private enum Destination: Hashable {
-        case instructorForm
-    }
-    
     @Environment(User.self) private var appUser
     
+    @State private var router = Router()
     @State var courses: [Course] = []
     @State var showLoginSheet: Bool = false
     @State private var navigateToInstructorForm: Bool = false
-    
-    @State private var path = NavigationPath()
     
     private func loadFeed() async {
         do {
@@ -37,8 +32,9 @@ struct ExploreView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            NavigationStack(path: $path) {
+        @Bindable var router = router
+        return GeometryReader { geometry in
+            NavigationStack(path: $router.path) {
                 List {
                     VStack(spacing: 15) {
                         HStack {
@@ -51,7 +47,7 @@ struct ExploreView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 15) {
                                 ForEach(courses, id: \.self.image) { course in
-                                    NavigationLink(destination: CourseView(course: course)) {
+                                    NavigationLink(value: Route.course(course)) {
                                         Slide(title: course.title, url: course.image, width: geometry.size.width)
                                     }
                                 }
@@ -75,7 +71,7 @@ struct ExploreView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 15) {
                                 ForEach(courses, id: \.self.image) { course in
-                                    NavigationLink(destination: CourseView(course: course)) {
+                                    NavigationLink(value: Route.course(course)) {
                                         Slide(title: course.title, url: course.image, width: geometry.size.width)
                                     }
                                 }
@@ -101,7 +97,7 @@ struct ExploreView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 15) {
                                 ForEach(courses, id: \.self.image) { course in
-                                    NavigationLink(destination: CourseView(course: course)) {
+                                    NavigationLink(value: Route.course(course)) {
                                         Slide(title: course.title, url: course.image, width: geometry.size.width)
                                     }
                                 }
@@ -118,15 +114,13 @@ struct ExploreView: View {
                             showLoginSheet = true
                         }
                     } else {
-                        NavigationLink(destination: InstructorArabicFormView()) {
-                            Button("Add your own course") {
-                                
-                            }
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.all, 10)
-                            .background(Color.gray.opacity(0.2))
-                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                            .listRowSeparator(.hidden)
+                        NavigationLink(value: Route.instructorArabicForm) {
+                            Text("Add your own course")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.all, 10)
+                                .background(Color.gray.opacity(0.2))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                .listRowSeparator(.hidden)
                         }
                     }
                     
@@ -134,20 +128,16 @@ struct ExploreView: View {
                 }
                 .listStyle(PlainListStyle())
                 .listRowSpacing(30)
-                .navigationDestination(for: Destination.self) { destination in
-                    switch destination {
-                    case .instructorForm:
-                        InstructorArabicFormView()
-                    }
-                }
-                .navigationDestination(for: Course.self) { course in
-                    CourseView(course: course)
+                .navigationDestination(for: Route.self) { route in
+                    route.destination
+                        .environment(router)
                 }
             }
+            .environment(router)
             .sheet(isPresented: $showLoginSheet, onDismiss: {
                 if navigateToInstructorForm {
                     navigateToInstructorForm = false
-                    path.append(Destination.instructorForm)
+                    router.push(.instructorArabicForm)
                 }
             }) {
                 LoginView(completion: {

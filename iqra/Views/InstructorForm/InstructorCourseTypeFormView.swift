@@ -9,6 +9,7 @@ import SwiftUI
 
 struct InstructorCourseTypeFormView: View {
     
+    @Environment(Router.self) private var router
     @State private var settings = InstructorSettings()
     
     let types = [
@@ -70,11 +71,11 @@ struct InstructorCourseTypeFormView: View {
                     
                     Spacer()
                     
-                    NavigationLink {
+                    Button {
                         if settings.courseCategories.contains(.islamic) {
-                            InstructorMuslimFormView()
+                            router.push(.instructorMuslimForm)
                         } else {
-                            InstructorFormCompleteView()
+                            router.push(.instructorFormComplete)
                         }
                     } label: {
                         ZStack {
@@ -105,4 +106,5 @@ struct InstructorCourseTypeFormView: View {
 
 #Preview {
     InstructorCourseTypeFormView()
+        .environment(Router())
 }

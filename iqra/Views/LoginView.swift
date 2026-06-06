@@ -28,6 +28,7 @@ struct LoginData: Codable {
 struct LoginView: View {
     
     @Environment(User.self) private var appUser
+    @State private var router = Router()
     @State private var email: String = ""
     @State private var password: String = ""
     let completion: (() -> Void)?
@@ -70,7 +71,8 @@ struct LoginView: View {
     }
     
     var body: some View {
-        NavigationStack {
+        @Bindable var router = router
+        return NavigationStack(path: $router.path) {
             VStack(spacing: 25){
                 Text("Login!")
                 TextField("Email", text: $email)
@@ -91,10 +93,15 @@ struct LoginView: View {
                     }
                 })
                 
-                NavigationLink("Sign Up", destination: SignupView())
+                NavigationLink("Sign Up", value: Route.signup)
             }
             .padding()
+            .navigationDestination(for: Route.self) { route in
+                route.destination
+                    .environment(router)
+            }
         }
+        .environment(router)
     }
 }
 
