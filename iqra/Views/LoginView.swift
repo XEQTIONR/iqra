@@ -49,12 +49,13 @@ struct LoginView: View {
             UserDefaults.standard.set(res.token, forKey: "api_token")
 
             
+            appUser.update(from: res.user)
             
-            completion!()
             
             try await Task.sleep(nanoseconds: 250_000_000)
+            completion!()
             
-            appUser.update(from: res.user)
+            
 
         } else if let httpResponse = response as? HTTPURLResponse {
             
@@ -69,32 +70,31 @@ struct LoginView: View {
     }
     
     var body: some View {
-        VStack(spacing: 25){
-            Text("Login!")
-            TextField("Email", text: $email)
-                .autocorrectionDisabled(true)
-                .textInputAutocapitalization(.never)
-                .textContentType(.emailAddress)
-            SecureField("Password", text: $password)
-                .textContentType(.password)
-            
-            Button("Submit", action: {
-                Task {
-                    do {
-                        let result: () = try await login()
-                        print("Result: \(result)")
-                    } catch {
-                        print("Error: \(error)")
+        NavigationStack {
+            VStack(spacing: 25){
+                Text("Login!")
+                TextField("Email", text: $email)
+                    .autocorrectionDisabled(true)
+                    .textInputAutocapitalization(.never)
+                    .textContentType(.emailAddress)
+                SecureField("Password", text: $password)
+                    .textContentType(.password)
+                
+                Button("Submit", action: {
+                    Task {
+                        do {
+                            let result: () = try await login()
+                            print("Result: \(result)")
+                        } catch {
+                            print("Error: \(error)")
+                        }
                     }
-                }
-            })
-            
-            Button("Log", action: {
-                print("appUser")
-                print(appUser)
-            })
+                })
+                
+                NavigationLink("Sign Up", destination: SignupView())
+            }
+            .padding()
         }
-        .padding()
     }
 }
 

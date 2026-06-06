@@ -17,9 +17,7 @@ struct InstructorCourseTypeFormView: View {
     ]
     
     var body: some View {
-        NavigationStack {
-            
-            VStack {
+        VStack {
                 Text("Signup to teach")
                     .font(.title)
                     .padding(.top, 50)
@@ -98,7 +96,6 @@ struct InstructorCourseTypeFormView: View {
                 
                
             }
-        }
     }
 }
 

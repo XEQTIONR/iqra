@@ -9,11 +9,9 @@ import SwiftUI
 
 struct InstructorFormCompleteView: View {
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                ProgressView()
-                Text("Creating your instructor profile...")
-            }
+        VStack(spacing: 20) {
+            ProgressView()
+            Text("Creating your instructor profile...")
         }
     }
 }

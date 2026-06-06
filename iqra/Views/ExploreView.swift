@@ -9,16 +9,17 @@ import SwiftUI
 import CachedAsyncImage
 
 struct ExploreView: View {
-    var items = [1,2] // This represents the number of horizontal scroll items
-    let imageUrls = [
-        "https://picsum.photos/600/400",
-        "https://picsum.photos/600/401",
-        "https://picsum.photos/600/402",
-        "https://picsum.photos/600/403",
-        "https://picsum.photos/600/404"
-    ]
-
+    private enum Destination: Hashable {
+        case instructorForm
+    }
+    
+    @Environment(User.self) private var appUser
+    
     @State var courses: [Course] = []
+    @State var showLoginSheet: Bool = false
+    @State private var navigateToInstructorForm: Bool = false
+    
+    @State private var path = NavigationPath()
     
     private func loadFeed() async {
         do {
@@ -37,7 +38,7 @@ struct ExploreView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            NavigationStack {
+            NavigationStack(path: $path) {
                 List {
                     VStack(spacing: 15) {
                         HStack {
@@ -112,24 +113,47 @@ struct ExploreView: View {
                     }
                     .listRowSeparator(.hidden)
                     
-                    NavigationLink(destination: InstructorFormView()) {
+                    if (appUser.id == nil) {
                         Button("Add your own course") {
-                            
+                            showLoginSheet = true
                         }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.all, 10)
-                        .background(Color.gray.opacity(0.2))
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .listRowSeparator(.hidden)
+                    } else {
+                        NavigationLink(destination: InstructorFormView()) {
+                            Button("Add your own course") {
+                                
+                            }
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(.all, 10)
+                            .background(Color.gray.opacity(0.2))
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .listRowSeparator(.hidden)
+                        }
                     }
                     
                     
                 }
                 .listStyle(PlainListStyle())
                 .listRowSpacing(30)
+                .navigationDestination(for: Destination.self) { destination in
+                    switch destination {
+                    case .instructorForm:
+                        InstructorFormView()
+                    }
+                }
+                .navigationDestination(for: Course.self) { course in
+                    CourseView(course: course)
+                }
             }
-            .navigationDestination(for: Course.self) { course in
-                CourseView(course: course)
+            .sheet(isPresented: $showLoginSheet, onDismiss: {
+                if navigateToInstructorForm {
+                    navigateToInstructorForm = false
+                    path.append(Destination.instructorForm)
+                }
+            }) {
+                LoginView(completion: {
+                    navigateToInstructorForm = true
+                    showLoginSheet = false
+                })
             }
             .task {
                 await loadFeed()
@@ -140,4 +164,5 @@ struct ExploreView: View {
 
 #Preview {
     ExploreView()
+        .environment(User())
 }

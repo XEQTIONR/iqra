@@ -49,5 +49,5 @@ struct MainView: View {
 
 #Preview {
     MainView(currentSection: .constant(.main))
-
+        .environment(User())
 }
