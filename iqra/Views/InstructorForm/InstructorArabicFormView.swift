@@ -78,7 +78,14 @@ struct InstructorArabicFormView: View {
                 Spacer()
                 
                 NavigationLink {
-                    InstructorLanguageFormView()
+                    if (settings.reading == .no
+                        && settings.writing == .no
+                        && settings.speaking == .no
+                    ) {
+                        InstructorUnqalifiedView()
+                    } else {
+                        InstructorLanguageFormView()
+                    }
                 } label: {
                     ZStack {
                         Text("Next")

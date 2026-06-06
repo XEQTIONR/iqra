@@ -71,13 +71,11 @@ struct InstructorCourseTypeFormView: View {
                     Spacer()
                     
                     NavigationLink {
-                        
                         if settings.courseCategories.contains(.islamic) {
                             InstructorMuslimFormView()
                         } else {
                             InstructorFormCompleteView()
                         }
-                        
                     } label: {
                         ZStack {
                             Text("Next")
