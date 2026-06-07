@@ -12,6 +12,7 @@ let CREATE_INSTRUCTOR = "http://localhost:8000/api/instructors"
 struct InstructorFormCompleteView: View {
     
     @Environment(User.self) private var appUser
+    @Environment(Router.self) private var router
     @Bindable var settings: InstructorSettings
 
     var body: some View {
@@ -44,6 +45,8 @@ struct InstructorFormCompleteView: View {
                         print("userrr")
                         print(user)
                         appUser.update(from: user)
+                        router.popToRoot()
+                        
                         
                     } else {
                         print("SOMETHING WENT WRONG")
