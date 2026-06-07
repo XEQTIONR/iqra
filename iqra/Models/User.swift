@@ -16,7 +16,7 @@ class User: Codable, CustomStringConvertible {
     var email: String?
     var gender: String?
     var birthday: String?
-    var isCreator: Bool?
+    var isInstructor: Bool?
 
     init() {}
 
@@ -25,7 +25,7 @@ class User: Codable, CustomStringConvertible {
     // which breaks synthesized Codable (it would look for `_name`/`_email`
     // keys in the JSON and silently decode everything as nil).
     enum CodingKeys: String, CodingKey {
-        case id, name, email, gender, birthday, isCreator
+        case id, name, email, gender, birthday, isInstructor
     }
 
     required init(from decoder: Decoder) throws {
@@ -35,7 +35,7 @@ class User: Codable, CustomStringConvertible {
         email = try container.decodeIfPresent(String.self, forKey: .email)
         gender = try container.decodeIfPresent(String.self, forKey: .gender)
         birthday = try container.decodeIfPresent(String.self, forKey: .birthday)
-        isCreator = try container.decodeIfPresent(Bool.self, forKey: .isCreator)
+        isInstructor = try container.decodeIfPresent(Bool.self, forKey: .isInstructor)
         
     }
 
@@ -46,7 +46,7 @@ class User: Codable, CustomStringConvertible {
         try container.encodeIfPresent(email, forKey: .email)
         try container.encodeIfPresent(gender, forKey: .gender)
         try container.encodeIfPresent(birthday, forKey: .birthday)
-        try container.encodeIfPresent(isCreator, forKey: .isCreator)
+        try container.encodeIfPresent(isInstructor, forKey: .isInstructor)
     }
 
     /// Copies fields from another user into this shared instance so that
@@ -57,7 +57,7 @@ class User: Codable, CustomStringConvertible {
         email = other.email
         gender = other.gender
         birthday = other.birthday
-        isCreator = other.isCreator
+        isInstructor = other.isInstructor
         save()
     }
 
@@ -68,7 +68,7 @@ class User: Codable, CustomStringConvertible {
         email = nil
         gender = nil
         birthday = nil
-        isCreator = nil
+        isInstructor = nil
         UserDefaults.standard.removeObject(forKey: User.storageKey)
     }
 
@@ -99,7 +99,7 @@ class User: Codable, CustomStringConvertible {
             email: \(email ?? "nil"), 
             gender: \(gender ?? "nil"), 
             birthday: \(String(describing: birthday)),
-            isCreator: \(String(describing: isCreator?.description))
+            isInstructor: \(String(describing: isInstructor?.description))
             )
         """
     }
@@ -114,6 +114,7 @@ extension User {
         user.name = "Troy McBarker"
         user.email = "someone@example.com"
         user.gender = "male"
+        user.isInstructor = true
         return user
     }
 }

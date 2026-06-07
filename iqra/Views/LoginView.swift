@@ -56,8 +56,6 @@ struct LoginView: View {
             try await Task.sleep(nanoseconds: 250_000_000)
             completion!()
             
-            
-
         } else if let httpResponse = response as? HTTPURLResponse {
             
             if httpResponse.statusCode == 422 {

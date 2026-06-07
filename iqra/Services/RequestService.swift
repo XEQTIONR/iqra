@@ -51,4 +51,14 @@ class RequestService {
         return (data, response, isSuccess)
         
     }
+    
+    private struct DataWrapper<T: Decodable>: Decodable {
+        let data: T
+    }
+    
+    public static func apiUnwrapData<T: Decodable>(type: T.Type, from data: Data) throws -> T {
+        let wrapper = try JSONDecoder().decode(DataWrapper<T>.self, from: data)
+        return wrapper.data
+    }
+        
 }

@@ -11,6 +11,7 @@ let CREATE_INSTRUCTOR = "http://localhost:8000/api/instructors"
 
 struct InstructorFormCompleteView: View {
     
+    @Environment(User.self) private var appUser
     @Bindable var settings: InstructorSettings
 
     var body: some View {
@@ -37,6 +38,13 @@ struct InstructorFormCompleteView: View {
                         print("OK")
                         print(String(data: data, encoding: .utf8) ?? "NODATA")
                         print(response)
+                        
+                        let user = try RequestService.apiUnwrapData(type: User.self, from: data)
+//                        let user = try JSONDecoder().decode(User.self, from: data)
+                        print("userrr")
+                        print(user)
+                        appUser.update(from: user)
+                        
                     } else {
                         print("SOMETHING WENT WRONG")
                         print(String(data: data, encoding: .utf8) ?? "NODATA")

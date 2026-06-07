@@ -42,6 +42,10 @@ struct SettingsView: View {
                 Text(appUser.name!)
                     .font(.title3)
                     .fontWeight(.bold)
+                
+                if appUser.isInstructor == true {
+                    Text("Instructor")
+                }
             }
             
             Spacer()
