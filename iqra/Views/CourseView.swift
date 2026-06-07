@@ -57,5 +57,10 @@ struct CourseView: View {
 }
 
 #Preview {
-    CourseView(course: Course(title: "My Course", image: "https://picsum.photos/600/400", description: "A dummy description"))
+    CourseView(course: Course(
+        title: "My Course",
+        image: "https://picsum.photos/600/400",
+        description: "A dummy description",
+        difficulty: .beginner
+    ))
 }

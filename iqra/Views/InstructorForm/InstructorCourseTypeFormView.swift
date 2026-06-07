@@ -12,9 +12,11 @@ struct InstructorCourseTypeFormView: View {
     @Environment(Router.self) private var router
     @Bindable var settings: InstructorSettings
     
-    let types = [
-        "Islamic & Quran courses",
-        "Arabic language & calligraphy courses",
+    let labels: [CourseCategory: String] = [
+        .reading: "Quran recitation, reading and memorization",
+        .qScience: "Quran Sciences",
+        .hScience: "Hadith Sciences",
+        .calligraphy: "Arabic / Quranic Calligraphy",
     ]
     
     var body: some View {
@@ -33,50 +35,39 @@ struct InstructorCourseTypeFormView: View {
                         .padding(.bottom, 50)
                     
                     VStack(spacing: 15) {
-                        Text("Islamic & Quran courses")
-                            .padding(.all, 10)
-                            .frame(maxWidth: .infinity)
-                            .foregroundStyle(settings.courseCategories.contains(.islamic) ? Color.blue : Color.primary)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .strokeBorder(settings.courseCategories.contains(.islamic) ? Color.blue : Color.gray, lineWidth: 1.5)
-                            )
-                            .padding(.horizontal)
-                            .onTapGesture {
-                                if (!settings.courseCategories.contains(.islamic)) {
-                                    settings.courseCategories.insert(.islamic)
-                                } else {
-                                    settings.courseCategories.remove(.islamic)
+                        ForEach(CourseCategory.allCases, id: \.self) { category in
+                            let isSelected = settings.courseCategories.contains(category)
+
+                            Text(labels[category] ?? category.rawValue)
+                                .padding(.all, 10)
+                                .frame(maxWidth: .infinity)
+                                .multilineTextAlignment(.center)
+                                .foregroundStyle(isSelected ? Color.blue : Color.primary)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .strokeBorder(isSelected ? Color.blue : Color.gray, lineWidth: 1.5)
+                                )
+                                .padding(.horizontal)
+                                .contentShape(RoundedRectangle(cornerRadius: 12))
+                                .onTapGesture {
+                                    if isSelected {
+                                        settings.courseCategories.remove(category)
+                                    } else {
+                                        settings.courseCategories.insert(category)
+                                    }
                                 }
-                            }
-                        
-                        Text("Arabic language & calligraphy courses")
-                            .padding(.all, 10)
-                            .frame(maxWidth: .infinity)
-                            .foregroundStyle(settings.courseCategories.contains(.arabic) ? Color.blue : Color.primary)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .strokeBorder(settings.courseCategories.contains(.arabic) ? Color.blue : Color.gray, lineWidth: 1.5)
-                            )
-                            .padding(.horizontal)
-                            .onTapGesture {
-                                if (!settings.courseCategories.contains(.arabic)) {
-                                    settings.courseCategories.insert(.arabic)
-                                } else {
-                                    settings.courseCategories.remove(.arabic)
-                                }
-                            }
+                        }
                     }
                     .frame(maxWidth: .infinity)
                     
                     Spacer()
                     
                     Button {
-                        if settings.courseCategories.contains(.islamic) {
-                            router.push(.instructorMuslimForm(settings))
-                        } else {
+//                        if settings.courseCategories.contains(.islamic) {
+//                            router.push(.instructorMuslimForm(settings))
+//                        } else {
                             router.push(.instructorFormComplete(settings))
-                        }
+//                        }
                     } label: {
                         ZStack {
                             Text("Next")

@@ -16,6 +16,7 @@ class User: Codable, CustomStringConvertible {
     var email: String?
     var gender: String?
     var birthday: String?
+    var isCreator: Bool?
 
     init() {}
 
@@ -24,7 +25,7 @@ class User: Codable, CustomStringConvertible {
     // which breaks synthesized Codable (it would look for `_name`/`_email`
     // keys in the JSON and silently decode everything as nil).
     enum CodingKeys: String, CodingKey {
-        case id, name, email, gender, birthday
+        case id, name, email, gender, birthday, isCreator
     }
 
     required init(from decoder: Decoder) throws {
@@ -34,6 +35,8 @@ class User: Codable, CustomStringConvertible {
         email = try container.decodeIfPresent(String.self, forKey: .email)
         gender = try container.decodeIfPresent(String.self, forKey: .gender)
         birthday = try container.decodeIfPresent(String.self, forKey: .birthday)
+        isCreator = try container.decodeIfPresent(Bool.self, forKey: .isCreator)
+        
     }
 
     func encode(to encoder: Encoder) throws {
@@ -43,6 +46,7 @@ class User: Codable, CustomStringConvertible {
         try container.encodeIfPresent(email, forKey: .email)
         try container.encodeIfPresent(gender, forKey: .gender)
         try container.encodeIfPresent(birthday, forKey: .birthday)
+        try container.encodeIfPresent(isCreator, forKey: .isCreator)
     }
 
     /// Copies fields from another user into this shared instance so that
@@ -53,6 +57,7 @@ class User: Codable, CustomStringConvertible {
         email = other.email
         gender = other.gender
         birthday = other.birthday
+        isCreator = other.isCreator
         save()
     }
 
@@ -63,6 +68,7 @@ class User: Codable, CustomStringConvertible {
         email = nil
         gender = nil
         birthday = nil
+        isCreator = nil
         UserDefaults.standard.removeObject(forKey: User.storageKey)
     }
 
@@ -86,6 +92,29 @@ class User: Codable, CustomStringConvertible {
     }
 
     var description: String {
-        "User(id: \(id.map(String.init) ?? "nil"), name: \(name ?? "nil"), email: \(email ?? "nil"), gender: \(gender ?? "nil"), birthday: \(birthday ?? "nil"))"
+        """
+            User(
+            id: \(String(describing: id)), 
+            name: \(name ?? "nil"),
+            email: \(email ?? "nil"), 
+            gender: \(gender ?? "nil"), 
+            birthday: \(String(describing: birthday)),
+            isCreator: \(String(describing: isCreator?.description))
+            )
+        """
     }
 }
+
+#if DEBUG
+extension User {
+    /// A populated, logged-in user for SwiftUI previews.
+    static var preview: User {
+        let user = User()
+        user.id = 1
+        user.name = "Troy McBarker"
+        user.email = "someone@example.com"
+        user.gender = "male"
+        return user
+    }
+}
+#endif

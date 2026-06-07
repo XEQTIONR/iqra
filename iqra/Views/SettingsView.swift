@@ -33,12 +33,18 @@ struct SettingsView: View {
     @ViewBuilder
     private var content: some View {
         if appUser.id != nil {
-            Text("Settings")
-            Text(appUser.name!)
-            Button ("Log") {
-                print("appUser:")
-                print(appUser)
+            
+            VStack(spacing: 20) {
+                Circle()
+                    .frame(width: 80, height: 80)
+                    .padding(.top, 100)
+                
+                Text(appUser.name!)
+                    .font(.title3)
+                    .fontWeight(.bold)
             }
+            
+            Spacer()
             Button("Logout", action: {
                 Task {
                     // Best-effort: tell the server to revoke the token, but don't
@@ -69,10 +75,6 @@ struct SettingsView: View {
             }) 
         } else {
             VStack(spacing: 20) {
-                Button ("Log") {
-                    print("appUser:")
-                    print(appUser)
-                }
                 Button("Login") {
                     loginModalOpen.toggle()
                 }
@@ -94,5 +96,5 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView(.constant(.main))
-        .environment(User())
+        .environment(User.preview)
 }

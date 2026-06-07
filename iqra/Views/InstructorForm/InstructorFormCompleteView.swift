@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+let CREATE_INSTRUCTOR = "http://localhost:8000/api/instructors"
+
 struct InstructorFormCompleteView: View {
     
     @Bindable var settings: InstructorSettings
@@ -16,6 +18,35 @@ struct InstructorFormCompleteView: View {
             ProgressView()
             Text("Creating your instructor profile...")
             Text(settings.description)
+        }
+        .onAppear {
+            Task {
+                do {
+                    let (data, response, ok) = try await RequestService.request(
+                        CREATE_INSTRUCTOR,
+                        method: "POST",
+                        headers: [
+                            "Content-Type": "application/json",
+                            "Accept": "application/json",
+                            "Authorization": "Bearer \(UserDefaults.standard.string(forKey: "api_token") ?? "")"
+                        ],
+                        body: try! JSONEncoder().encode(settings),
+                    )
+                    
+                    if ok {
+                        print("OK")
+                        print(String(data: data, encoding: .utf8) ?? "NODATA")
+                        print(response)
+                    } else {
+                        print("SOMETHING WENT WRONG")
+                        print(String(data: data, encoding: .utf8) ?? "NODATA")
+                        print(response)
+                        /// error handle
+                    }
+                } catch {
+                    
+                }
+            }
         }
     }
 }

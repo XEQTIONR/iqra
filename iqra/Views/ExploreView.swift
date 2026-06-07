@@ -132,6 +132,16 @@ struct ExploreView: View {
                     route.destination
                         .environment(router)
                 }
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button(action: {
+                            // Action here
+                        }) {
+                            Image(systemName: "bell.badge")
+                                .renderingMode(.original)
+                        }
+                    }
+                }
             }
             .environment(router)
             .sheet(isPresented: $showLoginSheet, onDismiss: {

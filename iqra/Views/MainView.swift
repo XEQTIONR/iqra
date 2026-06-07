@@ -15,7 +15,7 @@ struct MainView: View {
     @State var courses: [Course] = []
 
     var body: some View {
-        NavigationStack {
+//        NavigationStack {
             TabView {
                 Tab("Explore", systemImage: "magnifyingglass") {
                     ExploreView()
@@ -33,17 +33,8 @@ struct MainView: View {
                     SettingsView($currentSection)
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        // Action here
-                    }) {
-                        Image(systemName: "bell.badge")
-                            .renderingMode(.original)
-                    }
-                }
-            }
-        }
+            
+//        }
     }
 }
 

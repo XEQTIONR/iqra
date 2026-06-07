@@ -14,9 +14,9 @@ struct InstructorArabicFormView: View {
     
     private var readingSelection: Binding<String> {
         Binding(
-            get: { settings.reading.label },
+            get: { readingLabel(settings.reading) },
             set: { label in
-                if let level = ReadingLevel.allCases.first(where: { $0.label == label }) {
+                if let level = ReadingLevel.allCases.first(where: { readingLabel($0) == label }) {
                     settings.reading = level
                 }
             }
@@ -25,9 +25,9 @@ struct InstructorArabicFormView: View {
     
     private var speakingSelection: Binding<String> {
         Binding(
-            get: { settings.speaking.label },
+            get: { speakingLabel(settings.speaking) },
             set: { label in
-                if let level = SpeakingLevel.allCases.first(where: { $0.label == label }) {
+                if let level = SpeakingLevel.allCases.first(where: { speakingLabel($0) == label }) {
                     settings.speaking = level
                 }
             }
@@ -36,13 +36,38 @@ struct InstructorArabicFormView: View {
     
     private var writingSelection: Binding<String> {
         Binding(
-            get: { settings.writing.label },
+            get: { writingLabel(settings.writing) },
             set: { label in
-                if let level = WritingLevel.allCases.first(where: { $0.label == label }) {
+                if let level = WritingLevel.allCases.first(where: { writingLabel($0) == label }) {
                     settings.writing = level
                 }
             }
         )
+    }
+    
+    private func readingLabel(_ level: ReadingLevel) -> String {
+        switch level {
+        case .no: return "I cannot read Arabic"
+        case .withHarakat: return "I can read Arabic with harakat/tashkeel"
+        case .withoutHarakat: return "I can read Arabic with or without harakat/tashkeel"
+        }
+    }
+    
+    private func speakingLabel(_ level: SpeakingLevel) -> String {
+        switch level {
+        case .no: return "I cannot speak Arabic"
+        case .wordsOnly: return "I can speak Arabic words but I do not understand them"
+        case .MSA: return "I can speak and I understand Modern Standard Arabic (MSA) / Fusha"
+        case .multiple: return "I can speak and I understand multiple Arabic dialects"
+        case .native: return "I am Arab, I speak and understand most Arabic dialects"
+        }
+    }
+    
+    private func writingLabel(_ level: WritingLevel) -> String {
+        switch level {
+        case .no: return "I cannot write in Arabic"
+        case .yes: return "I can write in Arabic"
+        }
     }
 
     var body: some View {
@@ -60,19 +85,19 @@ struct InstructorArabicFormView: View {
                 
                 ProficiencyPicker(
                     title: "Reading",
-                    options: ReadingLevel.allCases.map(\.label),
+                    options: ReadingLevel.allCases.map(readingLabel),
                     selection: readingSelection
                 )
                 
                 ProficiencyPicker(
                     title: "Speaking",
-                    options: SpeakingLevel.allCases.map(\.label),
+                    options: SpeakingLevel.allCases.map(speakingLabel),
                     selection: speakingSelection
                 )
                 
                 ProficiencyPicker(
                     title: "Writing",
-                    options: WritingLevel.allCases.map(\.label),
+                    options: WritingLevel.allCases.map(writingLabel),
                     selection: writingSelection
                 )
                 

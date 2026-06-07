@@ -12,67 +12,33 @@ enum Gender: String, CaseIterable, Codable {
     case female
 }
 
-enum ReadingLevel: String, CaseIterable {
+enum ReadingLevel: String, CaseIterable, Codable {
     case no
     case withHarakat
     case withoutHarakat
-    
-    var label: String {
-        switch self {
-        case .no: return "I cannot read Arabic"
-        case .withHarakat: return "I can read Arabic with harakat/tashkeel"
-        case .withoutHarakat: return "I can read Arabic with or without harakat/tashkeel"
-        }
-    }
 }
 
-enum SpeakingLevel: String, CaseIterable {
+enum SpeakingLevel: String, CaseIterable, Codable {
     case no
     case wordsOnly
     case MSA
     case multiple
     case native
-    
-    var label: String {
-        switch self {
-        case .no: return "I cannot speak Arabic"
-        case .wordsOnly: return "I can speak Arabic words but I do not understand them"
-        case .MSA: return "I can speak and I understand Modern Standard Arabic (MSA) / Fusha"
-        case .multiple: return "I can speak and I understand multiple Arabic dialects"
-        case .native: return "I am Arab, I speak and understand most Arabic dialects"
-        }
-    }
 }
 
-enum WritingLevel: String, CaseIterable {
+enum WritingLevel: String, CaseIterable, Codable {
     case no
     case yes
-    
-    var label: String {
-        switch self {
-        case .no: return "I cannot write in Arabic"
-        case .yes: return "I can write in Arabic"
-        }
-    }
 }
 
-
-
-enum AgeGroup: String, CaseIterable {
-    case aLessThan19
-    case a19To24
-    case a25To34
-    case a35To44
-    case a45To54
-    case a55plus
+enum CourseCategory: String, CaseIterable, Codable {
+    case reading
+    case qScience
+    case hScience
+    case calligraphy
 }
 
-enum CourseCategory: String, CaseIterable {
-    case islamic
-    case arabic
-}
-
-enum Title: String, CaseIterable {
+enum Title: String, CaseIterable, Codable {
     case hafiz
     case hujjat
     case qari
@@ -83,9 +49,7 @@ enum Title: String, CaseIterable {
 }
 
 @Observable
-class InstructorSettings {
-    var gender: Gender? // scrap
-    var ageGroup: String? // scrap
+class InstructorSettings: Codable {
     var reading: ReadingLevel = .no
     var speaking: SpeakingLevel = .no
     var writing: WritingLevel = .no
@@ -95,7 +59,44 @@ class InstructorSettings {
     var titles: Set<Title> = []
     
     var description: String {
-        "InstructorSettings(reading: \(reading.label), speaking: \(speaking.label), writing: \(writing.label), isMuslim: \(String(describing: isMuslim))"
+        "InstructorSettings(reading: \(reading.rawValue), speaking: \(speaking.rawValue), writing: \(writing.rawValue), isMuslim: \(String(describing: isMuslim))"
+    }
+
+    init() {}
+
+    enum CodingKeys: String, CodingKey {
+        case gender
+        case ageGroup
+        case reading
+        case speaking
+        case writing
+        case languages
+        case courseCategories
+        case isMuslim
+        case titles
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        reading = try container.decodeIfPresent(ReadingLevel.self, forKey: .reading) ?? .no
+        speaking = try container.decodeIfPresent(SpeakingLevel.self, forKey: .speaking) ?? .no
+        writing = try container.decodeIfPresent(WritingLevel.self, forKey: .writing) ?? .no
+        languages = try container.decodeIfPresent(Set<String>.self, forKey: .languages) ?? []
+        courseCategories = try container.decodeIfPresent(Set<CourseCategory>.self, forKey: .courseCategories) ?? []
+        isMuslim = try container.decodeIfPresent(Bool.self, forKey: .isMuslim)
+        titles = try container.decodeIfPresent(Set<Title>.self, forKey: .titles) ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        try container.encode(reading, forKey: .reading)
+        try container.encode(speaking, forKey: .speaking)
+        try container.encode(writing, forKey: .writing)
+        try container.encode(languages, forKey: .languages)
+        try container.encode(courseCategories, forKey: .courseCategories)
+        try container.encodeIfPresent(isMuslim, forKey: .isMuslim)
+        try container.encode(titles, forKey: .titles)
     }
 }
 
