@@ -55,11 +55,10 @@ class InstructorSettings: Codable {
     var writing: WritingLevel = .no
     var languages: Set<String> = []
     var courseCategories = Set<CourseCategory>()
-    var isMuslim: Bool?
     var titles: Set<Title> = []
     
     var description: String {
-        "InstructorSettings(reading: \(reading.rawValue), speaking: \(speaking.rawValue), writing: \(writing.rawValue), isMuslim: \(String(describing: isMuslim))"
+        "InstructorSettings(reading: \(reading.rawValue), speaking: \(speaking.rawValue), writing: \(writing.rawValue))"
     }
 
     init() {}
@@ -83,7 +82,6 @@ class InstructorSettings: Codable {
         writing = try container.decodeIfPresent(WritingLevel.self, forKey: .writing) ?? .no
         languages = try container.decodeIfPresent(Set<String>.self, forKey: .languages) ?? []
         courseCategories = try container.decodeIfPresent(Set<CourseCategory>.self, forKey: .courseCategories) ?? []
-        isMuslim = try container.decodeIfPresent(Bool.self, forKey: .isMuslim)
         titles = try container.decodeIfPresent(Set<Title>.self, forKey: .titles) ?? []
     }
 
@@ -95,7 +93,6 @@ class InstructorSettings: Codable {
         try container.encode(writing, forKey: .writing)
         try container.encode(languages, forKey: .languages)
         try container.encode(courseCategories, forKey: .courseCategories)
-        try container.encodeIfPresent(isMuslim, forKey: .isMuslim)
         try container.encode(titles, forKey: .titles)
     }
 }

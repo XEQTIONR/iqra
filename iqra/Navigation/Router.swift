@@ -12,7 +12,6 @@ enum Route: Hashable {
     case instructorArabicForm
     case instructorLanguageForm(InstructorSettings)
     case instructorCourseTypeForm(InstructorSettings)
-    case instructorMuslimForm(InstructorSettings)
     case instructorQualificationForm(InstructorSettings)
     case instructorFormComplete(InstructorSettings)
     case instructorUnqualified
@@ -50,8 +49,6 @@ extension Route {
             InstructorLanguageFormView(settings: settings)
         case .instructorCourseTypeForm(let settings):
             InstructorCourseTypeFormView(settings: settings)
-        case .instructorMuslimForm(let settings):
-            InstructorMuslimFormView(settings: settings)
         case .instructorQualificationForm(let settings):
             InstructorQualificationFormView(settings: settings)
         case .instructorFormComplete(let settings):

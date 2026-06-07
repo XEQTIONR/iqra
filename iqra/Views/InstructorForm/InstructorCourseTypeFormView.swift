@@ -66,7 +66,7 @@ struct InstructorCourseTypeFormView: View {
 //                        if settings.courseCategories.contains(.islamic) {
 //                            router.push(.instructorMuslimForm(settings))
 //                        } else {
-                            router.push(.instructorFormComplete(settings))
+                            router.push(.instructorQualificationForm(settings))
 //                        }
                     } label: {
                         ZStack {
