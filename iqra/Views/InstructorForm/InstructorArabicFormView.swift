@@ -7,9 +7,16 @@
 
 import SwiftUI
 
+extension EnvironmentValues {
+    @Entry var completion: (() -> Void)? = nil
+}
+
 struct InstructorArabicFormView: View {
     
-    @Environment(Router.self) private var router
+    let completion: (() -> Void)?
+    
+    @State private var router = Router()
+    
     @State private var settings = InstructorSettings()
     
     private var readingSelection: Binding<String> {
@@ -71,65 +78,72 @@ struct InstructorArabicFormView: View {
     }
 
     var body: some View {
-        VStack {
-            Text("Signup to teach")
-                .font(.title)
-                .padding(.top, 50)
-            
-            Spacer()
-                .frame(height: 50)
-            
-            VStack(spacing: 50) {
-                Text("What is your Arabic proficiency?")
-                    .font(.title3)
-                
-                ProficiencyPicker(
-                    title: "Reading",
-                    options: ReadingLevel.allCases.map(readingLabel),
-                    selection: readingSelection
-                )
-                
-                ProficiencyPicker(
-                    title: "Speaking",
-                    options: SpeakingLevel.allCases.map(speakingLabel),
-                    selection: speakingSelection
-                )
-                
-                ProficiencyPicker(
-                    title: "Writing",
-                    options: WritingLevel.allCases.map(writingLabel),
-                    selection: writingSelection
-                )
+        NavigationStack(path: $router.path) {
+            VStack {
+                Text("Signup to teach")
+                    .font(.title)
+                    .padding(.top, 50)
                 
                 Spacer()
+                    .frame(height: 50)
                 
-                Button {
-                    if (settings.reading == .no
-                        && settings.writing == .no
-                        && settings.speaking == .no
-                    ) {
-                        router.push(.instructorUnqualified)
-                    } else {
-                        router.push(.instructorLanguageForm(settings))
-                    }
-                } label: {
-                    ZStack {
-                        Text("Next")
-                        HStack {
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .padding(.trailing, 20)
+                VStack(spacing: 50) {
+                    Text("What is your Arabic proficiency?")
+                        .font(.title3)
+                    
+                    ProficiencyPicker(
+                        title: "Reading",
+                        options: ReadingLevel.allCases.map(readingLabel),
+                        selection: readingSelection
+                    )
+                    
+                    ProficiencyPicker(
+                        title: "Speaking",
+                        options: SpeakingLevel.allCases.map(speakingLabel),
+                        selection: speakingSelection
+                    )
+                    
+                    ProficiencyPicker(
+                        title: "Writing",
+                        options: WritingLevel.allCases.map(writingLabel),
+                        selection: writingSelection
+                    )
+                    
+                    Spacer()
+                    
+                    Button {
+                        if (settings.reading == .no
+                            && settings.writing == .no
+                            && settings.speaking == .no
+                        ) {
+                            router.push(.instructorUnqualified)
+                        } else {
+                            router.push(.instructorLanguageForm(settings))
                         }
+                    } label: {
+                        ZStack {
+                            Text("Next")
+                            HStack {
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .padding(.trailing, 20)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.blue)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .contentShape(RoundedRectangle(cornerRadius: 12))
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.blue)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .contentShape(RoundedRectangle(cornerRadius: 12))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 20)
                 }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 10)
-                .padding(.bottom, 20)
+            }
+            .navigationDestination(for: Route.self) { route in
+                route.destination
+                    .environment(\.completion, completion)
+                    .environment(router)
             }
         }
     }
@@ -173,7 +187,7 @@ private struct ProficiencyPicker: View {
 }
 
 #Preview {
-    InstructorArabicFormView()
+    InstructorArabicFormView(completion: nil)
         .environment(User())
         .environment(Router())
 }

@@ -14,6 +14,8 @@ struct ExploreView: View {
     @State private var router = Router()
     @State var courses: [Course] = []
     @State var showLoginSheet: Bool = false
+    @State var showInstructorSheet: Bool = false
+    @State var showCourseSheet: Bool = false
     @State private var navigateToInstructorForm: Bool = false
     
     private func loadFeed() async {
@@ -83,7 +85,7 @@ struct ExploreView: View {
                     }
                     .padding(.horizontal, -5)
                     .listRowSeparator(.hidden)
-                
+
                     VStack(spacing: 15) {
                         VStack(spacing: 10) {
                             HStack {
@@ -93,7 +95,7 @@ struct ExploreView: View {
                                 Spacer()
                             }
                         }
-                       
+
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 15) {
                                 ForEach(courses, id: \.self.image) { course in
@@ -108,21 +110,22 @@ struct ExploreView: View {
                         .safeAreaPadding(.horizontal, 0)
                     }
                     .listRowSeparator(.hidden)
-                    
-                    if (appUser.id == nil) {
                         Button("Add your own course") {
-                            showLoginSheet = true
+                            if appUser.id == nil {
+                                showLoginSheet = true
+                                navigateToInstructorForm = true
+                            } else if appUser.isInstructor == false {
+                                showInstructorSheet = true
+                            }
+                            
                         }
-                    } else {
-                        NavigationLink(value: Route.instructorArabicForm) {
-                            Text("Add your own course")
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding(.all, 10)
                                 .background(Color.gray.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                                 .listRowSeparator(.hidden)
-                        }
-                    }
+                        
+//                    }
                     
                     
                 }
@@ -144,16 +147,24 @@ struct ExploreView: View {
                 }
             }
             .environment(router)
-            .sheet(isPresented: $showLoginSheet, onDismiss: {
-                if navigateToInstructorForm {
-                    navigateToInstructorForm = false
-                    router.push(.instructorArabicForm)
-                }
-            }) {
-                LoginView(completion: {
-                    navigateToInstructorForm = true
-                    showLoginSheet = false
+            .sheet(isPresented: $showInstructorSheet) {
+                InstructorArabicFormView(completion: {
+                    showInstructorSheet = false
+                    showCourseSheet = true
                 })
+            }
+            .sheet(isPresented: $showLoginSheet) {
+                LoginView(completion: {
+                    showLoginSheet = false
+                    
+                    if navigateToInstructorForm {
+                        navigateToInstructorForm = false
+                        showInstructorSheet = true
+                    }
+                })
+            }
+            .sheet(isPresented: $showCourseSheet) {
+                CourseForm()
             }
             .task {
                 await loadFeed()

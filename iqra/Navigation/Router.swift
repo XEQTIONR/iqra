@@ -44,7 +44,7 @@ extension Route {
         case .course(let course):
             CourseView(course: course)
         case .instructorArabicForm:
-            InstructorArabicFormView()
+            InstructorArabicFormView(completion: nil)
         case .instructorLanguageForm(let settings):
             InstructorLanguageFormView(settings: settings)
         case .instructorCourseTypeForm(let settings):

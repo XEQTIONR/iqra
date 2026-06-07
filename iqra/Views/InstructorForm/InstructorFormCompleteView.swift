@@ -13,6 +13,8 @@ struct InstructorFormCompleteView: View {
     
     @Environment(User.self) private var appUser
     @Environment(Router.self) private var router
+    @Environment(\.completion) private var completion
+    
     @Bindable var settings: InstructorSettings
 
     var body: some View {
@@ -46,6 +48,8 @@ struct InstructorFormCompleteView: View {
                         print(user)
                         appUser.update(from: user)
                         router.popToRoot()
+                        completion!()
+//                        selectedTab?.wrappedValue = 2
                         
                         
                     } else {
