@@ -24,7 +24,7 @@ class RequestService {
     public static let authJsonHeaders : [String: String] = [
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "Authorization": "Bearer \(UserDefaults.standard.string(forKey: "token") ?? "")"
+        "Authorization": "Bearer \(UserDefaults.standard.string(forKey: "api_token") ?? "")"
     ]
     
     public static func request(

@@ -37,7 +37,7 @@ struct CourseView: View {
                     var headers = ["Authorization": "Bearer \(token)"]
                     headers.merge(RequestService.jsonHeaders) { (current, new) in new }
                     
-                    let (data, response, ok) = try await RequestService.request(
+                    let (data, _, ok) = try await RequestService.request(
                         "http://localhost:8000/api/jwt",
                         headers: headers,
                     )

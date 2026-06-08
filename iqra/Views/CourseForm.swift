@@ -7,14 +7,25 @@
 
 import SwiftUI
 
+struct CourseFormData: Codable {
+    var title: String
+    var description: String
+    var difficulty: Difficulty
+    var category: CourseCategory
+    var length_type: LengthType
+    var age_groups: [AgeGroup]
+}
+
 struct CourseForm: View {
     
-    @State private var difficulty: Difficulty = .beginner
-    @State private var category: CourseCategory = .reading
-    @State private var description: String = ""
-    @State private var title: String = ""
-    @State private var lengthType: LengthType = .fixed
-    @State private var ageGroups: [AgeGroup] = []
+    @State private var formData = CourseFormData(
+        title: "",
+        description: "",
+        difficulty: .beginner,
+        category: .reading,
+        length_type: .fixed,
+        age_groups: []
+    )
     @State private var showAgeSelector: Bool = false
     
     
@@ -33,15 +44,15 @@ struct CourseForm: View {
     
     private func selectedLabel() -> String {
         
-        switch ageGroups.count {
+        switch formData.age_groups.count {
             case 0:
             return "None"
         case 1:
-            return getLabel(ageGroups[0])
+            return getLabel(formData.age_groups[0])
         case 4:
             return "All ages"
         default:
-            return "\(ageGroups.map(getLabel).joined(separator: ", "))"
+            return "\(formData.age_groups.map(getLabel).joined(separator: ", "))"
         }
     }
 
@@ -50,27 +61,24 @@ struct CourseForm: View {
         NavigationStack() {
             Form() {
                 Section(header: Text("Title")) {
-                    TextField("Learn to read the Quran in Arabic", text: $title)
+                    TextField("Learn to read the Quran in Arabic", text: $formData.title)
                 }
-                
-                
-                
-                
+
                 Section(header: Text("Details")) {
-                    Picker("Course Level", selection: $difficulty) {
+                    Picker("Course Level", selection: $formData.difficulty) {
                         ForEach(Difficulty.allCases, id: \.self) {
                             Text($0.rawValue.capitalized)
                         }
                     }
                     
                     
-                    Picker("Course Category", selection: $category) {
+                    Picker("Course Category", selection: $formData.category) {
                         ForEach(CourseCategory.allCases, id: \.self) {
                             Text($0.rawValue.capitalized)
                         }
                     }
                     
-                    Picker("Course Length", selection: $lengthType) {
+                    Picker("Course Length", selection: $formData.length_type) {
                         ForEach(LengthType.allCases, id: \.self) {
                             Text($0.rawValue.capitalized)
                         }
@@ -85,24 +93,24 @@ struct CourseForm: View {
                                             Text(getLabel(ageGroup))
                                             Spacer()
                                             
-                                            if ageGroups.contains(ageGroup) {
+                                            if formData.age_groups.contains(ageGroup) {
                                                 Image(systemName: "checkmark")
                                                     .foregroundColor(.blue)
                                             }
                                         }
                                         .background(.white.opacity(0.01))
                                         .onTapGesture {
-                                            if ageGroups.contains(ageGroup) {
-                                                ageGroups.removeAll { $0 == ageGroup }
+                                            if formData.age_groups.contains(ageGroup) {
+                                                formData.age_groups.removeAll { $0 == ageGroup }
                                             } else {
-                                                ageGroups.append(ageGroup)
+                                                formData.age_groups.append(ageGroup)
                                             }
                                         }
                                     }
                                 }
                             } label: {
                                 HStack {
-                                    Label("Age groups", systemImage: "gear") // Visual Label
+                                    Label("Age groups", systemImage: "gear")
                                         .labelStyle(.titleOnly)
                                     
                                     Spacer()
@@ -113,34 +121,47 @@ struct CourseForm: View {
                             }
                             
                         }
-//                        .sheet(isPresented: $showAgeSelector) {
-//                            List {
-//                                ForEach(AgeGroup.allCases, id: \.self) { ageGroup in
-//                                    HStack {
-//                                        Text(ageGroup.rawValue)
-//                                    }
-//                                }
-//                            }
-//                        }
-                        
                     }
-                    
-                     
                 }
                 
                 Section(header: Text("Description")) {
-                    TextEditor(text: $description)
+                    TextEditor(text: $formData.description)
                         .frame(minHeight: 100)
                 }
                 
-                
-                
+                Button(action: {
+                    Task {
+                        do {
+                            print(RequestService.authJsonHeaders)
+                            print(UserDefaults.standard.string(forKey: "api_token")!)
+                            let body = try JSONEncoder().encode(formData)
+                            let (data, _, ok) = try await RequestService.request(
+                                COURSES_ENDPOINT,
+                                method: "POST",
+                                headers: RequestService.authJsonHeaders,
+                                body: body
+                            )
+
+                            if ok {
+                                print("success")
+                            } else {
+                                print("oops")
+                            }
+
+                            print(String(data: data, encoding: .utf8) ?? "no data")
+                        } catch {
+                            print("request failed: \(error)")
+                        }
+                    }
+                }) {
+                    Text("Submit")
+                        .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle()) // Makes the whole row tappable
+                }
+                .listRowBackground(Color.blue)
+                .foregroundColor(.white)
             }
-//            .frame(maxWidth: .infinity)
-//            .padding()
             .navigationTitle("Create new course")
-            
-            
         }
     }
 }
