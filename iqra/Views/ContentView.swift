@@ -16,10 +16,19 @@ enum ContentSection {
 
 struct ContentView: View {
     
-    @State var currentSection: ContentSection = .intro
-
+    @State var currentSection: ContentSection
+    
+    init() {
+        let introShown = UserDefaults.standard.bool(forKey: "intro_shown")
+        if introShown {
+            _currentSection = State(initialValue: .main)
+        } else {
+            UserDefaults.standard.set(true, forKey: "intro_shown")
+            _currentSection = State(initialValue: .intro)
+        }
+    }
+    
     var body: some View {
-        
         switch currentSection {
             
         case .intro:

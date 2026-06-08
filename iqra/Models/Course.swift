@@ -7,6 +7,9 @@
 
 import Foundation
 
+enum LengthType: String, CaseIterable, Codable, Hashable {
+    case fixed, ongoing
+}
 
 enum Difficulty: String, CaseIterable, Codable, Hashable {
     case beginner

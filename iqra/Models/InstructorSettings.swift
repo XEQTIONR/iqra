@@ -7,6 +7,14 @@
 
 import SwiftUI
 
+
+enum AgeGroup: String, CaseIterable, Codable {
+    case kids
+    case teens
+    case youngAdults
+    case seniors
+}
+
 enum Gender: String, CaseIterable, Codable {
     case male
     case female
