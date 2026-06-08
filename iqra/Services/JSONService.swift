@@ -7,6 +7,12 @@
 
 import Foundation
 
+let COURSES_ENDPOINT = "http://localhost:8000/api/courses"
+let LOGIN_ENDPOINT = "http://localhost:8000/api/sanctum/token"
+let LOGOUT_ENDPOINT = "http://localhost:8000/api/logout"
+let ME_ENDPOINT = "http://localhost:8000/api/user"
+let JWT_ENDPOINT = "http://localhost:8000/api/jwt"
+
 class JSONService {
     static public func loadLocalJSON<T: Codable & Identifiable>(fileName: String) -> [T]? {
         // 1. Find the file in the bundle

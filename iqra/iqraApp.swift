@@ -12,35 +12,39 @@ import SwiftData
 struct iqraApp: App {
     
     @State private var user: User = {
-        let user = User()
+        let initialUser = User()
         if let cached = User.loadCached() {
-            user.update(from: cached)
+            initialUser.update(from: cached)
         }
-        return user
+        return initialUser
     }()
-//    var sharedModelContainer: ModelContainer = {
-//        let schema = Schema()
-//        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-//        
-//        for family in UIFont.familyNames.sorted() {
-//            print(family)
-//
-//            for font in UIFont.fontNames(forFamilyName: family) {
-//                print("   \(font)")
-//            }
-//        }
-//
-//        do {
-//            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-//        } catch {
-//            fatalError("Could not create ModelContainer: \(error)")
-//        }
-//    }()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(user)
+                .task {
+                    await fetchUserData()
+                }
+        }
+    }
+    
+    private func fetchUserData() async {
+        guard UserDefaults.standard.string(forKey: "api_token") != nil else { return }
+        
+        do {
+            let (data, _, ok) = try await RequestService.request(
+                ME_ENDPOINT,
+                method: "GET",
+                headers: RequestService.authJsonHeaders
+            )
+            
+            if ok {
+                let fetchedUser = try RequestService.apiUnwrapData(type: User.self, from: data)
+                self.user.update(from: fetchedUser)
+            }
+        } catch {
+            print("Failed to update user profile: \(error)")
         }
     }
 }

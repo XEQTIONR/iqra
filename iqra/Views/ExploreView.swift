@@ -116,6 +116,8 @@ struct ExploreView: View {
                                 navigateToInstructorForm = true
                             } else if appUser.isInstructor == false {
                                 showInstructorSheet = true
+                            } else {
+                                showCourseSheet = true
                             }
                             
                         }
@@ -158,8 +160,15 @@ struct ExploreView: View {
                     showLoginSheet = false
                     
                     if navigateToInstructorForm {
+                        
+                        if appUser.isInstructor == true {
+                            showCourseSheet = true
+                        } else {
+                            showInstructorSheet = true
+                        }
+                        
                         navigateToInstructorForm = false
-                        showInstructorSheet = true
+                        
                     }
                 })
             }
