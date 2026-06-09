@@ -29,6 +29,7 @@ struct CourseForm: View {
         age_groups: []
     )
     @State private var showAgeSelector: Bool = false
+    @State private var router = Router()
     
     
     private func getLabel(_ group: AgeGroup) -> String {
@@ -131,40 +132,68 @@ struct CourseForm: View {
                         .frame(minHeight: 100)
                 }
                 
-                Button(action: {
-                    Task {
-                        do {
-                            print(RequestService.authJsonHeaders)
-                            print(UserDefaults.standard.string(forKey: "api_token")!)
-                            let body = try JSONEncoder().encode(formData)
-                            let (data, _, ok) = try await RequestService.request(
-                                COURSES_ENDPOINT,
-                                method: "POST",
-                                headers: RequestService.authJsonHeaders,
-                                body: body
-                            )
-
-                            if ok {
-                                
-                                let course = try RequestService.apiUnwrapData(type: Course.self, from: data)
-                                print("success")
-                                onComplete?(course)
-                            } else {
-                                print("oops")
-                            }
-
-                            print(String(data: data, encoding: .utf8) ?? "no data")
-                        } catch {
-                            print("request failed: \(error)")
-                        }
+//                Button(action: {
+//                    Task {
+//                        do {
+//                            print(RequestService.authJsonHeaders)
+//                            print(UserDefaults.standard.string(forKey: "api_token")!)
+//                            let body = try JSONEncoder().encode(formData)
+//                            let (data, _, ok) = try await RequestService.request(
+//                                COURSES_ENDPOINT,
+//                                method: "POST",
+//                                headers: RequestService.authJsonHeaders,
+//                                body: body
+//                            )
+//
+//                            if ok {
+//                                
+//                                let course = try RequestService.apiUnwrapData(type: Course.self, from: data)
+//                                print("success")
+//                                onComplete?(course)
+//                            } else {
+//                                print("oops")
+//                            }
+//
+//                            print(String(data: data, encoding: .utf8) ?? "no data")
+//                        } catch {
+//                            print("request failed: \(error)")
+//                        }
+//                    }
+//                }) {
+//                    Text("Submit")
+//                        .frame(maxWidth: .infinity)
+//                        .contentShape(Rectangle()) // Makes the whole row tappable
+//                }
+//                .listRowBackground(Color.blue)
+//                .foregroundColor(.white)
+                
+//                NavigationLink("My Link") {
+//                    CourseImage()
+//                }
+//                .listRowBackground(Color.blue)
+//                .foregroundColor(.white)
+                
+                ZStack {
+                    NavigationLink {
+                        CourseIntroVideoForm()
+                    } label: {
+                        EmptyView()
                     }
-                }) {
-                    Text("Submit")
-                        .frame(maxWidth: .infinity)
-                        .contentShape(Rectangle()) // Makes the whole row tappable
+                    .opacity(0)
+
+                    HStack {
+                        Spacer()
+                        Text("Continue")
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.white)
                 }
                 .listRowBackground(Color.blue)
-                .foregroundColor(.white)
+                
             }
             .navigationTitle("Create new course")
         }
