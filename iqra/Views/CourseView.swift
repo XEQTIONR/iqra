@@ -15,12 +15,14 @@ struct CourseView: View {
     var body: some View {
         VStack {
             
-            AsyncImage(url: URL(string: course.image)) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } placeholder: {
-                Color.gray
+            if (course.image != nil) {
+                AsyncImage(url: URL(string: course.image!)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                } placeholder: {
+                    Color.gray
+                }
             }
             
             HStack {
@@ -58,9 +60,13 @@ struct CourseView: View {
 
 #Preview {
     CourseView(course: Course(
+        id: 1,
         title: "My Course",
         image: "https://picsum.photos/600/400",
         description: "A dummy description",
-        difficulty: .beginner
+        difficulty: .beginner,
+        category: .reading,
+        length_type: .fixed,
+        age_groups: [.kids, .teens]
     ))
 }

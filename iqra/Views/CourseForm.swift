@@ -18,6 +18,8 @@ struct CourseFormData: Codable {
 
 struct CourseForm: View {
     
+    var onComplete: ((_ course: Course) -> Void)? = nil
+    
     @State private var formData = CourseFormData(
         title: "",
         description: "",
@@ -143,7 +145,10 @@ struct CourseForm: View {
                             )
 
                             if ok {
+                                
+                                let course = try RequestService.apiUnwrapData(type: Course.self, from: data)
                                 print("success")
+                                onComplete?(course)
                             } else {
                                 print("oops")
                             }

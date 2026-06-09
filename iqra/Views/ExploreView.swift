@@ -50,7 +50,7 @@ struct ExploreView: View {
                             HStack(spacing: 15) {
                                 ForEach(courses, id: \.self.image) { course in
                                     NavigationLink(value: Route.course(course)) {
-                                        Slide(title: course.title, url: course.image, width: geometry.size.width)
+                                        Slide(title: course.title, url: course.image ?? "https://via.placeholder.com/300x200", width: geometry.size.width)
                                     }
                                 }
                             }
@@ -74,7 +74,7 @@ struct ExploreView: View {
                             HStack(spacing: 15) {
                                 ForEach(courses, id: \.self.image) { course in
                                     NavigationLink(value: Route.course(course)) {
-                                        Slide(title: course.title, url: course.image, width: geometry.size.width)
+                                        Slide(title: course.title, url: course.image ?? "https://via.placeholder.com/300x200", width: geometry.size.width)
                                     }
                                 }
                             }
@@ -100,7 +100,7 @@ struct ExploreView: View {
                             HStack(spacing: 15) {
                                 ForEach(courses, id: \.self.image) { course in
                                     NavigationLink(value: Route.course(course)) {
-                                        Slide(title: course.title, url: course.image, width: geometry.size.width)
+                                        Slide(title: course.title, url: course.image ?? "http://via.placeholder.com/300x200", width: geometry.size.width)
                                     }
                                 }
                             }
@@ -173,7 +173,11 @@ struct ExploreView: View {
                 })
             }
             .sheet(isPresented: $showCourseSheet) {
-                CourseForm()
+                CourseForm(onComplete: { course in
+                    print("COMPLeTe")
+                    print(course)
+                    //courses.append(course)
+                })
             }
             .task {
                 await loadFeed()

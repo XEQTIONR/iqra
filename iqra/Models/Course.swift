@@ -18,8 +18,12 @@ enum Difficulty: String, CaseIterable, Codable, Hashable {
 }
 
 struct Course: Codable, Hashable {
+    let id: Int
     let title: String
-    let image: String
+    let image: String?
     let description: String
     let difficulty: Difficulty
+    let category: CourseCategory
+    let length_type: LengthType
+    let age_groups: [AgeGroup]
 }
