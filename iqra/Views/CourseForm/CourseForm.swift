@@ -14,6 +14,15 @@ struct CourseFormData: Codable {
     var category: CourseCategory
     var length_type: LengthType
     var age_groups: [AgeGroup]
+    
+    enum CodingKeys: String, CodingKey {
+        case title
+        case description
+        case difficulty
+        case category
+        case length_type
+        case age_groups
+    }
 }
 
 struct CourseForm: View {
@@ -175,7 +184,7 @@ struct CourseForm: View {
                 
                 ZStack {
                     NavigationLink {
-                        CourseIntroVideoForm()
+                        CourseIntroVideoForm(formData: $formData)
                     } label: {
                         EmptyView()
                     }
