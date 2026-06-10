@@ -8,12 +8,32 @@
 import SwiftUI
 import PhotosUI
 
+// Defines which kinds of media the picker is allowed to select.
+enum MediaPickerType {
+    case photo
+    case video
+    case both
+
+    var filter: PHPickerFilter {
+        switch self {
+        case .photo:
+            return .images
+        case .video:
+            return .videos
+        case .both:
+            return .any(of: [.images, .videos])
+        }
+    }
+}
+
 // For UIKit
 class MediaPickerViewController: UIViewController, PHPickerViewControllerDelegate {
-    
+
+    var mediaType: MediaPickerType = .both
+
     func presentPicker() {
         var config = PHPickerConfiguration()
-        config.filter = .any(of: [.images, .videos]) // Both images and videos
+        config.filter = mediaType.filter
         config.selectionLimit = 1 // Set to 0 for unlimited, or any number
         config.preferredAssetRepresentationMode = .current
         
@@ -60,13 +80,35 @@ class MediaPickerViewController: UIViewController, PHPickerViewControllerDelegat
 
 // SwiftUI Wrapper
 struct MediaPicker: UIViewControllerRepresentable {
-    @Binding var selectedImage: UIImage?
-    @Binding var selectedVideoURL: URL?
+    private let selectedImage: Binding<UIImage?>?
+    private let selectedVideoURL: Binding<URL?>?
+    let mediaType: MediaPickerType
     @Environment(\.dismiss) private var dismiss
-    
+
+    // Photo only
+    init(photo: Binding<UIImage?>) {
+        self.selectedImage = photo
+        self.selectedVideoURL = nil
+        self.mediaType = .photo
+    }
+
+    // Video only
+    init(video: Binding<URL?>) {
+        self.selectedImage = nil
+        self.selectedVideoURL = video
+        self.mediaType = .video
+    }
+
+    // Both photo and video
+    init(photo: Binding<UIImage?>, video: Binding<URL?>) {
+        self.selectedImage = photo
+        self.selectedVideoURL = video
+        self.mediaType = .both
+    }
+
     func makeUIViewController(context: Context) -> PHPickerViewController {
         var config = PHPickerConfiguration()
-        config.filter = .any(of: [.images, .videos])
+        config.filter = mediaType.filter
         config.selectionLimit = 1
         
         let picker = PHPickerViewController(configuration: config)
@@ -93,16 +135,18 @@ struct MediaPicker: UIViewControllerRepresentable {
             guard let result = results.first else { return }
             
             // Handle image
-            if result.itemProvider.canLoadObject(ofClass: UIImage.self) {
+            if let imageBinding = parent.selectedImage,
+               result.itemProvider.canLoadObject(ofClass: UIImage.self) {
                 result.itemProvider.loadObject(ofClass: UIImage.self) { image, error in
                     DispatchQueue.main.async {
-                        self.parent.selectedImage = image as? UIImage
+                        imageBinding.wrappedValue = image as? UIImage
                     }
                 }
             }
             
             // Handle video
-            if result.itemProvider.hasItemConformingToTypeIdentifier(UTType.movie.identifier) {
+            if let videoBinding = parent.selectedVideoURL,
+               result.itemProvider.hasItemConformingToTypeIdentifier(UTType.movie.identifier) {
                 result.itemProvider.loadFileRepresentation(forTypeIdentifier: UTType.movie.identifier) { url, error in
                     guard let url = url else { return }
                     
@@ -112,7 +156,7 @@ struct MediaPicker: UIViewControllerRepresentable {
                     try? FileManager.default.copyItem(at: url, to: destinationURL)
                     
                     DispatchQueue.main.async {
-                        self.parent.selectedVideoURL = destinationURL
+                        videoBinding.wrappedValue = destinationURL
                     }
                 }
             }

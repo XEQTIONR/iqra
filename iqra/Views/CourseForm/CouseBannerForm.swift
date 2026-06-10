@@ -57,7 +57,7 @@ struct CourseBannerForm: View {
             
         }
         .sheet(isPresented: $showPicker) {
-            MediaPicker(selectedImage: $selectedImage, selectedVideoURL: $selectedVideoURL)
+            MediaPicker(photo: $selectedImage)
         }
         
     }

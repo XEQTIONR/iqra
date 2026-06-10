@@ -101,10 +101,10 @@ struct CourseIntroVideoForm: View {
                             playerManager.cleanup()
                         }
                     } else {
-                        Image(systemName: "video")
+                        Image(systemName: "video.fill")
                             .resizable()
                             .scaledToFit()
-                            .foregroundColor(.gray)
+                            .foregroundColor(.gray.opacity(0.5))
                             .frame(width: 50)
                     }
                     
@@ -122,19 +122,36 @@ struct CourseIntroVideoForm: View {
                             selectedVideoURL = nil
                         }
                         
+                        Spacer()
+                        
+                        NavigationLink {
+                            CourseBannerForm()
+                        } label: {
+                            HStack {
+                                Image(systemName: "chevron.right")
+                                    .padding(.leading)
+                                    .opacity(0)
+                                Spacer()
+                                Text("Continue")
+                                    .padding(.all, 10)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .padding(.trailing)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .background(.blue)
+                            .cornerRadius(10)
+                            .foregroundStyle(.white)
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding()
-//                .background(Color.gray.opacity(0.2))
-                
-                
             }
             .navigationTitle("Intro video")
-            
         }
         .sheet(isPresented: $showPicker) {
-            MediaPicker(selectedImage: $selectedImage, selectedVideoURL: $selectedVideoURL)
+            MediaPicker(video: $selectedVideoURL)
         }
         
     }

@@ -32,7 +32,7 @@ struct PickerView: View {
             }
         }
         .sheet(isPresented: $showPicker) {
-            MediaPicker(selectedImage: $selectedImage, selectedVideoURL: $selectedVideoURL)
+            MediaPicker(photo: $selectedImage, video: $selectedVideoURL)
         }
     }
 }
