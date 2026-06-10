@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 import UniformTypeIdentifiers
 
 
@@ -80,49 +81,85 @@ class RequestService {
         return wrapper.data
     }
     
-    public static func uploadMultipartFile(fileURL: URL, fieldName: String, to serverURL: URL) async throws -> (Data, URLResponse, Bool) {
-        let pathExt = fileURL.pathExtension
+    public static func uploadImage(
+        _ image: UIImage,
+        serverURL: URL,
+        fieldName: String
+    ) async throws -> (Data, URLResponse, Bool) {
+
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            throw RequestError.encodingFailed
+        }
         
-        // 1. Create a unique boundary string
+        return try await uploadMultipartFile(
+            serverURL,
+            data: imageData,
+            fieldName: fieldName,
+            fileName: "image.jpg",
+            mimeType: "image/jpeg"
+        )
+
+    }
+    
+    public static func uploadFileUrl(
+        _ fileURL: URL,
+        serverURL: URL,
+        fieldName: String
+    ) async throws -> (Data, URLResponse, Bool) {
+
+        let fileName = fileURL.lastPathComponent
+        let mimeType = getMimeType(from: fileURL)
+        let fileData = try Data(contentsOf: fileURL)
         let boundary = "Boundary-\(UUID().uuidString)"
         
-        // 2. Setup the request
+        return try await uploadMultipartFile(
+            serverURL,
+            data: fileData,
+            fieldName: fieldName,
+            fileName: fileName,
+            mimeType: mimeType
+        )
+
+    }
+    
+    public static func uploadMultipartFile(
+        _ serverURL: URL,
+        data: Data,
+        fieldName: String,
+        fileName: String,
+        mimeType: String,
+    
+    ) async throws -> (Data, URLResponse, Bool) {
+
+        let boundary = "Boundary-\(UUID().uuidString)"
         var request = URLRequest(url: serverURL)
+        
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Bearer \(UserDefaults.standard.string(forKey: "api_token") ?? "")", forHTTPHeaderField: "Authorization")
         
+        var body = Data()
         
-        // 3. Prepare file metadata
-        let fileName = fileURL.lastPathComponent
-        let mimeType = getMimeType(from: fileURL) // Adjust based on your file type
+        // Append file field header
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
         
-            // 4. Fetch the raw file bytes
-            let fileData = try Data(contentsOf: fileURL)
-            
-            // 5. Construct the HTTP request body format
-            var body = Data()
-            
-            // Append file field header
-            body.append("--\(boundary)\r\n".data(using: .utf8)!)
-            body.append("Content-Disposition: form-data; name=\"\(fieldName)\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
-            body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
-            
-            // Append raw file data
-            body.append(fileData)
-            body.append("\r\n".data(using: .utf8)!)
-            
-            // Close the multipart request boundary closing tag
-            body.append("--\(boundary)--\r\n".data(using: .utf8)!)
-            
-            // 6. Execute the upload task
-            let (data, response) = try await URLSession.shared.upload(for: request, from: body)
-            
-            let httpResponse = response as! HTTPURLResponse
-            let isSuccess = httpResponse.statusCode >= 200 && httpResponse.statusCode < 300
-            
-            return (data, response, isSuccess)
+        // Append raw file data
+        body.append(data)
+        body.append("\r\n".data(using: .utf8)!)
+        
+        // Close the multipart request boundary closing tag
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        
+        // Execute the upload task
+        let (data, response) = try await URLSession.shared.upload(for: request, from: body)
+        
+        let httpResponse = response as! HTTPURLResponse
+        let isSuccess = httpResponse.statusCode >= 200 && httpResponse.statusCode < 300
+        
+        return (data, response, isSuccess)
     }
         
 }

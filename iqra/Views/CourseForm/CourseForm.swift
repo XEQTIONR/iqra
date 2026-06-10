@@ -10,6 +10,8 @@ import SwiftUI
 struct CourseFormData: Codable {
     var title: String
     var description: String
+    var image: String
+    var video: String
     var difficulty: Difficulty
     var category: CourseCategory
     var length_type: LengthType
@@ -18,6 +20,8 @@ struct CourseFormData: Codable {
     enum CodingKeys: String, CodingKey {
         case title
         case description
+        case image
+        case video
         case difficulty
         case category
         case length_type
@@ -32,6 +36,8 @@ struct CourseForm: View {
     @State private var formData = CourseFormData(
         title: "",
         description: "",
+        image: "",
+        video: "",
         difficulty: .beginner,
         category: .reading,
         length_type: .fixed,

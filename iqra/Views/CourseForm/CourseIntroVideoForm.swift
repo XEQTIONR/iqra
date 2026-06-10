@@ -160,6 +160,8 @@ struct CourseIntroVideoForm: View {
     CourseIntroVideoForm(formData: .constant(CourseFormData(
         title: "Test",
         description: "The description of this course",
+        image: "",
+        video: "",
         difficulty: .advanced,
         category: .reading,
         length_type: .fixed,

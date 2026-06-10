@@ -7,6 +7,12 @@
 
 import SwiftUI
 
+
+
+enum GenericError: Error {
+    case generic
+}
+
 struct CourseBannerForm: View {
     
     @Binding var formData: CourseFormData
@@ -16,7 +22,6 @@ struct CourseBannerForm: View {
     @State private var selectedImage: UIImage?
 
     var body: some View {
-        
         NavigationStack {
             ZStack {
                 VStack(spacing: 20) {
@@ -41,62 +46,59 @@ struct CourseBannerForm: View {
                     } else {
                         Button("Save") {
                             Task {
-                                var (data, _, ok) = try await RequestService.request(
-                                    "http://localhost:8000/api/courses",
-                                    method: "POST",
-                                    headers: RequestService.authJsonHeaders,
-                                    body: JSONEncoder().encode(formData)
-                                )
+                                let serverURL = URL(string: "http://localhost:8000/api/uploads")!
                                 
-                                if ok {
-                                    print("course created")
+                                do {
+                                    let (videoData, _, ok1) = try await RequestService.uploadFileUrl(videoUrl!, serverURL: serverURL, fieldName: "file")
                                     
-                                    do {
-                                        let course = try RequestService.apiUnwrapData(type: Course.self, from: data)
-                                    
-                                    
-                                        (data, _, ok) = try await RequestService.uploadMultipartFile(
-                                            fileURL: videoUrl!,
-                                            fieldName: "video",
-                                            to: URL(string: "http://localhost:8000/api/courses/\(course.id)/video")!
-                                        )
-                                        
-                                        if ok {
-                                            print("video uploaded")
-                                        } else {
-                                            print("2nd failed")
-                                        }
-                                        print("data after upload")
-                                        print(String(data: data, encoding: .utf8))
-                                    } catch {
-                                        print(error)
+                                    if !ok1 {
+                                        print("Error")
+                                        // @TODO: error handle here
                                     }
-                                } else {
-                                    print(String(data: data, encoding: .utf8))
-                                    print("1st failed")
+                                    
+                                    let (imageData, _, ok2) = try await RequestService.uploadImage(selectedImage!, serverURL: serverURL, fieldName: "file")
+                                    
+                                    if !ok2 {
+                                        print("Error")
+                                        // @TODO: error handle here
+                                    }
+        
+                                    let video = try RequestService.apiUnwrapData(type: File.self, from: videoData)
+                                    let image = try RequestService.apiUnwrapData(type: File.self, from: imageData)
+                                    
+                                    formData.video = video.path
+                                    formData.image = image.path
+                                    
+                                    let (data,_,ok) = try await RequestService.request(
+                                        COURSES_ENDPOINT,
+                                        method: "POST",
+                                        headers: RequestService.authJsonHeaders,
+                                        body: JSONEncoder().encode(formData)
+                                    )
+                                    
+                                    print(data)
+                                } catch {
+                                    print(error)
+                                    // @TODO: Error handle here
                                 }
                             }
                         }
-                        
                         Button("Clear Image", role: .destructive) {
                             selectedImage = nil
                         }
-                        
-                    }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
-//                .background(Color.gray.opacity(0.2))
-                
                 
             }
-            .navigationTitle("Course Banner")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding()
             
         }
-        .sheet(isPresented: $showPicker) {
-            MediaPicker(photo: $selectedImage)
-        }
+                .navigationTitle("Course Banner")
+                .sheet(isPresented: $showPicker) {
+                    MediaPicker(photo: $selectedImage)
+                }
         
+        }
     }
 }
 
@@ -104,8 +106,10 @@ struct CourseBannerForm: View {
     CourseBannerForm(
         formData: .constant(
             CourseFormData(
-                title: "Test",
-                description: "The description of this course",
+                title: "SOme text",
+                description: "Other text",
+                image: "Test",
+                video: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 difficulty: .advanced,
                 category: .reading,
                 length_type: .fixed,
