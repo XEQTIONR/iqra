@@ -17,6 +17,7 @@ struct CourseBannerForm: View {
     
     @Binding var formData: CourseFormData
     @Binding var videoUrl: URL?
+    var onComplete: ((_ course: Course) -> Void)? = nil
     
     @State private var showPicker = false
     @State private var selectedImage: UIImage?
@@ -54,6 +55,7 @@ struct CourseBannerForm: View {
                                     if !ok1 {
                                         print("Error")
                                         // @TODO: error handle here
+                                        return
                                     }
                                     
                                     let (imageData, _, ok2) = try await RequestService.uploadImage(selectedImage!, serverURL: serverURL, fieldName: "file")
@@ -61,6 +63,7 @@ struct CourseBannerForm: View {
                                     if !ok2 {
                                         print("Error")
                                         // @TODO: error handle here
+                                        return
                                     }
         
                                     let video = try RequestService.apiUnwrapData(type: File.self, from: videoData)
@@ -77,6 +80,16 @@ struct CourseBannerForm: View {
                                     )
                                     
                                     print(data)
+                                    
+                                    if !ok {
+                                        print ("Error")
+                                        //@TODO: error handle
+                                        return
+                                    }
+                                    
+                                    let course = try RequestService.apiUnwrapData(type: Course.self, from: data)
+                                    onComplete?(course)
+                                   
                                 } catch {
                                     print(error)
                                     // @TODO: Error handle here
@@ -118,6 +131,7 @@ struct CourseBannerForm: View {
         ),
         videoUrl: .constant(
             URL(string: "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-        )
+        ),
+        onComplete: nil
     )
 }

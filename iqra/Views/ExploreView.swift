@@ -160,23 +160,19 @@ struct ExploreView: View {
                     showLoginSheet = false
                     
                     if navigateToInstructorForm {
-                        
                         if appUser.isInstructor == true {
                             showCourseSheet = true
                         } else {
                             showInstructorSheet = true
                         }
-                        
                         navigateToInstructorForm = false
-                        
                     }
                 })
             }
             .sheet(isPresented: $showCourseSheet) {
                 CourseForm(onComplete: { course in
-                    print("COMPLeTe")
-                    print(course)
-                    //courses.append(course)
+                    showCourseSheet = false
+                    router.push(.course(course))
                 })
             }
             .task {
