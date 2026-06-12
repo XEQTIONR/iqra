@@ -62,7 +62,7 @@ struct InstructorQualificationFormView: View {
                     Spacer()
                     
                     Button {
-                        router.push(.instructorFormComplete(settings))
+                        router.push(.instructorAvailibilityForm(settings))
                     } label: {
                         ZStack {
                             Text(settings.titles.count == 0 ? "Skip" : "Continue")

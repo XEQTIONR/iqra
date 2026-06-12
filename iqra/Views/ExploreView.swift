@@ -126,10 +126,6 @@ struct ExploreView: View {
                                 .background(Color.gray.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                                 .listRowSeparator(.hidden)
-                        
-//                    }
-                    
-                    
                 }
                 .listStyle(PlainListStyle())
                 .listRowSpacing(30)
@@ -147,6 +143,7 @@ struct ExploreView: View {
                         }
                     }
                 }
+                .navigationTitle("Explore")
             }
             .environment(router)
             .sheet(isPresented: $showInstructorSheet) {

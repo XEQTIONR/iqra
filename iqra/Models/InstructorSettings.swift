@@ -64,6 +64,8 @@ class InstructorSettings: Codable {
     var languages: Set<String> = []
     var courseCategories = Set<CourseCategory>()
     var titles: Set<Title> = []
+    /// Selected half-hour availability slots per day, stored as minutes from midnight.
+    var availability: [Day: Set<Int>] = [:]
     
     var description: String {
         "InstructorSettings(reading: \(reading.rawValue), speaking: \(speaking.rawValue), writing: \(writing.rawValue))"
@@ -81,6 +83,7 @@ class InstructorSettings: Codable {
         case courseCategories
         case isMuslim
         case titles
+        case availability
     }
 
     required init(from decoder: Decoder) throws {
@@ -91,6 +94,7 @@ class InstructorSettings: Codable {
         languages = try container.decodeIfPresent(Set<String>.self, forKey: .languages) ?? []
         courseCategories = try container.decodeIfPresent(Set<CourseCategory>.self, forKey: .courseCategories) ?? []
         titles = try container.decodeIfPresent(Set<Title>.self, forKey: .titles) ?? []
+        availability = try container.decodeIfPresent([Day: Set<Int>].self, forKey: .availability) ?? [:]
     }
 
     func encode(to encoder: Encoder) throws {
@@ -102,6 +106,7 @@ class InstructorSettings: Codable {
         try container.encode(languages, forKey: .languages)
         try container.encode(courseCategories, forKey: .courseCategories)
         try container.encode(titles, forKey: .titles)
+        try container.encode(availability, forKey: .availability)
     }
 }
 
