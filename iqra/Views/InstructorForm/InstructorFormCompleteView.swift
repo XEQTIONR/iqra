@@ -21,9 +21,11 @@ struct InstructorFormCompleteView: View {
         VStack(spacing: 20) {
             ProgressView()
             Text("Creating your instructor profile...")
-            Text(settings.description)
         }
         .onAppear {
+            guard !ProcessInfo.isRunningInPreview else {
+                return
+            }
             Task {
                 do {
                     let settingsJson = try JSONEncoder().encode(settings)
@@ -41,20 +43,10 @@ struct InstructorFormCompleteView: View {
                     )
                     
                     if ok {
-                        print("OK")
-                        print(String(data: data, encoding: .utf8) ?? "NODATA")
-                        print(response)
-                        
                         let user = try RequestService.apiUnwrapData(type: User.self, from: data)
-//                        let user = try JSONDecoder().decode(User.self, from: data)
-                        print("userrr")
-                        print(user)
                         appUser.update(from: user)
                         router.popToRoot()
                         completion!()
-//                        selectedTab?.wrappedValue = 2
-                        
-                        
                     } else {
                         print("SOMETHING WENT WRONG")
                         print(String(data: data, encoding: .utf8) ?? "NODATA")
@@ -62,7 +54,7 @@ struct InstructorFormCompleteView: View {
                         /// error handle
                     }
                 } catch {
-                    
+                    /// more error handling
                 }
             }
         }
@@ -71,4 +63,7 @@ struct InstructorFormCompleteView: View {
 
 #Preview {
     InstructorFormCompleteView(settings: InstructorSettings())
+        .environment(User())
+        .environment(Router())
+        .environment(\.completion, nil)
 }
