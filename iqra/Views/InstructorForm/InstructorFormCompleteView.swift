@@ -26,6 +26,9 @@ struct InstructorFormCompleteView: View {
         .onAppear {
             Task {
                 do {
+                    let settingsJson = try JSONEncoder().encode(settings)
+                    
+                    print("settingsJson", settingsJson)
                     let (data, response, ok) = try await RequestService.request(
                         CREATE_INSTRUCTOR,
                         method: "POST",
@@ -34,7 +37,7 @@ struct InstructorFormCompleteView: View {
                             "Accept": "application/json",
                             "Authorization": "Bearer \(UserDefaults.standard.string(forKey: "api_token") ?? "")"
                         ],
-                        body: try! JSONEncoder().encode(settings),
+                        body: settingsJson,
                     )
                     
                     if ok {

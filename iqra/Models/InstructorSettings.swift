@@ -94,7 +94,11 @@ class InstructorSettings: Codable {
         languages = try container.decodeIfPresent(Set<String>.self, forKey: .languages) ?? []
         courseCategories = try container.decodeIfPresent(Set<CourseCategory>.self, forKey: .courseCategories) ?? []
         titles = try container.decodeIfPresent(Set<Title>.self, forKey: .titles) ?? []
-        availability = try container.decodeIfPresent([Day: Set<Int>].self, forKey: .availability) ?? [:]
+
+        let rawAvailability = try container.decodeIfPresent([String: [Int]].self, forKey: .availability) ?? [:]
+        availability = Dictionary(uniqueKeysWithValues: rawAvailability.compactMap { key, value in
+            Day(rawValue: key).map { ($0, Set(value)) }
+        })
     }
 
     func encode(to encoder: Encoder) throws {
@@ -106,7 +110,9 @@ class InstructorSettings: Codable {
         try container.encode(languages, forKey: .languages)
         try container.encode(courseCategories, forKey: .courseCategories)
         try container.encode(titles, forKey: .titles)
-        try container.encode(availability, forKey: .availability)
+
+        let availabilityObject = Dictionary(uniqueKeysWithValues: availability.map { ($0.key.rawValue, Array($0.value)) })
+        try container.encode(availabilityObject, forKey: .availability)
     }
 }
 

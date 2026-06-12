@@ -1,5 +1,5 @@
 //
-//  AvailibilityFormView.swift
+//  AvailabilityFormView.swift
 //  iqra
 //
 //  Created by Ovi Hussain on 2026-06-11.
@@ -37,7 +37,7 @@ struct TimeSlot: Identifiable, Hashable {
     }
 }
 
-struct InstructorAvailibilityFormView: View {
+struct InstructorAvailabilityFormView: View {
     
     @Environment(Router.self) private var router
     @Bindable var settings: InstructorSettings
@@ -66,8 +66,8 @@ struct InstructorAvailibilityFormView: View {
 
             scheduleCanvas
             Button("Continue") {
-                settings.availability = availability
-                router.push(.instructorCourseTypeForm(settings))
+               settings.availability = availability
+               router.push(.instructorFormComplete(settings))
             }
             .padding(.vertical)
         }
@@ -76,7 +76,7 @@ struct InstructorAvailibilityFormView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button(action: {
-                    router.push(.instructorCourseTypeForm(settings))
+                   // router.push(.instructorFormComplete(settings))
                 }) {
                     Image(systemName: "gear")
                         .renderingMode(.original)
@@ -156,6 +156,6 @@ struct InstructorAvailibilityFormView: View {
 }
 
 #Preview {
-    InstructorAvailibilityFormView(settings: InstructorSettings())
+    InstructorAvailabilityFormView(settings: InstructorSettings())
         .environment(Router())
 }

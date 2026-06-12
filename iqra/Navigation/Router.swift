@@ -59,7 +59,7 @@ extension Route {
         case .instructorQualificationForm(let settings):
             InstructorQualificationFormView(settings: settings)
         case .instructorAvailibilityForm(let settings):
-            InstructorAvailibilityFormView(settings: settings)
+            InstructorAvailabilityFormView(settings: settings)
         case .instructorFormComplete(let settings):
             InstructorFormCompleteView(settings: settings)
         case .instructorUnqualified:
