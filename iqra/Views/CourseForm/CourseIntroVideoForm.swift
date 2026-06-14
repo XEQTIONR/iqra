@@ -10,7 +10,7 @@ import AVKit
 import AVFoundation
 
 struct CourseIntroVideoForm: View {
-    @Binding var formData: CourseFormData
+    @Binding var formData: Course
     var onComplete: ((_ course: Course) -> Void)? = nil
     @State private var showPicker = false
     @State private var selectedVideoURL: URL?
@@ -125,7 +125,11 @@ struct CourseIntroVideoForm: View {
                         Spacer()
                         
                         NavigationLink {
-                            CourseBannerForm(formData: $formData,  videoUrl: $selectedVideoURL, onComplete: onComplete)
+                            CourseBannerForm(
+                                formData: $formData,
+                                videoUrl: $selectedVideoURL,
+                                onComplete: onComplete
+                            )
                         } label: {
                             HStack {
                                 Image(systemName: "chevron.right")
@@ -159,15 +163,15 @@ struct CourseIntroVideoForm: View {
 
 #Preview {
     CourseIntroVideoForm(
-        formData: .constant(CourseFormData(
+        formData: .constant(Course(
             title: "Test",
             description: "The description of this course",
             image: "",
             video: "",
             difficulty: .advanced,
             category: .reading,
-            length_type: .fixed,
-            age_groups: [.kids, .teens]
+            lengthType: .fixed,
+            ageGroups: [.kids, .teens]
         )),
         onComplete: nil
     )

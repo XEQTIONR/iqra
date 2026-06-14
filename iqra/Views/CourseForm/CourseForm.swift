@@ -7,41 +7,20 @@
 
 import SwiftUI
 
-struct CourseFormData: Codable {
-    var title: String
-    var description: String
-    var image: String
-    var video: String
-    var difficulty: Difficulty
-    var category: CourseCategory
-    var length_type: LengthType
-    var age_groups: [AgeGroup]
-    
-    enum CodingKeys: String, CodingKey {
-        case title
-        case description
-        case image
-        case video
-        case difficulty
-        case category
-        case length_type
-        case age_groups
-    }
-}
-
 struct CourseForm: View {
     
     var onComplete: ((_ course: Course) -> Void)? = nil
     
-    @State private var formData = CourseFormData(
+    @State private var formData = Course(
         title: "",
         description: "",
         image: "",
         video: "",
         difficulty: .beginner,
         category: .reading,
-        length_type: .fixed,
-        age_groups: []
+        lengthType: .fixed,
+        ageGroups: [],
+        isPublished: false
     )
     @State private var showAgeSelector: Bool = false
     @State private var router = Router()
@@ -62,23 +41,23 @@ struct CourseForm: View {
     
     private func selectedLabel() -> String {
         
-        switch formData.age_groups.count {
-            case 0:
+        switch formData.ageGroups.count {
+        case 0:
             return "None"
         case 1:
-            return getLabel(formData.age_groups[0])
+            return getLabel(formData.ageGroups[0])
         case 4:
             return "All ages"
         default:
-            return "\(formData.age_groups.map(getLabel).joined(separator: ", "))"
+            return "\(formData.ageGroups.map(getLabel).joined(separator: ", "))"
         }
     }
 
     private func toggleAgeGroup(_ ageGroup: AgeGroup) {
-        if formData.age_groups.contains(ageGroup) {
-            formData.age_groups.removeAll { $0 == ageGroup }
+        if formData.ageGroups.contains(ageGroup) {
+            formData.ageGroups.removeAll { $0 == ageGroup }
         } else {
-            formData.age_groups.append(ageGroup)
+            formData.ageGroups.append(ageGroup)
         }
     }
     
@@ -102,13 +81,17 @@ struct CourseForm: View {
                 }
             }
             
-            Picker("Course Length", selection: $formData.length_type) {
+            Picker("Course Length", selection: $formData.lengthType) {
                 ForEach(LengthType.allCases, id: \.self) {
                     Text($0.rawValue.capitalized)
                 }
             }
             
             ageGroupsLink
+            
+            Toggle(isOn: $formData.isPublished) {
+                Text("Publish")
+            }
         }
     }
     
@@ -135,7 +118,7 @@ struct CourseForm: View {
                     Text(getLabel(ageGroup))
                     Spacer()
                     
-                    if formData.age_groups.contains(ageGroup) {
+                    if formData.ageGroups.contains(ageGroup) {
                         Image(systemName: "checkmark")
                             .foregroundColor(.blue)
                     }
@@ -146,6 +129,7 @@ struct CourseForm: View {
                 }
             }
         }
+        .navigationTitle(Text("Select age groups"))
     }
     
     private var descriptionSection: some View {

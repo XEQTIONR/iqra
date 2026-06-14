@@ -15,7 +15,7 @@ enum GenericError: Error {
 
 struct CourseBannerForm: View {
     
-    @Binding var formData: CourseFormData
+    @Binding var formData: Course
     @Binding var videoUrl: URL?
     var onComplete: ((_ course: Course) -> Void)? = nil
     
@@ -45,60 +45,36 @@ struct CourseBannerForm: View {
                             showPicker = true
                         }
                     } else {
-                        Button("Save") {
-                            Task {
-                                let serverURL = URL(string: "http://localhost:8000/api/uploads")!
-                                
-                                do {
-                                    let (videoData, _, ok1) = try await RequestService.uploadFileUrl(videoUrl!, serverURL: serverURL, fieldName: "file")
-                                    
-                                    if !ok1 {
-                                        print("Error")
-                                        // @TODO: error handle here
-                                        return
-                                    }
-                                    
-                                    let (imageData, _, ok2) = try await RequestService.uploadImage(selectedImage!, serverURL: serverURL, fieldName: "file")
-                                    
-                                    if !ok2 {
-                                        print("Error")
-                                        // @TODO: error handle here
-                                        return
-                                    }
-        
-                                    let video = try RequestService.apiUnwrapData(type: File.self, from: videoData)
-                                    let image = try RequestService.apiUnwrapData(type: File.self, from: imageData)
-                                    
-                                    formData.video = video.path
-                                    formData.image = image.path
-                                    
-                                    let (data,_,ok) = try await RequestService.request(
-                                        COURSES_ENDPOINT,
-                                        method: "POST",
-                                        headers: RequestService.authJsonHeaders,
-                                        body: JSONEncoder().encode(formData)
-                                    )
-                                    
-                                    print(data)
-                                    
-                                    if !ok {
-                                        print ("Error")
-                                        //@TODO: error handle
-                                        return
-                                    }
-                                    
-                                    let course = try RequestService.apiUnwrapData(type: Course.self, from: data)
-                                    onComplete?(course)
-                                   
-                                } catch {
-                                    print(error)
-                                    // @TODO: Error handle here
-                                }
-                            }
-                        }
                         Button("Clear Image", role: .destructive) {
                             selectedImage = nil
                         }
+                        
+                        NavigationLink {
+                            CourseFormatForm(
+                                formData: $formData,
+                                videoUrl: $videoUrl,
+                                image: $selectedImage,
+                                onComplete: onComplete
+                            )
+                        } label: {
+                            HStack {
+                                Image(systemName: "chevron.right")
+                                    .padding(.leading)
+                                    .opacity(0)
+                                Spacer()
+                                Text("Continue")
+                                    .padding(.all, 10)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .padding(.trailing)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .background(.blue)
+                            .cornerRadius(10)
+                            .foregroundStyle(.white)
+                        }
+                        
+                        
                 }
                 
             }
@@ -118,15 +94,15 @@ struct CourseBannerForm: View {
 #Preview {
     CourseBannerForm(
         formData: .constant(
-            CourseFormData(
-                title: "SOme text",
+            Course(
+                title: "Some text",
                 description: "Other text",
                 image: "Test",
                 video: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 difficulty: .advanced,
                 category: .reading,
-                length_type: .fixed,
-                age_groups: [.kids, .teens]
+                lengthType: .fixed,
+                ageGroups: [.kids, .teens]
             ),
         ),
         videoUrl: .constant(

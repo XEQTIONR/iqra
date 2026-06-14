@@ -15,23 +15,26 @@ struct CourseView: View {
     var body: some View {
         VStack {
             
-            if (course.image != nil) {
-                AsyncImage(url: URL(string: course.image!)) { image in
+           
+                AsyncImage(url: URL(string: course.image)) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                 } placeholder: {
                     Color.gray
                 }
-            }
             
-            HStack {
+            
+            VStack(alignment: .leading) {
                 Text(course.title)
-                    .font(.title)
-                    .fontWeight(.bold)
-                Spacer()
+                    .background(.blue.opacity(0.2))
+
+                Text(course.description)
             }
-            .padding(.horizontal)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.red.opacity(0.2))
+            
+            
             
             Button("Enroll", action: {
                 Task {
@@ -62,11 +65,12 @@ struct CourseView: View {
     CourseView(course: Course(
         id: 1,
         title: "My Course",
-        image: "https://picsum.photos/600/400",
-        description: "A dummy description",
+        description: "A dummy description", image: "https://picsum.photos/600/400",
+        video: "",
         difficulty: .beginner,
         category: .reading,
-        length_type: .fixed,
-        age_groups: [.kids, .teens]
+        lengthType: .fixed,
+        ageGroups: [.kids, .teens],
+        isPublished: true
     ))
 }

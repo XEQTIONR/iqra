@@ -110,7 +110,6 @@ class RequestService {
         let fileName = fileURL.lastPathComponent
         let mimeType = getMimeType(from: fileURL)
         let fileData = try Data(contentsOf: fileURL)
-        let boundary = "Boundary-\(UUID().uuidString)"
         
         return try await uploadMultipartFile(
             serverURL,
