@@ -81,6 +81,14 @@ class RequestService {
         return wrapper.data
     }
     
+    public static func apiUnwrapCollection<T: Decodable>(
+        type: T.Type,
+        from data: Data
+    ) throws -> [T] {
+        let wrapper = try JSONDecoder().decode(DataWrapper<[T]>.self, from: data)
+        return wrapper.data
+    }
+    
     public static func uploadImage(
         _ image: UIImage,
         serverURL: URL,

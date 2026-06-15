@@ -24,12 +24,12 @@ struct ExploreView: View {
                 "http://localhost:8000/api/feed",
                 headers: RequestService.jsonHeaders
             )
-            print("data")
-            print(String(data: data, encoding: .utf8) ?? "No data")
 
-            courses = try JSONDecoder().decode([Course].self, from: data)
+            courses = try RequestService.apiUnwrapCollection(type: Course.self, from: data)
+            print("courses:", courses)
         } catch {
             // do nothing
+            print(error)
         }
     }
     
@@ -48,9 +48,9 @@ struct ExploreView: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 15) {
-                                ForEach(courses, id: \.self.image) { course in
+                                ForEach(courses, id: \.self) { course in
                                     NavigationLink(value: Route.course(course)) {
-                                        Slide(title: course.title, url: "https://via.placeholder.com/300x200", width: geometry.size.width)
+                                        Slide(title: course.title, url: course.image , width: geometry.size.width)
                                     }
                                 }
                             }
