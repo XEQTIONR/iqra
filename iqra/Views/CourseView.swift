@@ -11,49 +11,155 @@ struct CourseView: View {
     
     
     let course: Course
+    @State private var isExpanded: Bool = false
+    @State private var i = 0
     
     var body: some View {
         VStack {
-            
-           
-                AsyncImage(url: URL(string: course.image)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Color.gray
-                }
-            
-            
-            VStack(alignment: .leading) {
-                Text(course.title)
-                    .background(.blue.opacity(0.2))
-
-                Text(course.description)
+            AsyncImage(url: URL(string: course.image)) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } placeholder: {
+                Color.gray
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.red.opacity(0.2))
-            
-            
-            
-            Button("Enroll", action: {
-                Task {
-                    let token = UserDefaults.standard.value(forKey: "api_token") as! String
-                    var headers = ["Authorization": "Bearer \(token)"]
-                    headers.merge(RequestService.jsonHeaders) { (current, new) in new }
+
+            VStack(spacing: 50) {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text(course.title)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    Text(course.description)
+                        .foregroundStyle(.secondary)
                     
-                    let (data, _, ok) = try await RequestService.request(
-                        "http://localhost:8000/api/jwt",
-                        headers: headers,
-                    )
-                    
-                    if ok {
-                        UserDefaults.standard.set(String(data: data, encoding: .utf8), forKey: "jwt")
-                    } else {
-                        /// do error handling here
+                    HStack {
+                        HStack {
+                            Text("Difficulty:")
+                                .fontWeight(.semibold)
+                            Text(course.difficulty.rawValue.capitalized)
+                            Spacer()
+                        }
+                        .containerRelativeFrame(.horizontal) { length, axis in
+                            return length * 0.45
+                        }
+                        Spacer()
+                        HStack {
+                            Text("Category:")
+                                .fontWeight(.semibold)
+                            Text(course.category.rawValue.capitalized)
+                            Spacer()
+                        }
+                        .containerRelativeFrame(.horizontal) { length, axis in
+                            return length * 0.45
+                        }
+                        
                     }
+                    .font(.caption)
+                    HStack {
+                        
+                        
+                        
+                        HStack {
+                            Text("Age Groups:")
+                                .fontWeight(.semibold)
+                            Text(course.ageGroups.map({ $0.rawValue.capitalized }).joined(separator: ", "))
+                            Spacer()
+                        }
+                        .containerRelativeFrame(.horizontal) { length, axis in
+                            return length * 0.45
+                        }
+                        HStack {
+                            Text("Length Type:")
+                                .fontWeight(.semibold)
+                            Text(course.lengthType.rawValue.capitalized)
+                            Spacer()
+                            
+                        }
+                    }
+                    .font(.caption)
                 }
-            })
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                
+                
+//                Button("Enroll", action: {
+                    
+                    
+    //                Task {
+    //                    let token = UserDefaults.standard.value(forKey: "api_token") as! String
+    //                    var headers = ["Authorization": "Bearer \(token)"]
+    //                    headers.merge(RequestService.jsonHeaders) { (current, new) in new }
+    //
+    //                    let (data, _, ok) = try await RequestService.request(
+    //                        "http://localhost:8000/api/jwt",
+    //                        headers: headers,
+    //                    )
+    //
+    //                    if ok {
+    //                        UserDefaults.standard.set(String(data: data, encoding: .utf8), forKey: "jwt")
+    //                    } else {
+    //                        /// do error handling here
+    //                    }
+    //                }
+//                })
+                
+                DisclosureGroup("Enroll in this course", isExpanded: $isExpanded) {
+                    VStack(alignment: .leading, spacing: 15) {
+                        ForEach(0..<course.formats.count, id: \.self) { index in
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack {
+                                    Text(course.formats[index].title)
+                                        .foregroundStyle(i == index ? .blue : .secondary)
+                                        .font(.title2.bold())
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    Circle()
+                                        .fill(i == index ? .blue : .secondary)
+                                        .frame(width: 20, height: 20)
+                                        .overlay {
+                                            if index == i {
+                                                Circle()
+                                                    .fill(.white)
+                                                    .frame(width: 12, height: 12)
+                                            }
+                                        }
+                                }
+                                
+                                Text("$ \(course.formats[index].price) per \(course.formats[index].unit)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                
+                                Text(course.formats[index].description)
+                                    .font(.body)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .onTapGesture {
+                                i = index
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .strokeBorder(i == index ? .blue : .secondary, lineWidth: 1)
+                            )
+                        }
+                        
+                        Button("Continue") {
+                            
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.all, 10)
+                        .background(.blue)
+                        .foregroundStyle(.white)
+                        .clipShape(.rect(cornerRadius: 10))
+                            
+                    }
+                    .padding(.top)
+                    
+                }
+            }
+            .padding()
+            
             
             Spacer()
         }
@@ -71,6 +177,28 @@ struct CourseView: View {
         category: .reading,
         lengthType: .fixed,
         ageGroups: [.kids, .teens],
-        isPublished: true
+        isPublished: true,
+        formats: [
+            CourseFormat(
+                title: "Format title",
+                description: "A 1-week trial that can to give this a go",
+                unit: .lesson,
+                lessonLength: 60,
+                lessonsPerWeek: 2,
+                price: 50,
+                billingCycles: 10
+                
+            ),
+            CourseFormat(
+                title: "Format title 2",
+                description: "A 1-week trial that can to give this a go",
+                unit: .lesson,
+                lessonLength: 60,
+                lessonsPerWeek: 2,
+                price: 50,
+                billingCycles: 10
+                
+            )
+        ]
     ))
 }
