@@ -21,6 +21,7 @@ final class CourseSchedule {
 struct CourseScheduleView: View {
     
     var format: CourseFormat
+    var course: Course
     @Environment(Router.self) private var router
     @State private var schedule = CourseSchedule()
     @State private var selectedDay: Day = .mon
@@ -45,6 +46,33 @@ struct CourseScheduleView: View {
             }
             .padding(.vertical)
         }
+        .onAppear {
+            Task {
+                print("ZE YASK")
+                guard !ProcessInfo.isRunningInPreview else {
+                    return
+                }
+                print("gp YASK")
+                
+                do {
+                    print("http://localhost:8000/api/courses/\(String(describing: course.id))/availabilities")
+                    let (data, _, ok) = try await RequestService.request(
+                        "http://localhost:8000/api/courses/\(course.id!)/availabilities",
+                        headers: RequestService.jsonHeaders
+                    )
+                    print("API CALL DATA")
+                    print(String(data: data, encoding: .utf8) ?? "NONE")
+                    
+                    if ok {
+                     // do sth
+                    }
+                } catch {
+                    print("ERROR API CALL")
+                    print(error)
+                }
+            }
+            
+        }
         .frame(maxWidth: .infinity)
         .padding(.horizontal)
         .toolbar {
@@ -57,6 +85,15 @@ struct CourseScheduleView: View {
                 }
             }
         }
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(.white)
+                .frame(width: 50, height: 50)
+                .overlay {
+                    ProgressView()
+                }
+        }
+        .background(.black.opacity(0.3))
     }
 
     private var daySelector: some View {
@@ -128,14 +165,37 @@ struct CourseScheduleView: View {
 }
 
 #Preview {
-    CourseScheduleView(format: CourseFormat(
-        title: "Title",
-        description: "Description",
-        unit: .lesson,
-        lessonLength: 60,
-        lessonsPerWeek: 2,
-        price: 50.0,
-        billingCycles: 10
-    ))
+    CourseScheduleView(
+        format: CourseFormat(
+            title: "Title",
+            description: "Description",
+            unit: .lesson,
+            lessonLength: 60,
+            lessonsPerWeek: 2,
+            price: 50.0,
+            billingCycles: 10
+        ),
+        course: Course(
+            title: "Title",
+            description: "Description",
+            image: "",
+            video: "",
+            difficulty: .beginner,
+            category: .reading,
+            lengthType: .fixed,
+            ageGroups: [.kids, .teens],
+            isPublished: false,
+            formats: [CourseFormat(
+                title: "Title",
+                description: "Description",
+                unit: .lesson,
+                lessonLength: 60,
+                lessonsPerWeek: 2,
+                price: 50.0,
+                billingCycles: 10
+            )],
+        
+        )
+    )
         .environment(Router())
 }

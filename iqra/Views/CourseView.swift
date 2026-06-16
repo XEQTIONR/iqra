@@ -122,7 +122,10 @@ struct CourseView: View {
                         }
                         
                         NavigationLink {
-                            CourseScheduleView(format: course.formats[i])
+                            CourseScheduleView(
+                                format: course.formats[i],
+                                course: course
+                            )
                         } label : {
                             Text("Continue")
                                 .frame(maxWidth: .infinity)
