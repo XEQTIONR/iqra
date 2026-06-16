@@ -31,7 +31,7 @@ struct CourseFormatForm: View {
             lessonLength: 60,
             lessonsPerWeek: 2,
             price: 0,
-            billingCycles: nil
+            billingCycles: 0
         ),
     ]
     

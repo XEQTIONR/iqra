@@ -144,14 +144,19 @@ struct CourseView: View {
                             )
                         }
                         
-                        Button("Continue") {
-                            
+                        NavigationLink {
+                            CourseScheduleView()
+                        } label : {
+                            Text("Continue")
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.all, 10)
-                        .background(.blue)
-                        .foregroundStyle(.white)
-                        .clipShape(.rect(cornerRadius: 10))
+//                        Button("Continue") {
+//                            
+//                        }
+//                        .frame(maxWidth: .infinity)
+//                        .padding(.all, 10)
+//                        .background(.blue)
+//                        .foregroundStyle(.white)
+//                        .clipShape(.rect(cornerRadius: 10))
                             
                     }
                     .padding(.top)
