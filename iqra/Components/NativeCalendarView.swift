@@ -217,18 +217,52 @@ struct NativeCalendarView: UIViewRepresentable {
             return nil
         }
 
+        func dateSelection(_ selection: UICalendarSelectionSingleDate, canSelectDate dateComponents: DateComponents?) -> Bool {
+            if let date = dateComponents?.date {
+                guard let canSelectDate = parent.canSelectDate else { return true }
+                return canSelectDate(date)
+            }
+
+            guard case .single(let binding) = parent.selection,
+                  let selected = binding.wrappedValue else { return true }
+            guard let canDeselectDate = parent.canDeselectDate else { return true }
+            return canDeselectDate(selected)
+        }
+
         func dateSelection(_ selection: UICalendarSelectionSingleDate, didSelectDate dateComponents: DateComponents?) {
             guard case .single(let binding) = parent.selection else { return }
-            binding.wrappedValue = dateComponents?.date
+
+            if let date = dateComponents?.date {
+                binding.wrappedValue = date
+                parent.onSelectDate?(date)
+            } else {
+                let deselected = binding.wrappedValue
+                binding.wrappedValue = nil
+                if let deselected {
+                    parent.onDeselectDate?(deselected)
+                }
+            }
+        }
+
+        func multiDateSelection(_ selection: UICalendarSelectionMultiDate, canSelectDate dateComponents: DateComponents) -> Bool {
+            guard let date = dateComponents.date else { return false }
+            guard let canSelectDate = parent.canSelectDate else { return true }
+            return canSelectDate(date)
+        }
+
+        func multiDateSelection(_ selection: UICalendarSelectionMultiDate, canDeselectDate dateComponents: DateComponents) -> Bool {
+            guard let date = dateComponents.date else { return false }
+            guard let canDeselectDate = parent.canDeselectDate else { return true }
+            return canDeselectDate(date)
         }
 
         func multiDateSelection(_ selection: UICalendarSelectionMultiDate, didSelectDate dateComponents: DateComponents) {
-            print(dateComponents)
             guard case .multiple(let binding) = parent.selection,
                   let date = dateComponents.date else { return }
             var dates = binding.wrappedValue
             dates.insert(Calendar.current.startOfDay(for: date))
             binding.wrappedValue = dates
+            parent.onSelectDate?(date)
         }
 
         func multiDateSelection(_ selection: UICalendarSelectionMultiDate, didDeselectDate dateComponents: DateComponents) {
@@ -238,6 +272,7 @@ struct NativeCalendarView: UIViewRepresentable {
             binding.wrappedValue = binding.wrappedValue.filter {
                 !Calendar.current.isDate($0, inSameDayAs: dayStart)
             }
+            parent.onDeselectDate?(date)
         }
     }
 }
@@ -249,8 +284,14 @@ struct NativeCalendarView: UIViewRepresentable {
 }
 
 #Preview("Multi selection") {
-    NativeCalendarView(selectedDates: .constant([]), events: .constant([
-        Date().addingTimeInterval(60 * 60 * 24 * 2),
-        Date().addingTimeInterval(60 * 60 * 24 * 5),
-    ]))
+    NativeCalendarView(
+        selectedDates: .constant([]),
+        events: .constant([
+            Date().addingTimeInterval(60 * 60 * 24 * 2),
+            Date().addingTimeInterval(60 * 60 * 24 * 5),
+        ]),
+        canSelectDate: {_ in true},
+        canDeselectDate: {_ in false}
+    )
 }
+
