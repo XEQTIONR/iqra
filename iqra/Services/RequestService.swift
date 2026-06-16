@@ -72,6 +72,23 @@ class RequestService {
         
     }
     
+    public func updateJSONToken() async throws {
+        let token = UserDefaults.standard.value(forKey: "api_token") as! String
+        var headers = ["Authorization": "Bearer \(token)"]
+        headers.merge(RequestService.jsonHeaders) { (current, new) in new }
+
+        let (data, _, ok) = try await RequestService.request(
+            "http://localhost:8000/api/jwt",
+            headers: headers,
+        )
+
+        if ok {
+            UserDefaults.standard.set(String(data: data, encoding: .utf8), forKey: "jwt")
+        } else {
+            /// do error handling here
+        }
+    }
+    
     private struct DataWrapper<T: Decodable>: Decodable {
         let data: T
     }

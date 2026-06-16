@@ -80,29 +80,6 @@ struct CourseView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
-                
-                
-//                Button("Enroll", action: {
-                    
-                    
-    //                Task {
-    //                    let token = UserDefaults.standard.value(forKey: "api_token") as! String
-    //                    var headers = ["Authorization": "Bearer \(token)"]
-    //                    headers.merge(RequestService.jsonHeaders) { (current, new) in new }
-    //
-    //                    let (data, _, ok) = try await RequestService.request(
-    //                        "http://localhost:8000/api/jwt",
-    //                        headers: headers,
-    //                    )
-    //
-    //                    if ok {
-    //                        UserDefaults.standard.set(String(data: data, encoding: .utf8), forKey: "jwt")
-    //                    } else {
-    //                        /// do error handling here
-    //                    }
-    //                }
-//                })
-                
                 DisclosureGroup("Enroll in this course", isExpanded: $isExpanded) {
                     VStack(alignment: .leading, spacing: 15) {
                         ForEach(0..<course.formats.count, id: \.self) { index in
