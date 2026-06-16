@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-let SIGNUP_ENDPOINT = "http://localhost:8000/api/register"
-
 struct SignupData: Codable {
     var name: String
     var email: String

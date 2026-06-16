@@ -78,7 +78,7 @@ class RequestService {
         headers.merge(RequestService.jsonHeaders) { (current, new) in new }
 
         let (data, _, ok) = try await RequestService.request(
-            "http://localhost:8000/api/jwt",
+            JWT_ENDPOINT,
             headers: headers,
         )
 

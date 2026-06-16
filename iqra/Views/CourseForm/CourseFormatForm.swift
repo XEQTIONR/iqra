@@ -38,9 +38,8 @@ struct CourseFormatForm: View {
     private var continueRow: some View {
         Button("Save") {
             Task {
-                let serverURL = URL(string: "http://localhost:8000/api/uploads")!
-
                 do {
+                    let serverURL = URL(string: UPLOADS_ENDPOINT)!
                     let (videoData, _, ok1) = try await RequestService.uploadFileUrl(videoUrl!, serverURL: serverURL, fieldName: "file")
                     
                     if !ok1 {
@@ -86,9 +85,6 @@ struct CourseFormatForm: View {
                     
                     let course = try RequestService.apiUnwrapData(type: Course.self, from: data)
                     onComplete?(course)
-                    
-                    
-                   
                 } catch {
                     print(error)
                     // @TODO: Error handle here

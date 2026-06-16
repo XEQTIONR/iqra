@@ -8,10 +8,14 @@
 import SwiftUI
 
 let COURSES_ENDPOINT = "http://localhost:8000/api/courses"
+let FEED_ENDPOINT = "http://localhost:8000/api/feed"
+let INSTRUCTORS_ENDPOINT = "http://localhost:8000/api/instructors"
+let JWT_ENDPOINT = "http://localhost:8000/api/jwt"
 let LOGIN_ENDPOINT = "http://localhost:8000/api/sanctum/token"
 let LOGOUT_ENDPOINT = "http://localhost:8000/api/logout"
 let ME_ENDPOINT = "http://localhost:8000/api/user"
-let JWT_ENDPOINT = "http://localhost:8000/api/jwt"
+let SIGNUP_ENDPOINT = "http://localhost:8000/api/register"
+let UPLOADS_ENDPOINT = "http://localhost:8000/api/uploads"
 
 enum Route: Hashable {
     case course(Course)

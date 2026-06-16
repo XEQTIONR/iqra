@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-let CREATE_INSTRUCTOR = "http://localhost:8000/api/instructors"
-
 struct InstructorFormCompleteView: View {
     
     @Environment(User.self) private var appUser
@@ -32,7 +30,7 @@ struct InstructorFormCompleteView: View {
                     
                     print("settingsJson", settingsJson)
                     let (data, response, ok) = try await RequestService.request(
-                        CREATE_INSTRUCTOR,
+                        INSTRUCTORS_ENDPOINT,
                         method: "POST",
                         headers: [
                             "Content-Type": "application/json",

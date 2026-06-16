@@ -20,6 +20,7 @@ final class CourseSchedule {
 
 struct CourseScheduleView: View {
     
+    var format: CourseFormat
     @Environment(Router.self) private var router
     @State private var schedule = CourseSchedule()
     @State private var selectedDay: Day = .mon
@@ -40,6 +41,7 @@ struct CourseScheduleView: View {
 
             scheduleCanvas
             Button("Continue") {
+                print("format:", format)
             }
             .padding(.vertical)
         }
@@ -126,6 +128,14 @@ struct CourseScheduleView: View {
 }
 
 #Preview {
-    CourseScheduleView()
+    CourseScheduleView(format: CourseFormat(
+        title: "Title",
+        description: "Description",
+        unit: .lesson,
+        lessonLength: 60,
+        lessonsPerWeek: 2,
+        price: 50.0,
+        billingCycles: 10
+    ))
         .environment(Router())
 }
