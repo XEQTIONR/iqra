@@ -291,7 +291,7 @@ struct NativeCalendarView: UIViewRepresentable {
             Date().addingTimeInterval(60 * 60 * 24 * 5),
         ]),
         canSelectDate: {_ in true},
-        canDeselectDate: {_ in false}
+        canDeselectDate: {_ in true}
     )
 }
 

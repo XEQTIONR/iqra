@@ -5,7 +5,7 @@
 //  Created by Ovi Hussain on 2026-06-04.
 //
 
-import SwiftUI
+import Foundation
 
 
 enum AgeGroup: String, CaseIterable, Codable {
@@ -75,13 +75,11 @@ class InstructorSettings: Codable {
 
     enum CodingKeys: String, CodingKey {
         case gender
-        case ageGroup
         case reading
         case speaking
         case writing
         case languages
-        case courseCategories
-        case isMuslim
+        case courseCategories = "course_categories"
         case titles
         case availability
     }

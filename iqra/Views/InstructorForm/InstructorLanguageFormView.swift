@@ -1,5 +1,5 @@
 //
-//  InstructorFormView.swift
+//  InstructorLanguageFormView.swift
 //  iqra
 //
 //  Created by Ovi Hussain on 2026-05-31.

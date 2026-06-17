@@ -25,6 +25,8 @@ struct CourseScheduleView: View {
     @Environment(Router.self) private var router
     @State private var schedule = CourseSchedule()
     @State private var selectedDay: Day = .mon
+    @State private var callingApi: Bool = false
+    @State private var openSlots: [Day: [Int]] = [:]
 
     private var selectedSlot: Int? {
         schedule.slots[selectedDay]
@@ -55,7 +57,7 @@ struct CourseScheduleView: View {
                 print("gp YASK")
                 
                 do {
-                    print("http://localhost:8000/api/courses/\(String(describing: course.id))/availabilities")
+                    callingApi = true
                     let (data, _, ok) = try await RequestService.request(
                         "http://localhost:8000/api/courses/\(course.id!)/availabilities",
                         headers: RequestService.jsonHeaders
@@ -65,8 +67,16 @@ struct CourseScheduleView: View {
                     
                     if ok {
                      // do sth
+                        let availability = try RequestService.apiUnwrapCollection(type: Availability.self, from: data)
+                        print("availability:", availability)
+                        print("availability:", availability[0].toDictionary)
+                        openSlots = availability[0].toDictionary
+                    } else {
+                        // error handle
                     }
+                    callingApi = false
                 } catch {
+                    callingApi = false
                     print("ERROR API CALL")
                     print(error)
                 }
@@ -86,14 +96,17 @@ struct CourseScheduleView: View {
             }
         }
         .overlay {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(.white)
-                .frame(width: 50, height: 50)
-                .overlay {
-                    ProgressView()
-                }
+            
+            if callingApi {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(.white)
+                    .frame(width: 50, height: 50)
+                    .overlay {
+                        ProgressView()
+                    }
+            }
         }
-        .background(.black.opacity(0.3))
+        .background(.black.opacity(callingApi ? 0.3 : 0))
     }
 
     private var daySelector: some View {
@@ -129,6 +142,7 @@ struct CourseScheduleView: View {
             VStack(spacing: 4) {
                 ForEach(TimeSlot.all) { slot in
                     let isSelected = selectedSlot == slot.minutesFromMidnight
+                    let available = (openSlots[selectedDay]?.contains(slot.minutesFromMidnight) ?? false)
                     Button {
                         toggle(slot)
                     } label: {
@@ -137,6 +151,7 @@ struct CourseScheduleView: View {
                                 .font(.subheadline)
                                 .monospacedDigit()
                                 .foregroundStyle(isSelected ? Color.white : Color.primary)
+                                .strikethrough(!available)
                             Spacer()
                             if isSelected {
                                 Image(systemName: "checkmark.circle.fill")
@@ -149,6 +164,7 @@ struct CourseScheduleView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .buttonStyle(.plain)
+                    .disabled(!available)
                 }
             }
             .padding(.bottom)
