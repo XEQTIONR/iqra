@@ -17,6 +17,7 @@ class User: Codable, CustomStringConvertible {
     var gender: String?
     var birthday: String?
     var isInstructor: Bool?
+    var enrollments: [Enrollment]?
 
     init() {}
 
@@ -25,7 +26,7 @@ class User: Codable, CustomStringConvertible {
     // which breaks synthesized Codable (it would look for `_name`/`_email`
     // keys in the JSON and silently decode everything as nil).
     enum CodingKeys: String, CodingKey {
-        case id, name, email, gender, birthday, isInstructor
+        case id, name, email, gender, birthday, isInstructor, enrollments
     }
 
     required init(from decoder: Decoder) throws {
@@ -36,6 +37,7 @@ class User: Codable, CustomStringConvertible {
         gender = try container.decodeIfPresent(String.self, forKey: .gender)
         birthday = try container.decodeIfPresent(String.self, forKey: .birthday)
         isInstructor = try container.decodeIfPresent(Bool.self, forKey: .isInstructor)
+        enrollments = try container.decodeIfPresent([Enrollment].self, forKey: .enrollments)
         
     }
 
@@ -47,6 +49,7 @@ class User: Codable, CustomStringConvertible {
         try container.encodeIfPresent(gender, forKey: .gender)
         try container.encodeIfPresent(birthday, forKey: .birthday)
         try container.encodeIfPresent(isInstructor, forKey: .isInstructor)
+        try container.encodeIfPresent(enrollments, forKey: .enrollments)
     }
 
     /// Copies fields from another user into this shared instance so that
@@ -58,6 +61,7 @@ class User: Codable, CustomStringConvertible {
         gender = other.gender
         birthday = other.birthday
         isInstructor = other.isInstructor
+        enrollments = other.enrollments
         save()
     }
 
@@ -69,6 +73,7 @@ class User: Codable, CustomStringConvertible {
         gender = nil
         birthday = nil
         isInstructor = nil
+        enrollments = nil
         UserDefaults.standard.removeObject(forKey: User.storageKey)
     }
 
@@ -100,6 +105,7 @@ class User: Codable, CustomStringConvertible {
             gender: \(gender ?? "nil"), 
             birthday: \(String(describing: birthday)),
             isInstructor: \(String(describing: isInstructor?.description))
+            enrollments: \(String(describing: enrollments)
             )
         """
     }

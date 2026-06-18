@@ -39,6 +39,13 @@ struct CourseSignupConfirmView: View {
                 print ("ok:", ok)
                 print("API RESPONSE DATA:")
                 print(String(data: data, encoding: .utf8)!)
+                
+                do {
+                    let enrollment = try RequestService.apiUnwrapData(type: Enrollment.self, from: data)
+                    print("enrollment:", enrollment)
+                } catch {
+                    print("ERROR:", error)
+                }
             }
         }
     }

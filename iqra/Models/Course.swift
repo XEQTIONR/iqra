@@ -31,7 +31,7 @@ struct CourseFormat: Hashable, Codable {
     var unit: BillingUnit
     var lessonLength: Int
     var lessonsPerWeek: Int
-    var price: Float
+    var price: Double
     var billingCycles: Int?
     
     enum CodingKeys: String, CodingKey {
