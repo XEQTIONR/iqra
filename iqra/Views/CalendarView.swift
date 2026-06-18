@@ -9,7 +9,20 @@ import SwiftUI
 
 struct CalendarView: View {
     var body: some View {
-        Text("Calendar View!")
+        
+        VStack{
+            NativeCalendarView(
+                selectedDates: .constant([]),
+                events: .constant([
+                    Date().addingTimeInterval(60 * 60 * 24 * 2),
+                    Date().addingTimeInterval(60 * 60 * 24 * 5),
+                ]),
+                canSelectDate: {_ in true},
+                canDeselectDate: {_ in true}
+            )
+            .frame(height: 500)
+        }
+
     }
 }
 

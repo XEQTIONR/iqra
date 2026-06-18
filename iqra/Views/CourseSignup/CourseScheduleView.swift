@@ -31,6 +31,10 @@ struct CourseScheduleView: View {
     private var selectedSlot: Int? {
         schedule.slots[selectedDay]
     }
+    
+    private var slotsSelected: Bool {
+        schedule.slots.count == format.lessonsPerWeek
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -43,19 +47,24 @@ struct CourseScheduleView: View {
                 .padding(.vertical)
 
             scheduleCanvas
-            Button("Continue") {
-                print("format:", format)
+            
+            NavigationLink {
+                CourseSignupConfirmView()
+            } label: {
+                Text(slotsSelected ? "Continue" : "Select timeslots")
             }
+//            Button(slotsSelected ? "Continue" : "Select timeslots") {
+//                
+//            }
+            .disabled(!slotsSelected)
             .padding(.vertical)
         }
         .onAppear {
             Task {
-                print("ZE YASK")
                 guard !ProcessInfo.isRunningInPreview else {
                     return
                 }
-                print("gp YASK")
-                
+
                 do {
                     callingApi = true
                     let (data, _, ok) = try await RequestService.request(
@@ -66,7 +75,6 @@ struct CourseScheduleView: View {
                     print(String(data: data, encoding: .utf8) ?? "NONE")
                     
                     if ok {
-                     // do sth
                         let availability = try RequestService.apiUnwrapCollection(type: Availability.self, from: data)
                         print("availability:", availability)
                         print("availability:", availability[0].toDictionary)
@@ -122,13 +130,13 @@ struct CourseScheduleView: View {
                             .font(.caption)
                             .fontWeight(.semibold)
                         Circle()
-                            .fill(hasSlots ? Color.blue : Color.clear)
+                            .fill(hasSlots ? (isSelected ? .white : .blue) : .clear)
                             .frame(width: 5, height: 5)
                     }
-                    .foregroundStyle(isSelected ? Color.white : Color.primary)
+                    .foregroundStyle(isSelected ? .white : .primary)
                 }
                 .frame(width: 45, height: 45)
-                .background(isSelected ? Color.blue : Color.blue.opacity(0.15))
+                .background(isSelected ? .blue : .blue.opacity(0.15))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
         }
@@ -142,7 +150,9 @@ struct CourseScheduleView: View {
             VStack(spacing: 4) {
                 ForEach(TimeSlot.all) { slot in
                     let isSelected = selectedSlot == slot.minutesFromMidnight
-                    let available = (openSlots[selectedDay]?.contains(slot.minutesFromMidnight) ?? false)
+                    let available =
+                        (openSlots[selectedDay]?.contains(slot.minutesFromMidnight) ?? false)
+                    && (format.lessonsPerWeek > schedule.slots.count)
                     Button {
                         toggle(slot)
                     } label: {
@@ -151,7 +161,7 @@ struct CourseScheduleView: View {
                                 .font(.subheadline)
                                 .monospacedDigit()
                                 .foregroundStyle(isSelected ? Color.white : Color.primary)
-                                .strikethrough(!available)
+                                .strikethrough(!available && !isSelected)
                             Spacer()
                             if isSelected {
                                 Image(systemName: "checkmark.circle.fill")
@@ -164,7 +174,7 @@ struct CourseScheduleView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .buttonStyle(.plain)
-                    .disabled(!available)
+                    .disabled(!available && !isSelected)
                 }
             }
             .padding(.bottom)

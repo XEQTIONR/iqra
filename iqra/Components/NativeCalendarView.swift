@@ -148,6 +148,7 @@ struct NativeCalendarView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> UICalendarView {
         let calendarView = UICalendarView()
+        
         calendarView.delegate = context.coordinator
         calendarView.calendar = Calendar.current
         calendarView.fontDesign = .rounded
@@ -155,6 +156,9 @@ struct NativeCalendarView: UIViewRepresentable {
             start: Date().addingTimeInterval(-60 * 60 * 24 * 365),
             end: Date().addingTimeInterval(60 * 60 * 24 * 365 * 2)
         )
+        
+        calendarView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        calendarView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         switch selection {
         case .single:
@@ -278,7 +282,7 @@ struct NativeCalendarView: UIViewRepresentable {
 }
 
 #Preview("Single selection") {
-    NativeCalendarView(selectedDate: .constant(nil), events: .constant([
+    NativeCalendarView(selectedDate: .constant(Date().addingTimeInterval(60 * 60 * 24 * 2)), events: .constant([
         Date().addingTimeInterval(60 * 60 * 24 * 2),
     ]))
 }
@@ -293,5 +297,6 @@ struct NativeCalendarView: UIViewRepresentable {
         canSelectDate: {_ in true},
         canDeselectDate: {_ in true}
     )
+    .frame(width: 350, height: 500)
 }
 
