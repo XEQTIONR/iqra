@@ -25,6 +25,7 @@ enum LengthType: String, CaseIterable, Codable, Hashable {
 }
 
 struct CourseFormat: Hashable, Codable {
+    var id: Int?
     var title: String
     var description: String
     var unit: BillingUnit
@@ -34,6 +35,7 @@ struct CourseFormat: Hashable, Codable {
     var billingCycles: Int?
     
     enum CodingKeys: String, CodingKey {
+        case id
         case title
         case description
         case unit

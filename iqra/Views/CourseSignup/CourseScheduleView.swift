@@ -7,33 +7,22 @@
 
 import SwiftUI
 
-/// Holds the single half-hour slot selected per day for a course schedule,
-/// stored as minutes from midnight.
-@Observable
-final class CourseSchedule {
-    var slots: [Day: Int] = [:]
-
-    init(slots: [Day: Int] = [:]) {
-        self.slots = slots
-    }
-}
-
 struct CourseScheduleView: View {
     
     var format: CourseFormat
     var course: Course
     @Environment(Router.self) private var router
-    @State private var schedule = CourseSchedule()
+    @State private var schedule : [Day: Int] = [:]
     @State private var selectedDay: Day = .mon
     @State private var callingApi: Bool = false
     @State private var openSlots: [Day: [Int]] = [:]
 
     private var selectedSlot: Int? {
-        schedule.slots[selectedDay]
+        schedule[selectedDay]
     }
     
     private var slotsSelected: Bool {
-        schedule.slots.count == format.lessonsPerWeek
+        schedule.count == format.lessonsPerWeek
     }
 
     var body: some View {
@@ -49,7 +38,11 @@ struct CourseScheduleView: View {
             scheduleCanvas
             
             NavigationLink {
-                CourseSignupConfirmView()
+                CourseSignupConfirmView(
+                    format: format,
+                    course: course,
+                    schedule: schedule
+                )
             } label: {
                 Text(slotsSelected ? "Continue" : "Select timeslots")
             }
@@ -121,7 +114,7 @@ struct CourseScheduleView: View {
         HStack(spacing: 10) {
             ForEach(Day.allCases, id: \.self) { day in
                 let isSelected = day == selectedDay
-                let hasSlots = schedule.slots[day] != nil
+                let hasSlots = schedule[day] != nil
                 Button {
                     selectedDay = day
                 } label: {
@@ -152,29 +145,35 @@ struct CourseScheduleView: View {
                     let isSelected = selectedSlot == slot.minutesFromMidnight
                     let available =
                         (openSlots[selectedDay]?.contains(slot.minutesFromMidnight) ?? false)
-                    && (format.lessonsPerWeek > schedule.slots.count)
-                    Button {
-                        toggle(slot)
-                    } label: {
-                        HStack {
-                            Text(slot.label)
-                                .font(.subheadline)
-                                .monospacedDigit()
-                                .foregroundStyle(isSelected ? Color.white : Color.primary)
-                                .strikethrough(!available && !isSelected)
-                            Spacer()
-                            if isSelected {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(Color.white)
+                    && (format.lessonsPerWeek > schedule.count)
+                    
+                    
+                    if (openSlots[selectedDay]?.contains(slot.minutesFromMidnight) ?? false) {
+                        Button {
+                            toggle(slot)
+                        } label: {
+                            HStack {
+                                Text(slot.label)
+                                    .font(.subheadline)
+                                    .monospacedDigit()
+                                    .foregroundStyle(isSelected ? Color.white : Color.primary)
+                                    .strikethrough(!available && !isSelected)
+                                Spacer()
+                                if isSelected {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(Color.white)
+                                }
                             }
+                            .padding(.horizontal, 12)
+                            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                            .background(isSelected ? Color.blue : Color.gray.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
-                        .padding(.horizontal, 12)
-                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                        .background(isSelected ? Color.blue : Color.gray.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .buttonStyle(.plain)
+                        .disabled(!available && !isSelected)
                     }
-                    .buttonStyle(.plain)
-                    .disabled(!available && !isSelected)
+                    
+                    
                 }
             }
             .padding(.bottom)
@@ -182,10 +181,10 @@ struct CourseScheduleView: View {
     }
 
     private func toggle(_ slot: TimeSlot) {
-        if schedule.slots[selectedDay] == slot.minutesFromMidnight {
-            schedule.slots[selectedDay] = nil
+        if schedule[selectedDay] == slot.minutesFromMidnight {
+            schedule[selectedDay] = nil
         } else {
-            schedule.slots[selectedDay] = slot.minutesFromMidnight
+            schedule[selectedDay] = slot.minutesFromMidnight
         }
     }
 }

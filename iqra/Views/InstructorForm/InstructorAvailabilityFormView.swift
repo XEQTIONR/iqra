@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum Day: String, CaseIterable, Codable, Hashable {
+enum Day: String, CaseIterable, Codable, CodingKeyRepresentable, Hashable {
     case mon, tue, wed, thu, fri, sat, sun
 }
 
