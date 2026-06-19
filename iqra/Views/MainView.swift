@@ -16,11 +16,12 @@ struct MainView: View {
     
     @Binding var currentSection: ContentSection
     
-    @State var courses: [Course] = []
+    @State private var router = Router()
     @State private var selectedTab = 0
 
     var body: some View {
-        
+        @Bindable var router = router
+        NavigationStack(path: $router.path) {
             TabView(selection: $selectedTab) {
                 Tab("Explore", systemImage: "magnifyingglass", value: 0) {
                     ExploreView()
@@ -38,6 +39,12 @@ struct MainView: View {
                     SettingsView($currentSection)
                 }
             }
+            .navigationDestination(for: Route.self) { route in
+                route.destination
+                    .environment(router)
+            }
+        }
+        .environment(router)
     }
 }
 

@@ -10,8 +10,8 @@ import CachedAsyncImage
 
 struct ExploreView: View {
     @Environment(User.self) private var appUser
+    @Environment(Router.self) private var router
     
-    @State private var router = Router()
     @State var courses: [Course] = []
     @State var showLoginSheet: Bool = false
     @State var showInstructorSheet: Bool = false
@@ -34,10 +34,8 @@ struct ExploreView: View {
     }
     
     var body: some View {
-        @Bindable var router = router
-        return GeometryReader { geometry in
-            NavigationStack(path: $router.path) {
-                List {
+        GeometryReader { geometry in
+            List {
                     VStack(spacing: 15) {
                         HStack {
                             Text("Read the Quran in Arabic")
@@ -127,13 +125,9 @@ struct ExploreView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                                 .listRowSeparator(.hidden)
                 }
-                .listStyle(PlainListStyle())
-                .listRowSpacing(30)
-                .navigationDestination(for: Route.self) { route in
-                    route.destination
-                        .environment(router)
-                }
-                .toolbar {
+            .listStyle(PlainListStyle())
+            .listRowSpacing(30)
+            .toolbar {
                     ToolbarItem(placement: .primaryAction) {
                         Button(action: {
                             // Action here
@@ -143,9 +137,7 @@ struct ExploreView: View {
                         }
                     }
                 }
-                .navigationTitle("Explore")
-            }
-            .environment(router)
+            .navigationTitle("Explore")
             .sheet(isPresented: $showInstructorSheet) {
                 InstructorArabicFormView(completion: {
                     showInstructorSheet = false
@@ -180,6 +172,9 @@ struct ExploreView: View {
 }
 
 #Preview {
-    ExploreView()
-        .environment(User())
+    NavigationStack {
+        ExploreView()
+    }
+    .environment(User())
+    .environment(Router())
 }
