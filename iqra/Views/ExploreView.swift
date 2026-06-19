@@ -35,7 +35,42 @@ struct ExploreView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            List {
+            exploreList(geometry: geometry)
+        }
+        .sheet(isPresented: $showInstructorSheet) {
+            InstructorArabicFormView(completion: {
+                showInstructorSheet = false
+                showCourseSheet = true
+            })
+        }
+        .sheet(isPresented: $showLoginSheet) {
+            LoginView(completion: {
+                showLoginSheet = false
+
+                if navigateToInstructorForm {
+                    if appUser.isInstructor == true {
+                        showCourseSheet = true
+                    } else {
+                        showInstructorSheet = true
+                    }
+                    navigateToInstructorForm = false
+                }
+            })
+        }
+        .sheet(isPresented: $showCourseSheet) {
+            CourseForm(onComplete: { course in
+                showCourseSheet = false
+                router.push(.course(course))
+            })
+        }
+        .task {
+            await loadFeed()
+        }
+    }
+
+    @ViewBuilder
+    private func exploreList(geometry: GeometryProxy) -> some View {
+        List {
                     VStack(spacing: 15) {
                         HStack {
                             Text("Read the Quran in Arabic")
@@ -124,48 +159,18 @@ struct ExploreView: View {
                                 .background(Color.gray.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                                 .listRowSeparator(.hidden)
+        }
+        .listStyle(PlainListStyle())
+        .listRowSpacing(30)
+        .navigationTitle("Explore")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: {
+                    // Action here
+                }) {
+                    Image(systemName: "bell.badge")
+                        .renderingMode(.original)
                 }
-            .listStyle(PlainListStyle())
-            .listRowSpacing(30)
-            .toolbar {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button(action: {
-                            // Action here
-                        }) {
-                            Image(systemName: "bell.badge")
-                                .renderingMode(.original)
-                        }
-                    }
-                }
-            .navigationTitle("Explore")
-            .sheet(isPresented: $showInstructorSheet) {
-                InstructorArabicFormView(completion: {
-                    showInstructorSheet = false
-                    showCourseSheet = true
-                })
-            }
-            .sheet(isPresented: $showLoginSheet) {
-                LoginView(completion: {
-                    showLoginSheet = false
-                    
-                    if navigateToInstructorForm {
-                        if appUser.isInstructor == true {
-                            showCourseSheet = true
-                        } else {
-                            showInstructorSheet = true
-                        }
-                        navigateToInstructorForm = false
-                    }
-                })
-            }
-            .sheet(isPresented: $showCourseSheet) {
-                CourseForm(onComplete: { course in
-                    showCourseSheet = false
-                    router.push(.course(course))
-                })
-            }
-            .task {
-                await loadFeed()
             }
         }
     }
