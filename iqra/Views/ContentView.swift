@@ -41,5 +41,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environment(User())
 //        .modelContainer(for: Item.self, inMemory: true)
 }

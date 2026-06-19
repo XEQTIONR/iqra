@@ -18,6 +18,7 @@ struct MainView: View {
     
     @State private var router = Router()
     @State private var selectedTab = 0
+    @State private var exploreTabBarVisibility = Visibility.visible
 
     var body: some View {
         @Bindable var router = router
@@ -25,14 +26,26 @@ struct MainView: View {
             Tab("Explore", systemImage: "magnifyingglass", value: 0) {
                 NavigationStack(path: $router.path) {
                     ExploreView()
+                        .onAppear { exploreTabBarVisibility = .visible }
                         .navigationDestination(for: Route.self) { route in
                             route.destination
                                 .environment(router)
+                                .onAppear {
+                                    if isCourseRoute(route) {
+                                        exploreTabBarVisibility = .hidden
+                                    }
+                                }
                         }
                 }
+                .toolbar(exploreTabBarVisibility, for: .tabBar)
+                .onChange(of: router.path.count) { _, count in
+                    if count == 0 {
+                        exploreTabBarVisibility = .visible
+                    }
+                }
             }
-            Tab("Calendar", systemImage: "calendar", value: 1) {
-                CalendarView()
+            Tab("Lessons", systemImage: "calendar", value: 1) {
+                ScheduleView()
             }
             Tab("Lessons", systemImage: "graduationcap", value: 2) {
                 MyCoursesView()
@@ -45,6 +58,11 @@ struct MainView: View {
             }
         }
         .environment(router)
+    }
+
+    private func isCourseRoute(_ route: Route) -> Bool {
+        if case .course = route { return true }
+        return false
     }
 }
 
