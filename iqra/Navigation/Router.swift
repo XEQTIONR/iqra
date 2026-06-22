@@ -8,6 +8,7 @@
 import SwiftUI
 
 let COURSES_ENDPOINT = "http://localhost:8000/api/courses"
+let ENROLLMENTS_ENDPOINT = "http://localhost:8000/api/enrollments"
 let FEED_ENDPOINT = "http://localhost:8000/api/feed"
 let INSTRUCTORS_ENDPOINT = "http://localhost:8000/api/instructors"
 let JWT_ENDPOINT = "http://localhost:8000/api/jwt"

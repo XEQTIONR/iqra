@@ -8,7 +8,19 @@
 import SwiftUI
 
 enum Day: String, CaseIterable, Codable, CodingKeyRepresentable, Hashable {
-    case mon, tue, wed, thu, fri, sat, sun
+    case sun, mon, tue, wed, thu, fri, sat
+
+    var calendarWeekday: Int {
+        switch self {
+        case .sun: 1
+        case .mon: 2
+        case .tue: 3
+        case .wed: 4
+        case .thu: 5
+        case .fri: 6
+        case .sat: 7
+        }
+    }
 }
 
 /// A single half-hour slot in the day, identified by the number of minutes

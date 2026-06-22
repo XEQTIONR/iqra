@@ -14,6 +14,7 @@ struct SignupData: Codable {
     var birthday: String
     var gender: String
     var device_name: String
+    var timezone: String
 }
 
 struct SignupResponse: Codable {
@@ -30,17 +31,19 @@ struct SignupView: View {
     @State private var password = ""
     @State private var birthday = Date()
     @State private var gender: Gender? = .male
+    @State private var timezone: String = TimeZone.current.description
     
     
     
     private func signUp() async throws {
-        let signUpData = SignupData (
+        let signUpData = SignupData(
             name: name,
             email: email,
             password: password,
             birthday: String("\(birthday)".split(separator: " ")[0]),
             gender: gender?.rawValue ?? "male",
-            device_name: UIDevice.current.name
+            device_name: UIDevice.current.name,
+            timezone: timezone
         )
         
         let (data, response, ok) = try await RequestService.request(
@@ -112,7 +115,8 @@ struct SignupView: View {
                 "Birthday",
                 selection: $birthday,
                 displayedComponents: [.date]
-            ).environment(\.timeZone, TimeZone(secondsFromGMT: 0)!)
+            )
+            .environment(\.timeZone, TimeZone(secondsFromGMT: 0)!)
             
             HStack(spacing: 30) {
                 Text("Gender")

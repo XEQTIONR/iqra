@@ -45,16 +45,24 @@ struct MainView: View {
                 }
             }
             Tab("Lessons", systemImage: "calendar", value: 1) {
-                ScheduleView()
+                NavigationStack(path: $router.path) {
+                    ScheduleView()
+                }
             }
             Tab("Lessons", systemImage: "graduationcap", value: 2) {
-                MyCoursesView()
+                NavigationStack(path: $router.path) {
+                    MyCoursesView()
+                }
             }
             Tab("Resources", systemImage: "book.pages", value: 3) {
-                IntroView(.constant(ContentSection.intro))
+                NavigationStack(path: $router.path) {
+                    IntroView(.constant(ContentSection.intro))
+                }
             }
             Tab("Settings", systemImage: "gearshape", value: 4) {
-                SettingsView($currentSection)
+                NavigationStack(path: $router.path) {
+                    SettingsView($currentSection)
+                }
             }
         }
         .environment(router)

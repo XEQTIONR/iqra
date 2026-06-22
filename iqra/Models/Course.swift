@@ -33,6 +33,7 @@ struct CourseFormat: Hashable, Codable {
     var lessonsPerWeek: Int
     var price: Double
     var billingCycles: Int?
+    var course: Course?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -43,6 +44,7 @@ struct CourseFormat: Hashable, Codable {
         case lessonsPerWeek = "lessons_per_week"
         case price
         case billingCycles = "billing_cycles"
+        case course
     }
 }
 
@@ -57,7 +59,7 @@ struct Course: Codable, Hashable {
     var lengthType: LengthType
     var ageGroups: [AgeGroup]
     var isPublished: Bool = false
-    var formats: [CourseFormat] = []
+    var formats: [CourseFormat]? = []
     var totalLessons: Int?
     
     enum CodingKeys: String, CodingKey {

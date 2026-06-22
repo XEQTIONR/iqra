@@ -19,6 +19,46 @@ struct Enrollment: Codable {
     var format: CourseFormat?
     var user: User?
     
+    var sessionDates: [Date] {
+        //print("ENROLLMENT:", enrollment)
+        
+        let calendar = Calendar.current
+        let rangeStart = startDate
+        let rangeEnd = endDate
+        let searchStart = calendar.date(byAdding: .second, value: -1, to: rangeStart) ?? rangeStart
+        var sessions: [Date] = []
+        
+        print("Schedule:", schedule)
+        print("Search Start:", searchStart)
+        print("Range State:", rangeStart)
+        print("Range End:", rangeEnd)
+
+        for (day, minutesFromMidnight) in schedule {
+            print("IN LOOP:", day, minutesFromMidnight)
+            var components = DateComponents()
+            components.weekday = day.calendarWeekday
+            components.hour = minutesFromMidnight / 60
+            components.minute = minutesFromMidnight % 60
+            
+            print("COMPONENTS:", components)
+
+            calendar.enumerateDates(
+                startingAfter: searchStart,
+                matching: components,
+                matchingPolicy: .nextTime
+            ) { date, _, stop in
+                guard let date else { return }
+                if calendar.startOfDay(for: date) > rangeEnd {
+                    stop = true
+                    return
+                }
+                sessions.append(date)
+            }
+        }
+
+        return sessions
+    }
+    
     enum CodingKeys: String, CodingKey {
         case id
         case startDate = "start_date"
@@ -81,4 +121,5 @@ struct Enrollment: Codable {
         let endDateString = dateFormatter.string(from: endDate)
         try container.encode(startDateString, forKey: .endDate)
     }
+    
 }

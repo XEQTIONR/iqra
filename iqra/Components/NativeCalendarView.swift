@@ -148,10 +148,14 @@ struct NativeCalendarView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> UICalendarView {
         let calendarView = UICalendarView()
+        let date = Date()
+        let month = Calendar.current.component(.month, from: date)
+        let year = Calendar.current.component(.year, from: date)
         
         calendarView.delegate = context.coordinator
         calendarView.calendar = Calendar.current
         calendarView.fontDesign = .rounded
+        calendarView.setVisibleDateComponents(DateComponents(year: year, month: month), animated: true)
         calendarView.availableDateRange = DateInterval(
             start: Date().addingTimeInterval(-60 * 60 * 24 * 365),
             end: Date().addingTimeInterval(60 * 60 * 24 * 365 * 2)

@@ -20,8 +20,8 @@ let dateFormatter: DateFormatter = {
 struct Availability: Codable {
     var id: Int
     var instructorId: Int
-    var startDate: Date
-    var endDate: Date?  // ← MADE OPTIONAL
+    var startAt: Date
+    var endAt: Date?  // ← MADE OPTIONAL
     var mon: [Int]?
     var tue: [Int]?
     var wed: [Int]?
@@ -48,8 +48,8 @@ struct Availability: Codable {
     enum CodingKeys: String, CodingKey {
         case id
         case instructorId = "instructor_id"
-        case startDate = "start_date"
-        case endDate = "end_date"
+        case startAt = "start_at"
+        case endAt = "end_at"
         case mon
         case tue
         case wed
@@ -74,28 +74,28 @@ struct Availability: Codable {
         sun = try container.decodeIfPresent([Int].self, forKey: .sun)
         
         // Decode start date (required)
-        let startDateString = try container.decode(String.self, forKey: .startDate)
+        let startDateString = try container.decode(String.self, forKey: .startAt)
         guard let startDate = dateFormatter.date(from: startDateString) else {
             throw DecodingError.dataCorruptedError(
-                forKey: .startDate,
+                forKey: .startAt,
                 in: container,
                 debugDescription: "Invalid date format: \(startDateString)"
             )
         }
-        self.startDate = startDate
+        self.startAt = startDate
         
         // Decode end date (optional)
-        if let endDateString = try container.decodeIfPresent(String.self, forKey: .endDate) {
+        if let endDateString = try container.decodeIfPresent(String.self, forKey: .endAt) {
             guard let endDate = dateFormatter.date(from: endDateString) else {
                 throw DecodingError.dataCorruptedError(
-                    forKey: .endDate,
+                    forKey: .endAt,
                     in: container,
                     debugDescription: "Invalid date format: \(endDateString)"
                 )
             }
-            self.endDate = endDate
+            self.endAt = endDate
         } else {
-            self.endDate = nil
+            self.endAt = nil
         }
     }
     
@@ -114,13 +114,13 @@ struct Availability: Codable {
         try container.encodeIfPresent(sun, forKey: .sun)
         
         // Convert start date to string (required)
-        let startDateString = dateFormatter.string(from: startDate)
-        try container.encode(startDateString, forKey: .startDate)
+        let startDateString = dateFormatter.string(from: startAt)
+        try container.encode(startDateString, forKey: .startAt)
         
         // Convert end date to string (optional)
-        if let endDate = endDate {
-            let endDateString = dateFormatter.string(from: endDate)
-            try container.encode(endDateString, forKey: .endDate)
+        if let endDate = endAt {
+            let endDateString = dateFormatter.string(from: endAt!)
+            try container.encode(endDateString, forKey: .endAt)
         }
         // If endDate is nil, don't encode it at all
     }
