@@ -61,11 +61,13 @@ class InstructorSettings: Codable {
     var reading: ReadingLevel = .no
     var speaking: SpeakingLevel = .no
     var writing: WritingLevel = .no
-    var languages: Set<String> = []
     var courseCategories = Set<CourseCategory>()
+    var languages: Set<String> = []
     var titles: Set<Title> = []
-    /// Selected half-hour availability slots per day, stored as minutes from midnight.
     var availability: [Day: Set<Int>] = [:]
+    var startAt: Date = Calendar.current.startOfDay(for: Date())
+    var endAt: Date?
+    var timezone: TimeZone = TimeZone.current
     
     var description: String {
         "InstructorSettings(reading: \(reading.rawValue), speaking: \(speaking.rawValue), writing: \(writing.rawValue))"
@@ -82,6 +84,9 @@ class InstructorSettings: Codable {
         case courseCategories = "course_categories"
         case titles
         case availability
+        case timezone
+        case startAt = "start_at"
+        case endAt = "end_at"
     }
 
     required init(from decoder: Decoder) throws {
@@ -92,7 +97,11 @@ class InstructorSettings: Codable {
         languages = try container.decodeIfPresent(Set<String>.self, forKey: .languages) ?? []
         courseCategories = try container.decodeIfPresent(Set<CourseCategory>.self, forKey: .courseCategories) ?? []
         titles = try container.decodeIfPresent(Set<Title>.self, forKey: .titles) ?? []
-
+        startAt = try container.decode(Date.self, forKey: .startAt)
+        endAt = try container.decodeIfPresent(Date.self, forKey: .endAt)
+        timezone = try TimeZone.init(from: (container.decodeIfPresent(String.self, forKey: .timezone)
+                                            ?? TimeZone.current.identifier) as! Decoder)
+        
         let rawAvailability = try container.decodeIfPresent([String: [Int]].self, forKey: .availability) ?? [:]
         availability = Dictionary(uniqueKeysWithValues: rawAvailability.compactMap { key, value in
             Day(rawValue: key).map { ($0, Set(value)) }
@@ -108,6 +117,9 @@ class InstructorSettings: Codable {
         try container.encode(languages, forKey: .languages)
         try container.encode(courseCategories, forKey: .courseCategories)
         try container.encode(titles, forKey: .titles)
+        try container.encode(timezone.identifier, forKey: .timezone)
+        try container.encode(startAt.ISO8601Format(), forKey: .startAt)
+        try container.encode(endAt?.ISO8601Format() ?? nil, forKey: .endAt)
 
         let availabilityObject = Dictionary(uniqueKeysWithValues: availability.map { ($0.key.rawValue, Array($0.value)) })
         try container.encode(availabilityObject, forKey: .availability)
