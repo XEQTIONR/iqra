@@ -9,8 +9,8 @@ import Foundation
 
 struct Enrollment: Codable {
     var id: Int
-    var startDate: Date
-    var endDate: Date
+    var startAt: Date
+    var endAt: Date
     var price: Double
     var currency: String
     var status: String
@@ -23,8 +23,8 @@ struct Enrollment: Codable {
         //print("ENROLLMENT:", enrollment)
         
         let calendar = Calendar.current
-        let rangeStart = startDate
-        let rangeEnd = endDate
+        let rangeStart = startAt
+        let rangeEnd = endAt
         let searchStart = calendar.date(byAdding: .second, value: -1, to: rangeStart) ?? rangeStart
         var sessions: [Date] = []
         
@@ -61,8 +61,8 @@ struct Enrollment: Codable {
     
     enum CodingKeys: String, CodingKey {
         case id
-        case startDate = "start_date"
-        case endDate = "end_date"
+        case startAt = "start_at"
+        case endAt = "end_at"
         case price
         case currency
         case status
@@ -83,26 +83,26 @@ struct Enrollment: Codable {
         format = try container.decodeIfPresent(CourseFormat.self, forKey: .format)
 
         // Decode start date
-        let startDateString = try container.decode(String.self, forKey: .startDate)
-        guard let startDate = dateFormatter.date(from: startDateString) else {
+        let startDateString = try container.decode(String.self, forKey: .startAt)
+        guard let startAt = dateFormatter.date(from: startDateString) else {
             throw DecodingError.dataCorruptedError(
-                forKey: .startDate,
+                forKey: .startAt,
                 in: container,
                 debugDescription: "Invalid date format: \(startDateString)"
             )
         }
-        self.startDate = startDate
+        self.startAt = startAt
 
         // Decode end date
-        let endDateString = try container.decode(String.self, forKey: .endDate)
-        guard let endDate = dateFormatter.date(from: endDateString) else {
+        let endDateString = try container.decode(String.self, forKey: .endAt)
+        guard let endAt = dateFormatter.date(from: endDateString) else {
             throw DecodingError.dataCorruptedError(
-                forKey: .endDate,
+                forKey: .endAt,
                 in: container,
                 debugDescription: "Invalid date format: \(endDateString)"
             )
         }
-        self.endDate = endDate
+        self.endAt = endAt
     }
     
     func encode(to encoder: Encoder) throws {
@@ -115,11 +115,10 @@ struct Enrollment: Codable {
         try container.encode(length, forKey: .length)
         try container.encode(schedule, forKey: .schedule)
         
-        let startDateString = dateFormatter.string(from: startDate)
-        try container.encode(startDateString, forKey: .startDate)
+        let startDateString = dateFormatter.string(from: startAt)
+        try container.encode(startDateString, forKey: .startAt)
         
-        let endDateString = dateFormatter.string(from: endDate)
-        try container.encode(startDateString, forKey: .endDate)
+        let endDateString = dateFormatter.string(from: endAt)
+        try container.encode(endDateString, forKey: .endAt)
     }
-    
 }

@@ -147,7 +147,7 @@ struct ExploreView: View {
                             if appUser.id == nil {
                                 showLoginSheet = true
                                 navigateToInstructorForm = true
-                            } else if appUser.isInstructor == false {
+                            } else if appUser.isInstructor == false || appUser.isInstructor == nil {
                                 showInstructorSheet = true
                             } else {
                                 showCourseSheet = true

@@ -118,7 +118,7 @@ struct Availability: Codable {
         try container.encode(startDateString, forKey: .startAt)
         
         // Convert end date to string (optional)
-        if let endDate = endAt {
+        if let _ = endAt {
             let endDateString = dateFormatter.string(from: endAt!)
             try container.encode(endDateString, forKey: .endAt)
         }

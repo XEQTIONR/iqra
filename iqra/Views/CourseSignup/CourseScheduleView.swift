@@ -16,6 +16,7 @@ struct CourseScheduleView: View {
     @State private var selectedDay: Day = .mon
     @State private var callingApi: Bool = false
     @State private var openSlots: [Day: [Int]] = [:]
+    @State private var startDate = Calendar.current.startOfDay(for: Date())
 
     private var selectedSlot: Int? {
         schedule[selectedDay]
@@ -27,11 +28,14 @@ struct CourseScheduleView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("Select your timeslot")
+            Text("Schedule")
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .font(.title)
                 .fontWeight(.semibold)
-
+            
+            
+            DatePicker("Start Date", selection: $startDate, displayedComponents: [.date])
+                
             daySelector
                 .padding(.vertical)
 
@@ -41,7 +45,8 @@ struct CourseScheduleView: View {
                 CourseSignupConfirmView(
                     format: format,
                     course: course,
-                    schedule: schedule
+                    schedule: schedule,
+                    startDate: startDate
                 )
             } label: {
                 Text(slotsSelected ? "Continue" : "Select timeslots")

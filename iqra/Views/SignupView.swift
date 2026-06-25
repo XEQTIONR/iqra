@@ -60,6 +60,7 @@ struct SignupView: View {
             let res = try JSONDecoder().decode(SignupResponse.self, from: data)
             print(res.token)
             print(res.user)
+            UserDefaults.standard.set(res.token, forKey: "api_token")
             appUser.update(from: res.user)
             
         } else {
