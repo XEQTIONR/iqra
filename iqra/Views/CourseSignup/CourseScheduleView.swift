@@ -15,7 +15,7 @@ struct CourseScheduleView: View {
     @State private var schedule : [Day: Int] = [:]
     @State private var selectedDay: Day = .mon
     @State private var callingApi: Bool = false
-    @State private var openSlots: [Day: [Int]] = [:]
+    @State private var openSlots: [Day: [Date]] = [:]
     @State private var startDate = Calendar.current.startOfDay(for: Date())
 
     private var selectedSlot: Int? {
@@ -51,9 +51,6 @@ struct CourseScheduleView: View {
             } label: {
                 Text(slotsSelected ? "Continue" : "Select timeslots")
             }
-//            Button(slotsSelected ? "Continue" : "Select timeslots") {
-//                
-//            }
             .disabled(!slotsSelected)
             .padding(.vertical)
         }
@@ -74,9 +71,7 @@ struct CourseScheduleView: View {
                     
                     if ok {
                         let availability = try RequestService.apiUnwrapCollection(type: Availability.self, from: data)
-                        print("availability:", availability)
-                        print("availability:", availability[0].toDictionary)
-                        openSlots = availability[0].toDictionary
+                        openSlots = availability[0].toDictWithTZ()
                     } else {
                         // error handle
                     }
@@ -87,7 +82,6 @@ struct CourseScheduleView: View {
                     print(error)
                 }
             }
-            
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal)
@@ -147,13 +141,10 @@ struct CourseScheduleView: View {
         ScrollView {
             VStack(spacing: 4) {
                 ForEach(TimeSlot.all) { slot in
+                    let isOpen = isSlotOpen(slot, on: selectedDay)
                     let isSelected = selectedSlot == slot.minutesFromMidnight
-                    let available =
-                        (openSlots[selectedDay]?.contains(slot.minutesFromMidnight) ?? false)
-                    && (format.lessonsPerWeek > schedule.count)
-                    
-                    
-                    if (openSlots[selectedDay]?.contains(slot.minutesFromMidnight) ?? false) {
+
+                    if isOpen {
                         Button {
                             toggle(slot)
                         } label: {
@@ -162,7 +153,7 @@ struct CourseScheduleView: View {
                                     .font(.subheadline)
                                     .monospacedDigit()
                                     .foregroundStyle(isSelected ? Color.white : Color.primary)
-                                    .strikethrough(!available && !isSelected)
+
                                 Spacer()
                                 if isSelected {
                                     Image(systemName: "checkmark.circle.fill")
@@ -175,14 +166,21 @@ struct CourseScheduleView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                         .buttonStyle(.plain)
-                        .disabled(!available && !isSelected)
+                        .disabled(!isSelected && schedule.count >= format.lessonsPerWeek)
                     }
-                    
-                    
                 }
             }
             .padding(.bottom)
         }
+    }
+
+    private func isSlotOpen(_ slot: TimeSlot, on day: Day) -> Bool {
+        openSlots[day]?.contains { minutesFromMidnight(for: $0) == slot.minutesFromMidnight } ?? false
+    }
+
+    private func minutesFromMidnight(for date: Date) -> Int {
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        return Int(date.timeIntervalSince(startOfDay) / 60)
     }
 
     private func toggle(_ slot: TimeSlot) {

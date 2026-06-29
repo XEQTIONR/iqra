@@ -21,22 +21,20 @@ struct InstructorFormCompleteView: View {
             Text("Creating your instructor profile...")
         }
         .onAppear {
-            guard !ProcessInfo.isRunningInPreview else {
-                return
-            }
+            guard !ProcessInfo.isRunningInPreview else { return }
+
             Task {
                 do {
+                    settings.startAt = Calendar.current.startOfDay(for: Date())
+                    
                     let settingsJson = try JSONEncoder().encode(settings)
                     
-                    print("settingsJson", settingsJson)
+                    
+                    print(RequestService.authJsonHeaders)
                     let (data, response, ok) = try await RequestService.request(
                         INSTRUCTORS_ENDPOINT,
                         method: "POST",
-                        headers: [
-                            "Content-Type": "application/json",
-                            "Accept": "application/json",
-                            "Authorization": "Bearer \(UserDefaults.standard.string(forKey: "api_token") ?? "")"
-                        ],
+                        headers: RequestService.authJsonHeaders,
                         body: settingsJson,
                     )
                     

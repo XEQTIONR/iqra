@@ -7,6 +7,12 @@
 
 import Foundation
 
+
+let MINS_PER_HR = 60
+let SECS_PER_MIN = 60
+let SECS_PER_HR = MINS_PER_HR * SECS_PER_MIN
+let DAYS_PER_WEEK = 7
+
 // First, create a date formatter that can handle your date format
 let dateFormatter: DateFormatter = {
     let formatter = DateFormatter()
@@ -22,6 +28,7 @@ struct Availability: Codable {
     var instructorId: Int
     var startAt: Date
     var endAt: Date?  // ← MADE OPTIONAL
+    var timezone: TimeZone
     var mon: [Int]?
     var tue: [Int]?
     var wed: [Int]?
@@ -29,6 +36,21 @@ struct Availability: Codable {
     var fri: [Int]?
     var sat: [Int]?
     var sun: [Int]?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case instructorId = "instructor_id"
+        case startAt = "start_at"
+        case endAt = "end_at"
+        case timezone
+        case mon
+        case tue
+        case wed
+        case thu
+        case fri
+        case sat
+        case sun
+    }
     
     public var toDictionary: [Day: [Int]] {
         var dict : [Day: [Int]] = [:]
@@ -45,18 +67,55 @@ struct Availability: Codable {
         return dict
     }
     
-    enum CodingKeys: String, CodingKey {
-        case id
-        case instructorId = "instructor_id"
-        case startAt = "start_at"
-        case endAt = "end_at"
-        case mon
-        case tue
-        case wed
-        case thu
-        case fri
-        case sat
-        case sun
+    public func toDictWithTZ() -> [Day: [Date]] {
+        
+        var calendar = Calendar.current
+        calendar.timeZone = timezone
+        
+        var all: [Day: [Date]] = [:]
+        var allDates: [Date] = []
+        var all2: [Day: [Date]] = [:]
+        
+        let components = calendar.dateComponents([.year, .month, .day, .weekday], from: startAt)
+        let dayIndex = components.weekday!
+        
+        calendar.timeZone = TimeZone.current
+        for (day, mins) in toDictionary {
+            let index = day.calendarWeekday
+            let delta = index - dayIndex
+            print("\(index), \(delta)")
+            var date = calendar.date(byAdding: .day, value: delta, to: startAt)!
+            
+            if delta < 0 {
+                date = calendar.date(byAdding: .day, value: DAYS_PER_WEEK, to: date)!
+            }
+            
+            let slots: [Date] = mins.map{ calendar.date(byAdding: .minute, value: $0, to: date)! }
+            
+            for slot in slots {
+                
+                let comps = calendar.dateComponents([.weekday], from: slot)
+                
+                let d = Day.allCases.first(where: { $0.calendarWeekday == comps.weekday })!
+                
+                allDates.append(slot)
+                
+                all[d, default: []].append(slot)
+                
+                
+                let c = calendar.dateComponents([.weekday], from: slot)
+                let e = Day.allCases.first(where: { $0.calendarWeekday == c.weekday })!
+                
+                all2[e, default: []].append(slot)
+            }
+        }
+        
+        //print("ALL DATES: ", allDates)
+        //print("DATES:", all)
+        //print("SLOTTED DATES:", all2)
+        
+        
+        return all2
     }
     
     // Custom decoding to handle the date strings
@@ -97,6 +156,17 @@ struct Availability: Codable {
         } else {
             self.endAt = nil
         }
+        
+        do {
+            let tzStr = try container.decode(String.self, forKey: .timezone)
+            timezone = TimeZone(identifier: tzStr)!
+        } catch {
+            throw DecodingError.dataCorruptedError(
+                forKey: .timezone,
+                in: container,
+                debugDescription: "Invalid timezone")
+        }
+        
     }
     
     // Custom encoding to convert Date back to string
@@ -123,5 +193,7 @@ struct Availability: Codable {
             try container.encode(endDateString, forKey: .endAt)
         }
         // If endDate is nil, don't encode it at all
+        
+        try container.encode(timezone.identifier, forKey: .timezone)
     }
 }

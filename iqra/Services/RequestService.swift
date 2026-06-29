@@ -49,6 +49,10 @@ class RequestService {
         
     ) async throws -> (Data, URLResponse, Bool) {
         
+        print("Endpoint: \(url)")
+        print("Request headers:")
+        print(headers)
+        
         var request = URLRequest(url: URL(string: url)!)
         request.httpMethod = method
         

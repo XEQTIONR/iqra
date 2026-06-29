@@ -20,8 +20,7 @@ struct Enrollment: Codable {
     var user: User?
     
     var sessionDates: [Date] {
-        //print("ENROLLMENT:", enrollment)
-        
+
         let calendar = Calendar.current
         let rangeStart = startAt
         let rangeEnd = endAt
