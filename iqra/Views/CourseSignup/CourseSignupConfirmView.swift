@@ -95,6 +95,7 @@ struct CourseSignupConfirmView: View {
             unit: .lesson,
             lessonLength: 60,
             lessonsPerWeek: 2,
+            totalLessons: 10,
             price: 100,
             billingCycles: 4
         ),

@@ -13,27 +13,43 @@ struct CourseFormatForm: View {
     @Binding var videoUrl: URL?
     @Binding var image: UIImage?
     var onComplete: ((_ course: Course) -> Void)? = nil
-    @State private var options: [CourseFormat] = [
-        CourseFormat(
-            title: "1 day trial",
-            description: "Try our 1 day trial",
-            unit: .lesson,
-            lessonLength: 60,
-            lessonsPerWeek: 1,
-            price: 0,
-            billingCycles: 1
-        ),
-        
-        CourseFormat(
-            title: "Weekly",
-            description: "2 classes a week",
-            unit: .week,
-            lessonLength: 60,
-            lessonsPerWeek: 2,
-            price: 0,
-            billingCycles: 0
-        ),
-    ]
+    @State private var options: [CourseFormat]
+
+    init(
+        formData: Binding<Course>,
+        videoUrl: Binding<URL?>,
+        image: Binding<UIImage?>,
+        onComplete: ((_ course: Course) -> Void)? = nil
+    ) {
+        self._formData = formData
+        self._videoUrl = videoUrl
+        self._image = image
+        self.onComplete = onComplete
+
+        let totalLessons = formData.wrappedValue.lengthType == .fixed ? 10 : 0
+        self._options = State(initialValue: [
+            CourseFormat(
+                title: "1 day trial",
+                description: "Try our 1 day trial",
+                unit: .lesson,
+                lessonLength: 60,
+                lessonsPerWeek: 1,
+                totalLessons: 1,
+                price: 0,
+                billingCycles: 1
+            ),
+            CourseFormat(
+                title: "Weekly",
+                description: "2 classes a week",
+                unit: .week,
+                lessonLength: 60,
+                lessonsPerWeek: 2,
+                totalLessons: totalLessons,
+                price: 0,
+                billingCycles: 0
+            ),
+        ])
+    }
     
     private var continueRow: some View {
         Button("Save") {
@@ -111,6 +127,10 @@ struct CourseFormatForm: View {
 
             Stepper("Lesson length: \(options[index].lessonLength) min", value: $options[index].lessonLength, in: 0...240, step: 15)
             Stepper("Classes per week: \(options[index].lessonsPerWeek)", value: $options[index].lessonsPerWeek, in: 0...14)
+            
+            if formData.lengthType == .fixed {
+                Stepper("Total lessons: \(options[index].totalLessons)", value: $options[index].totalLessons, in: 0...100, step: 1)
+            }
 
             HStack {
                 Text("Price")
@@ -138,6 +158,7 @@ struct CourseFormatForm: View {
                 unit: .week,
                 lessonLength: 60,
                 lessonsPerWeek: 1,
+                totalLessons: formData.lengthType == .fixed ? 10 : 0,
                 price: 0,
                 billingCycles: 1
             )

@@ -68,6 +68,7 @@ struct Enrollment: Codable {
         case length
         case schedule
         case format
+        case user
     }
     
     init(from decoder: Decoder) throws {
@@ -80,6 +81,7 @@ struct Enrollment: Codable {
         length = try container.decode(Int.self, forKey: .length)
         schedule = try container.decode([Day: Int].self, forKey: .schedule)
         format = try container.decodeIfPresent(CourseFormat.self, forKey: .format)
+        user = try container.decodeIfPresent(User.self, forKey: .user)
 
         // Decode start date
         let startDateString = try container.decode(String.self, forKey: .startAt)

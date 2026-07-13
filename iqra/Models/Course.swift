@@ -25,15 +25,16 @@ enum LengthType: String, CaseIterable, Codable, Hashable {
 }
 
 struct CourseFormat: Hashable, Codable {
-    var id: Int?
+    var id: Int? = nil
     var title: String
     var description: String
     var unit: BillingUnit
     var lessonLength: Int
     var lessonsPerWeek: Int
+    var totalLessons: Int
     var price: Double
-    var billingCycles: Int?
-    var course: Course?
+    var billingCycles: Int? = nil
+    var course: Course? = nil
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -42,6 +43,7 @@ struct CourseFormat: Hashable, Codable {
         case unit
         case lessonLength = "lesson_length"
         case lessonsPerWeek = "lessons_per_week"
+        case totalLessons = "total_lessons"
         case price
         case billingCycles = "billing_cycles"
         case course

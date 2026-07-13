@@ -200,6 +200,7 @@ struct CourseScheduleView: View {
             unit: .lesson,
             lessonLength: 60,
             lessonsPerWeek: 2,
+            totalLessons: 10,
             price: 50.0,
             billingCycles: 10
         ),
@@ -219,6 +220,7 @@ struct CourseScheduleView: View {
                 unit: .lesson,
                 lessonLength: 60,
                 lessonsPerWeek: 2,
+                totalLessons: 10,
                 price: 50.0,
                 billingCycles: 10
             )],
