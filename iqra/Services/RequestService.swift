@@ -23,11 +23,13 @@ class RequestService {
         "Accept": "application/json"
     ]
     
-    public static let authJsonHeaders : [String: String] = [
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Authorization": "Bearer \(UserDefaults.standard.string(forKey: "api_token") ?? "")"
-    ]
+    public static var authJsonHeaders: [String: String] {
+        [
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": "Bearer \(UserDefaults.standard.string(forKey: "api_token") ?? "")"
+        ]
+    }
     
     public static func getMimeType(from url: URL) -> String {
         let pathExtension = url.pathExtension
@@ -52,6 +54,8 @@ class RequestService {
         print("Endpoint: \(url)")
         print("Request headers:")
         print(headers)
+        print("Body:")
+        print(body == nil ? "NIL" : String(data: body!, encoding: .utf8))
         
         var request = URLRequest(url: URL(string: url)!)
         request.httpMethod = method
@@ -68,6 +72,8 @@ class RequestService {
         
         
         let (data, response)  = try await URLSession.shared.data(for: request)
+        
+        print(String(data:data, encoding: .utf8)!)
         
         let httpResponse = response as! HTTPURLResponse
         let isSuccess = httpResponse.statusCode >= 200 && httpResponse.statusCode < 300
