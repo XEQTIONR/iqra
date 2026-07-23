@@ -54,36 +54,52 @@ struct CourseSignupConfirmView: View {
     var schedule: [Day: Int]
     var startDate: Date
     
+    @State private var showToast = false
+    @State private var toastMessage = ""
     
     var body: some View {
-        Text("This is it!")
-        
-        Button("Submit") {
-            print("format:", format.id!)
-            print("schedule:", schedule)
-            
-            let input = EnrollmentFormData(schedule: schedule, startAt: startDate)
-            
-            Task {
-                let (data, _, ok) = try await RequestService.request(
-                    "http://localhost:8000/api/enrollments/\(format.id!)",
-                    method: "POST",
-                    headers: RequestService.authJsonHeaders,
-                    body: try JSONEncoder().encode(input)
-                )
+        VStack {
+            Text("This is it!")
+            Button("Submit") {
+                print("format:", format.id!)
+                print("schedule:", schedule)
                 
-                print ("ok:", ok)
-                print("API RESPONSE DATA:")
-                print(String(data: data, encoding: .utf8)!)
+                let input = EnrollmentFormData(schedule: schedule, startAt: startDate)
                 
-                do {
-                    let enrollment = try RequestService.apiUnwrapData(type: Enrollment.self, from: data)
-                    print("enrollment:", enrollment)
-                } catch {
-                    print("ERROR:", error)
+                Task {
+                    let (data, _, ok) = try await RequestService.request(
+                        "http://localhost:8000/api/enrollments/\(format.id!)",
+                        method: "POST",
+                        headers: RequestService.authJsonHeaders,
+                        body: try JSONEncoder().encode(input)
+                    )
+                    
+                    print ("ok:", ok)
+                    print("API RESPONSE DATA:")
+                    print(String(data: data, encoding: .utf8)!)
+                    
+                    do {
+                        let enrollment = try RequestService.apiUnwrapData(type: Enrollment.self, from: data)
+                        print("enrollment:", enrollment)
+                        await MainActor.run {
+                            toastMessage = "Enrollment successful"
+                            withAnimation {
+                                showToast = true
+                            }
+                        }
+                    } catch {
+                        print("ERROR:", error)
+                        await MainActor.run {
+                            toastMessage = "Enrollment failed"
+                            withAnimation {
+                                showToast = true
+                            }
+                        }
+                    }
                 }
             }
         }
+        .toast(isShowing: $showToast, message: toastMessage)
     }
 }
 

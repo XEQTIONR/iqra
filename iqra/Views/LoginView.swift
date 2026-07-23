@@ -66,6 +66,7 @@ struct LoginView: View {
     
     var body: some View {
         @Bindable var router = router
+        
         return NavigationStack(path: $router.path) {
             VStack(spacing: 25){
                 Text("Login!")
@@ -95,6 +96,7 @@ struct LoginView: View {
                     .environment(router)
             }
         }
+        
         .environment(router)
     }
 }
