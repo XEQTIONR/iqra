@@ -11,10 +11,12 @@ import SwiftUI
 struct EnrollmentFormData: Codable {
     var schedule: [Day: Int]
     var startAt: Date
+    var endAt: Date? = nil
     
     enum CodingKeys: String, CodingKey {
         case schedule
         case startAt = "start_at"
+        case endAt = "end_at"
     }
     
     func encode(to encoder: Encoder) throws {
@@ -22,11 +24,13 @@ struct EnrollmentFormData: Codable {
         
         try container.encode(schedule, forKey: .schedule)
         try container.encode(dateFormatter.string(from: startAt), forKey: .startAt)
+        try container.encodeIfPresent((endAt != nil) ? dateFormatter.string(from: endAt!) : nil, forKey: .endAt)
     }
     
-    init (schedule: [Day: Int], startAt: Date) {
+    init (schedule: [Day: Int], startAt: Date, endAt: Date? = nil) {
         self.schedule = schedule
         self.startAt = startAt
+        self.endAt = endAt
     }
     
     init(from decoder: Decoder) throws {
@@ -44,6 +48,20 @@ struct EnrollmentFormData: Codable {
             )
         }
         startAt = startDate
+        
+        let endDateString = try container.decodeIfPresent(String.self, forKey: .endAt)
+        
+        if endDateString != nil {
+            guard let endDate = dateFormatter.date(from: endDateString!) else {
+                throw DecodingError.dataCorruptedError(
+                    forKey: .endAt,
+                    in: container,
+                    debugDescription: "Invalid date format: \(endDateString!)"
+                )
+            }
+            self.endAt = endDate
+        }
+        
     }
 }
 
@@ -53,6 +71,7 @@ struct CourseSignupConfirmView: View {
     var course: Course
     var schedule: [Day: Int]
     var startDate: Date
+    var endDate: Date?
     
     @State private var showToast = false
     @State private var toastMessage = ""
@@ -67,20 +86,21 @@ struct CourseSignupConfirmView: View {
                 let input = EnrollmentFormData(schedule: schedule, startAt: startDate)
                 
                 Task {
-                    let (data, _, ok) = try await RequestService.request(
-                        "http://localhost:8000/api/enrollments/\(format.id!)",
-                        method: "POST",
-                        headers: RequestService.authJsonHeaders,
-                        body: try JSONEncoder().encode(input)
-                    )
-                    
-                    print ("ok:", ok)
-                    print("API RESPONSE DATA:")
-                    print(String(data: data, encoding: .utf8)!)
-                    
                     do {
+                        let (data, _, ok) = try await RequestService.request(
+                            "http://localhost:8000/api/enrollments/\(format.id!)",
+                            method: "POST",
+                            headers: RequestService.authJsonHeaders,
+                            body: try JSONEncoder().encode(input)
+                        )
+                        
+                        print ("ok:", ok)
+                        print("API RESPONSE DATA:")
+                        print(String(data: data, encoding: .utf8)!)
+                    
+                    
                         let enrollment = try RequestService.apiUnwrapData(type: Enrollment.self, from: data)
-                        print("enrollment:", enrollment)
+
                         await MainActor.run {
                             toastMessage = "Enrollment successful"
                             withAnimation {

@@ -49,7 +49,7 @@ struct MainView: View {
                     ScheduleView()
                 }
             }
-            Tab("Lessons", systemImage: "graduationcap", value: 2) {
+            Tab("My Courses", systemImage: "graduationcap", value: 2) {
                 NavigationStack(path: $router.path) {
                     MyCoursesView()
                 }

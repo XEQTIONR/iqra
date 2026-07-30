@@ -15,6 +15,11 @@ struct NativeCalendarView: UIViewRepresentable {
     let canDeselectDate: ((Date) -> Bool)?
     let onSelectDate: ((Date) -> Void)?
     let onDeselectDate: ((Date) -> Void)?
+    let onPageChange: ((DateComponents) -> Void)?
+    
+    private var month: Int?
+    private var year: Int?
+    private var date: Date
     
     private let selection: Selection
 
@@ -23,13 +28,15 @@ struct NativeCalendarView: UIViewRepresentable {
         case multiple(Binding<Set<Date>>)
     }
     
+    // single selection 
     init(
         selectedDate: Binding<Date?>,
         events: Binding<[Date]>,
         canSelectDate: ((Date) -> Bool)?,
         canDeselectDate: ((Date) -> Bool)?,
         onSelectDate: ((Date) -> Void)?,
-        onDeselectDate: ((Date) -> Void)?
+        onDeselectDate: ((Date) -> Void)?,
+        onPageChange: ((DateComponents) -> Void)?
     
     ) {
         self.selection = .single(selectedDate)
@@ -37,7 +44,14 @@ struct NativeCalendarView: UIViewRepresentable {
         self.canDeselectDate = canDeselectDate
         self.onSelectDate = onSelectDate
         self.onDeselectDate = onDeselectDate
+        self.onPageChange = onPageChange
         self._events = events
+        
+        let date = selectedDate.wrappedValue ?? Date()
+        
+        self.date = date
+        self.month = Calendar.current.component(.month, from: date)
+        self.year = Calendar.current.component(.year, from: date)
     }
     
     
@@ -53,7 +67,8 @@ struct NativeCalendarView: UIViewRepresentable {
             canSelectDate: canSelectDate,
             canDeselectDate: canDeselectDate,
             onSelectDate: nil,
-            onDeselectDate: nil
+            onDeselectDate: nil,
+            onPageChange: nil
         )
     }
     
@@ -61,7 +76,8 @@ struct NativeCalendarView: UIViewRepresentable {
         selectedDate: Binding<Date?>,
         events: Binding<[Date]>,
         onSelectDate: ((Date) -> Void)?,
-        onDeselectDate: ((Date) -> Void)?
+        onDeselectDate: ((Date) -> Void)?,
+        onPageChange: ((DateComponents) -> Void)?
     
     ) {
         self.init(
@@ -70,7 +86,8 @@ struct NativeCalendarView: UIViewRepresentable {
             canSelectDate: nil,
             canDeselectDate: nil,
             onSelectDate: onSelectDate,
-            onDeselectDate: onDeselectDate
+            onDeselectDate: onDeselectDate,
+            onPageChange: onPageChange
         )
     }
     
@@ -86,6 +103,7 @@ struct NativeCalendarView: UIViewRepresentable {
         )
     }
 
+    // multiple selection
     init(
         selectedDates: Binding<Set<Date>>,
         events: Binding<[Date]>,
@@ -99,7 +117,13 @@ struct NativeCalendarView: UIViewRepresentable {
         self.canDeselectDate = canDeselectDate
         self.onSelectDate = onSelectDate
         self.onDeselectDate = onDeselectDate
+        self.onPageChange = nil
         self._events = events
+        
+        let date = Date()
+        self.date = date
+        self.month = Calendar.current.component(.month, from: date)
+        self.year = Calendar.current.component(.year, from: date)
     }
     
     init(
@@ -145,12 +169,28 @@ struct NativeCalendarView: UIViewRepresentable {
             canDeselectDate: nil,
         )
     }
+    
+    
+    mutating func setMonthAndYear(_ toMonthAndYear: DateComponents?) {
+        guard let toMonthAndYear else { return }
+        
+        month = toMonthAndYear.month
+        year = toMonthAndYear.year
+        
+        onPageChange!(DateComponents(year: year, month: month))
+    }
+    
+    mutating func setMonth(_ toMonth: Int?) {
+        month = toMonth
+    }
+    
+    mutating func setYear(_ toYear: Int?) {
+        year = toYear
+    }
 
     func makeUIView(context: Context) -> UICalendarView {
         let calendarView = UICalendarView()
-        let date = Date()
-        let month = Calendar.current.component(.month, from: date)
-        let year = Calendar.current.component(.year, from: date)
+        
         
         calendarView.delegate = context.coordinator
         calendarView.calendar = Calendar.current
@@ -175,9 +215,10 @@ struct NativeCalendarView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: UICalendarView, context: Context) {
+        print("updateUIView")
         context.coordinator.parent = self
         syncSelection(in: uiView)
-
+        
         let dateComponents = events.map {
             Calendar.current.dateComponents([.year, .month, .day], from: $0)
         }
@@ -185,6 +226,7 @@ struct NativeCalendarView: UIViewRepresentable {
     }
 
     private func syncSelection(in calendarView: UICalendarView) {
+        print("syncSelection")
         switch selection {
         case .single(let binding):
             guard let singleSelection = calendarView.selectionBehavior as? UICalendarSelectionSingleDate else { return }
@@ -223,6 +265,11 @@ struct NativeCalendarView: UIViewRepresentable {
                 return .default(color: .blue, size: .small)
             }
             return nil
+        }
+        
+        func calendarView(_ calendarView: UICalendarView, didChangeVisibleDateComponentsFrom previousDateComponents: DateComponents) {
+            let components = DateComponents(year: calendarView.visibleDateComponents.year, month: calendarView.visibleDateComponents.month)
+            parent.setMonthAndYear(components)
         }
 
         func dateSelection(_ selection: UICalendarSelectionSingleDate, canSelectDate dateComponents: DateComponents?) -> Bool {

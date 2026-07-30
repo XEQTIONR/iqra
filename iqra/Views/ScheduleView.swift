@@ -13,17 +13,23 @@ struct ScheduleView: View {
     @State private var eventDates: [Date] = []
     @State private var selectedDate: Date?
     
+    @State private var startDate: Date?
+    @State private var endDate: Date?
+    
     let calendar = Calendar.current
     
-    var selectedEnrollments: [Enrollment] {
-        guard let selectedDate else { return [] }
+    var currentEnrollments: [[Date]] {
+        let things = enrollments.map{ $0.sessionDates(
+            start: startDate ?? $0.startAt,
+            end: endDate ?? $0.endAt ?? Calendar.current.date(byAdding: .month, value: 1, to: $0.startAt)!
+        ) }
         
-        return enrollments.filter { $0.sessionDates.contains(selectedDate) }
+        return things
     }
+    
     
     @ViewBuilder
     private var classList: some View {
-        
         ForEach(eventDates, id: \.self) { date in
             Text(date.description)
         }
@@ -53,12 +59,20 @@ struct ScheduleView: View {
                     events: $eventDates,
                     onSelectDate: { date in
                         selectedDate = date
-                        print("SELECTED:", selectedDate)
                     },
-                    onDeselectDate: { _ in selectedDate = nil }
+                    onDeselectDate: { _ in selectedDate = nil },
+                    onPageChange: {
+                        let date = Calendar.current.date(from: $0)!
+                        
+                        startDate = date
+                        endDate = Calendar.current.date(byAdding: .month, value: 1, to: date)
+                        eventDates = currentEnrollments.flatMap { $0 }
+    
+                    }
                 )
-                .frame(width: 350, height: 450)
+                .padding(.horizontal)
                 
+                Divider()
                 classList
             }
             .task {
@@ -69,20 +83,26 @@ struct ScheduleView: View {
 
     private func loadEnrollments() async {
         do {
-            
-            guard !ProcessInfo.isRunningInPreview else {
-                return
-            }
+            print("load enrollments")
+            guard !ProcessInfo.isRunningInPreview else { return }
             
             let (data, _, ok) = try await RequestService.request(
                 ENROLLMENTS_ENDPOINT,
                 headers: RequestService.authJsonHeaders
             )
+            
             guard ok else { return }
 
-            enrollments = try RequestService.apiUnwrapCollection(type: Enrollment.self, from: data)
-            eventDates = enrollments.flatMap { $0.sessionDates }
-            print ("enrollments:", enrollments)
+            enrollments = try RequestService
+                .apiUnwrapCollection(type: Enrollment.self, from: data)
+                .map {
+                    var local = $0
+                    local.endAt = Date()
+                    return local
+                }
+            
+            eventDates = enrollments.flatMap{ $0.sessionDates(start: $0.startAt, end: endDate) }
+            
             print("Event Dates:", eventDates)
         } catch {
             print(error)

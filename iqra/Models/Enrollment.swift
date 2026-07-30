@@ -10,7 +10,7 @@ import Foundation
 struct Enrollment: Codable {
     var id: Int
     var startAt: Date
-    var endAt: Date
+    var endAt: Date?
     var price: Double
     var currency: String
     var status: String
@@ -18,45 +18,6 @@ struct Enrollment: Codable {
     var schedule: [Day: Int]
     var format: CourseFormat?
     var user: User?
-    
-    var sessionDates: [Date] {
-
-        let calendar = Calendar.current
-        let rangeStart = startAt
-        let rangeEnd = endAt
-        let searchStart = calendar.date(byAdding: .second, value: -1, to: rangeStart) ?? rangeStart
-        var sessions: [Date] = []
-        
-        print("Schedule:", schedule)
-        print("Search Start:", searchStart)
-        print("Range State:", rangeStart)
-        print("Range End:", rangeEnd)
-
-        for (day, minutesFromMidnight) in schedule {
-            print("IN LOOP:", day, minutesFromMidnight)
-            var components = DateComponents()
-            components.weekday = day.calendarWeekday
-            components.hour = minutesFromMidnight / 60
-            components.minute = minutesFromMidnight % 60
-            
-            print("COMPONENTS:", components)
-
-            calendar.enumerateDates(
-                startingAfter: searchStart,
-                matching: components,
-                matchingPolicy: .nextTime
-            ) { date, _, stop in
-                guard let date else { return }
-                if calendar.startOfDay(for: date) > rangeEnd {
-                    stop = true
-                    return
-                }
-                sessions.append(date)
-            }
-        }
-
-        return sessions
-    }
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -94,16 +55,19 @@ struct Enrollment: Codable {
         }
         self.startAt = startAt
 
-        // Decode end date
-        let endDateString = try container.decode(String.self, forKey: .endAt)
-        guard let endAt = dateFormatter.date(from: endDateString) else {
-            throw DecodingError.dataCorruptedError(
-                forKey: .endAt,
-                in: container,
-                debugDescription: "Invalid date format: \(endDateString)"
-            )
+        // Decode end date (optional / null)
+        if let endDateString = try container.decodeIfPresent(String.self, forKey: .endAt) {
+            guard let endDate = dateFormatter.date(from: endDateString) else {
+                throw DecodingError.dataCorruptedError(
+                    forKey: .endAt,
+                    in: container,
+                    debugDescription: "Invalid date format: \(endDateString)"
+                )
+            }
+            self.endAt = endDate
+        } else {
+            self.endAt = nil
         }
-        self.endAt = endAt
     }
     
     func encode(to encoder: Encoder) throws {
@@ -119,7 +83,50 @@ struct Enrollment: Codable {
         let startDateString = dateFormatter.string(from: startAt)
         try container.encode(startDateString, forKey: .startAt)
         
-        let endDateString = dateFormatter.string(from: endAt)
-        try container.encode(endDateString, forKey: .endAt)
+        if let endAt {
+            try container.encode(dateFormatter.string(from: endAt), forKey: .endAt)
+        }
+    }
+    
+    func sessionDates(start: Date?, end: Date?) -> [Date] {
+
+        let calendar = Calendar.current
+        let rangeStart = start ?? Date()
+        let rangeEnd = end ?? endAt ?? calendar.date(byAdding: .month, value: 1, to: rangeStart)
+        let searchStart = calendar.date(byAdding: .second, value: -1, to: rangeStart) ?? rangeStart
+        var sessions: [Date] = []
+        
+        for (day, minutesFromMidnight) in schedule {
+            print("IN LOOP:", day, minutesFromMidnight)
+            var components = DateComponents()
+            components.weekday = day.calendarWeekday
+            components.hour = minutesFromMidnight / 60
+            components.minute = minutesFromMidnight % 60
+
+            calendar.enumerateDates(
+                startingAfter: searchStart,
+                matching: components,
+                matchingPolicy: .nextTime
+            ) { date, _, stop in
+                guard let date else { return }
+                
+                if date >= startAt {
+                    if rangeEnd == nil {
+                        if date > calendar.date(byAdding: .month, value: 1, to: rangeStart)! {
+                            stop = true
+                            return
+                        }
+                    }
+                    
+                    else if calendar.startOfDay(for: date) > rangeEnd! {
+                        stop = true
+                        return
+                    }
+                    sessions.append(date)
+                }
+            }
+        }
+
+        return sessions.sorted()
     }
 }
