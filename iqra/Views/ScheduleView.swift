@@ -50,7 +50,7 @@ struct ScheduleView: View {
             Text(selectedDate!.description)
                 .foregroundStyle(.blue)
             
-            if eventDates.contains(selectedDate!) {
+            if eventDates.contains(where: { calendar.isDate($0, inSameDayAs: selectedDate!) }) {
                 ForEach(enrollments, id: \.self.id) { enrollment in
                     VStack(spacing: 20) {
                         Text(enrollment.format!.course!.title)
