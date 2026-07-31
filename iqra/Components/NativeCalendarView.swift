@@ -17,9 +17,9 @@ struct NativeCalendarView: UIViewRepresentable {
     let onDeselectDate: ((Date) -> Void)?
     let onPageChange: ((DateComponents) -> Void)?
     
-    private var month: Int?
-    private var year: Int?
-    private var date: Date
+    private let month: Int?
+    private let year: Int?
+    private let date: Date
     
     private let selection: Selection
 
@@ -171,21 +171,17 @@ struct NativeCalendarView: UIViewRepresentable {
     }
     
     
-    mutating func setMonthAndYear(_ toMonthAndYear: DateComponents?) {
-        guard let toMonthAndYear else { return }
-        
-        month = toMonthAndYear.month
-        year = toMonthAndYear.year
-        
-        onPageChange!(DateComponents(year: year, month: month))
+    /// Reduces components to just year/month/day so that values produced here can be
+    /// compared against the ones `UICalendarView` hands back, which also carry
+    /// `era`, `calendar` and `timeZone`.
+    private static func dayComponents(of date: Date) -> DateComponents {
+        let components = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        return DateComponents(year: components.year, month: components.month, day: components.day)
     }
-    
-    mutating func setMonth(_ toMonth: Int?) {
-        month = toMonth
-    }
-    
-    mutating func setYear(_ toYear: Int?) {
-        year = toYear
+
+    private static func normalized(_ components: DateComponents?) -> DateComponents? {
+        guard let components else { return nil }
+        return DateComponents(year: components.year, month: components.month, day: components.day)
     }
 
     func makeUIView(context: Context) -> UICalendarView {
@@ -195,7 +191,7 @@ struct NativeCalendarView: UIViewRepresentable {
         calendarView.delegate = context.coordinator
         calendarView.calendar = Calendar.current
         calendarView.fontDesign = .rounded
-        calendarView.setVisibleDateComponents(DateComponents(year: year, month: month), animated: true)
+        calendarView.setVisibleDateComponents(DateComponents(year: year, month: month), animated: false)
         calendarView.availableDateRange = DateInterval(
             start: Date().addingTimeInterval(-60 * 60 * 24 * 365),
             end: Date().addingTimeInterval(60 * 60 * 24 * 365 * 2)
@@ -215,35 +211,30 @@ struct NativeCalendarView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: UICalendarView, context: Context) {
-        print("updateUIView")
         context.coordinator.parent = self
         syncSelection(in: uiView)
-        
-        let dateComponents = events.map {
-            Calendar.current.dateComponents([.year, .month, .day], from: $0)
+
+        let eventComponents = events.map(Self.dayComponents(of:))
+        if let changed = context.coordinator.decorationsToReload(for: eventComponents) {
+            uiView.reloadDecorations(forDateComponents: changed, animated: false)
         }
-        uiView.reloadDecorations(forDateComponents: dateComponents, animated: false)
     }
 
     private func syncSelection(in calendarView: UICalendarView) {
-        print("syncSelection")
         switch selection {
         case .single(let binding):
             guard let singleSelection = calendarView.selectionBehavior as? UICalendarSelectionSingleDate else { return }
-            let newComponents = binding.wrappedValue.map {
-                Calendar.current.dateComponents([.year, .month, .day], from: $0)
-            }
-            if singleSelection.selectedDate != newComponents {
-                singleSelection.setSelected(newComponents, animated: false)
-            }
+            let newComponents = binding.wrappedValue.map(Self.dayComponents(of:))
+            // Re-selecting scrolls the calendar to the selected month, so only touch
+            // the selection when the day it points at actually changed.
+            guard Self.normalized(singleSelection.selectedDate) != newComponents else { return }
+            singleSelection.setSelected(newComponents, animated: false)
         case .multiple(let binding):
             guard let multiSelection = calendarView.selectionBehavior as? UICalendarSelectionMultiDate else { return }
-            let newComponents = binding.wrappedValue.map {
-                Calendar.current.dateComponents([.year, .month, .day], from: $0)
-            }
-            if Set(multiSelection.selectedDates) != Set(newComponents) {
-                multiSelection.setSelectedDates(Array(newComponents), animated: false)
-            }
+            let newComponents = binding.wrappedValue.map(Self.dayComponents(of:))
+            let currentComponents = multiSelection.selectedDates.compactMap { Self.normalized($0) }
+            guard Set(currentComponents) != Set(newComponents) else { return }
+            multiSelection.setSelectedDates(newComponents, animated: false)
         }
     }
 
@@ -254,8 +245,22 @@ struct NativeCalendarView: UIViewRepresentable {
     class Coordinator: NSObject, UICalendarViewDelegate, UICalendarSelectionSingleDateDelegate, UICalendarSelectionMultiDateDelegate {
         var parent: NativeCalendarView
 
+        /// Page and decoration state has to live on the coordinator: the `parent` struct is
+        /// replaced on every SwiftUI update, so anything stored on it is lost.
+        private var visiblePage: DateComponents?
+        private var decoratedComponents: Set<DateComponents> = []
+
         init(_ parent: NativeCalendarView) {
             self.parent = parent
+        }
+
+        /// Returns the components whose decoration changed, or `nil` when nothing changed.
+        func decorationsToReload(for components: [DateComponents]) -> [DateComponents]? {
+            let updated = Set(components)
+            guard updated != decoratedComponents else { return nil }
+            let changed = updated.symmetricDifference(decoratedComponents)
+            decoratedComponents = updated
+            return Array(changed)
         }
 
         func calendarView(_ calendarView: UICalendarView, decorationFor dateComponents: DateComponents) -> UICalendarView.Decoration? {
@@ -269,7 +274,14 @@ struct NativeCalendarView: UIViewRepresentable {
         
         func calendarView(_ calendarView: UICalendarView, didChangeVisibleDateComponentsFrom previousDateComponents: DateComponents) {
             let components = DateComponents(year: calendarView.visibleDateComponents.year, month: calendarView.visibleDateComponents.month)
-            parent.setMonthAndYear(components)
+
+            guard components != visiblePage else { return }
+            visiblePage = components
+
+            guard let onPageChange = parent.onPageChange else { return }
+            // This fires while the page transition is still running; letting the callback
+            // mutate SwiftUI state synchronously re-enters updateUIView mid-scroll.
+            DispatchQueue.main.async { onPageChange(components) }
         }
 
         func dateSelection(_ selection: UICalendarSelectionSingleDate, canSelectDate dateComponents: DateComponents?) -> Bool {

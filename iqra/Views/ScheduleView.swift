@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ScheduleView: View {
 
-    @State private var enrollments: [Enrollment] = []
+    @State private var enrollments: [Enrollment]
     @State private var eventDates: [Date] = []
     @State private var selectedDate: Date?
     
@@ -27,6 +27,17 @@ struct ScheduleView: View {
         return things
     }
     
+    init() {
+        enrollments = []
+        eventDates = []
+        selectedDate = nil
+        
+        guard let interval = calendar.dateInterval(of: .month, for: Date()) else { return }
+        
+        startDate = interval.start
+        endDate = nil
+    }
+    
     
     @ViewBuilder
     private var classList: some View {
@@ -35,10 +46,10 @@ struct ScheduleView: View {
         }
         if selectedDate == nil {
             Text("NIL DTE")
-        } else if selectedDate != nil {
-            
-            Text(selectedDate?.description ?? "NONE")
+        } else {
+            Text(selectedDate!.description)
                 .foregroundStyle(.blue)
+            
             if eventDates.contains(selectedDate!) {
                 ForEach(enrollments, id: \.self.id) { enrollment in
                     VStack(spacing: 20) {
@@ -46,7 +57,6 @@ struct ScheduleView: View {
                     }
                 }
             }
-            
         }
         
     }
@@ -61,13 +71,12 @@ struct ScheduleView: View {
                         selectedDate = date
                     },
                     onDeselectDate: { _ in selectedDate = nil },
-                    onPageChange: {
-                        let date = Calendar.current.date(from: $0)!
-                        
-                        startDate = date
-                        endDate = Calendar.current.date(byAdding: .month, value: 1, to: date)
+                    onPageChange: { components in
+                        guard let monthStart = calendar.date(from: components) else { return }
+
+                        startDate = monthStart
+                        endDate = calendar.date(byAdding: .month, value: 1, to: monthStart)
                         eventDates = currentEnrollments.flatMap { $0 }
-    
                     }
                 )
                 .padding(.horizontal)

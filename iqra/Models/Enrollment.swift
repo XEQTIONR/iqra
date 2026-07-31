@@ -88,10 +88,25 @@ struct Enrollment: Codable {
         }
     }
     
-    func sessionDates(start: Date?, end: Date?) -> [Date] {
+    func hasSessionOn(_ date: Date) -> Bool {
+        
+        guard let weekday = Calendar.current.dateComponents([.weekday], from: date).weekday else {
+            return false
+        }
+        
+        for key in schedule.keys {
+            if key.calendarWeekday == weekday {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    func sessionDates(start: Date, end: Date?) -> [Date] {
 
         let calendar = Calendar.current
-        let rangeStart = start ?? Date()
+        let rangeStart = start
         let rangeEnd = end ?? endAt ?? calendar.date(byAdding: .month, value: 1, to: rangeStart)
         let searchStart = calendar.date(byAdding: .second, value: -1, to: rangeStart) ?? rangeStart
         var sessions: [Date] = []
