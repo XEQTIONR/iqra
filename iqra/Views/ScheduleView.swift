@@ -102,15 +102,22 @@ struct ScheduleView: View {
             
             guard ok else { return }
 
-            enrollments = try RequestService
-                .apiUnwrapCollection(type: Enrollment.self, from: data)
-                .map {
-                    var local = $0
-                    local.endAt = Date()
-                    return local
-                }
+            enrollments = try RequestService.apiUnwrapCollection(type: Enrollment.self, from: data)
             
-            eventDates = enrollments.flatMap{ $0.sessionDates(start: $0.startAt, end: endDate) }
+            print("ENROLLMENTS:")
+            print(enrollments)
+            
+            eventDates = enrollments.flatMap{
+                var start = $0.startAt
+                
+                if let interval = calendar.dateInterval(of: .month, for: .now),
+                   interval.start > start {
+                   
+                    start = interval.start
+                }
+                
+                return $0.sessionDates(start: start, end: endDate)
+            }
             
             print("Event Dates:", eventDates)
         } catch {
