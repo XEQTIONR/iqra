@@ -31,6 +31,30 @@ struct Enrollment: Codable {
         case format
         case user
     }
+
+    init(
+        id: Int,
+        startAt: Date,
+        endAt: Date? = nil,
+        price: Double,
+        currency: String,
+        status: String,
+        length: Int,
+        schedule: [Day: Int],
+        format: CourseFormat? = nil,
+        user: User? = nil
+    ) {
+        self.id = id
+        self.startAt = startAt
+        self.endAt = endAt
+        self.price = price
+        self.currency = currency
+        self.status = status
+        self.length = length
+        self.schedule = schedule
+        self.format = format
+        self.user = user
+    }
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -146,3 +170,104 @@ struct Enrollment: Codable {
         return sessions.sorted()
     }
 }
+
+#if DEBUG
+extension Enrollment {
+    /// Sample enrollments with weekly sessions covering the current calendar month.
+    static var previewEnrollments: [Enrollment] {
+        let calendar = Calendar.current
+        let now = Date()
+        guard let month = calendar.dateInterval(of: .month, for: now) else { return [] }
+
+        let instructor = User.preview
+
+        let readingCourse = Course(
+            id: 1,
+            title: "Quran Reading",
+            description: "Learn to read the Quran with proper tajweed.",
+            image: "https://picsum.photos/600/400",
+            video: "",
+            difficulty: .beginner,
+            category: .reading,
+            lengthType: .ongoing,
+            ageGroups: [.kids, .teens],
+            isPublished: true,
+            instructor: instructor
+        )
+
+        let tajweedCourse = Course(
+            id: 2,
+            title: "Tajweed Foundations",
+            description: "Build a strong foundation in tajweed rules.",
+            image: "https://picsum.photos/600/400",
+            video: "",
+            difficulty: .intermediate,
+            category: .qScience,
+            lengthType: .fixed,
+            ageGroups: [.teens, .youngAdults],
+            isPublished: true,
+            instructor: instructor
+        )
+
+        let readingFormat = CourseFormat(
+            id: 1,
+            title: "Twice weekly",
+            description: "Two 60-minute lessons per week",
+            unit: .lesson,
+            lessonLength: 60,
+            lessonsPerWeek: 2,
+            totalLessons: 16,
+            price: 80,
+            billingCycles: 8,
+            course: readingCourse
+        )
+
+        let tajweedFormat = CourseFormat(
+            id: 2,
+            title: "Weekly intensive",
+            description: "One 90-minute lesson per week",
+            unit: .lesson,
+            lessonLength: 90,
+            lessonsPerWeek: 1,
+            totalLessons: 12,
+            price: 60,
+            billingCycles: 12,
+            course: tajweedCourse
+        )
+
+        return [
+            Enrollment(
+                id: 1,
+                startAt: month.start,
+                endAt: month.end,
+                price: 80,
+                currency: "USD",
+                status: "active",
+                length: 60,
+                schedule: [
+                    .mon: 10 * 60,       // Monday 10:00
+                    .wed: 14 * 60 + 30,  // Wednesday 14:30
+                ],
+                format: readingFormat,
+                user: User.preview
+            ),
+            Enrollment(
+                id: 2,
+                startAt: month.start,
+                endAt: month.end,
+                price: 60,
+                currency: "USD",
+                status: "active",
+                length: 90,
+                schedule: [
+                    .tue: 16 * 60,       // Tuesday 16:00
+                    .thu: 16 * 60,       // Thursday 16:00
+                    .fri: 9 * 60 + 30,   // Friday 09:30
+                ],
+                format: tajweedFormat,
+                user: User.preview
+            ),
+        ]
+    }
+}
+#endif

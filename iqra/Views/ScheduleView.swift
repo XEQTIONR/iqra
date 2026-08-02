@@ -27,15 +27,32 @@ struct ScheduleView: View {
         return things
     }
     
-    init() {
-        enrollments = []
-        eventDates = []
+    init(enrollments: [Enrollment] = []) {
+        self.enrollments = enrollments
         selectedDate = nil
-        
-        guard let interval = calendar.dateInterval(of: .month, for: Date()) else { return }
-        
+
+        guard let interval = calendar.dateInterval(of: .month, for: Date()) else {
+            eventDates = []
+            return
+        }
+
         startDate = interval.start
         endDate = nil
+        eventDates = Self.eventDates(for: enrollments, in: interval, endDate: nil)
+    }
+
+    private static func eventDates(
+        for enrollments: [Enrollment],
+        in interval: DateInterval,
+        endDate: Date?
+    ) -> [Date] {
+        enrollments.flatMap { enrollment in
+            var start = enrollment.startAt
+            if interval.start > start {
+                start = interval.start
+            }
+            return enrollment.sessionDates(start: start, end: endDate)
+        }
     }
     
     
@@ -47,7 +64,7 @@ struct ScheduleView: View {
             
             if eventDates.contains(where: { calendar.isDate($0, inSameDayAs: selectedDate!) }) {
                 VStack {
-                    ForEach(enrollments, id: \.self.id) { enrollment in
+                    ForEach(enrollments.filter { $0.hasSessionOn(selectedDate!) }, id: \.id) { enrollment in
                         VStack(alignment: .leading) {
                             Text(enrollment.format!.course!.title)
                             Text(enrollment.sessionForDate(selectedDate!)!.description)
@@ -116,17 +133,9 @@ struct ScheduleView: View {
             
             print("ENROLLMENTS:")
             print(enrollments)
-            
-            eventDates = enrollments.flatMap{
-                var start = $0.startAt
-                
-                if let interval = calendar.dateInterval(of: .month, for: .now),
-                   interval.start > start {
-                   
-                    start = interval.start
-                }
-                
-                return $0.sessionDates(start: start, end: endDate)
+
+            if let interval = calendar.dateInterval(of: .month, for: .now) {
+                eventDates = Self.eventDates(for: enrollments, in: interval, endDate: endDate)
             }
             
             print("Event Dates:", eventDates)
@@ -137,5 +146,5 @@ struct ScheduleView: View {
 }
 
 #Preview {
-    ScheduleView()
+    ScheduleView(enrollments: Enrollment.previewEnrollments)
 }
