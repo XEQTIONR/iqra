@@ -111,6 +111,23 @@ class User: Codable, CustomStringConvertible {
     }
 }
 
+extension User: Hashable {
+    static func == (lhs: User, rhs: User) -> Bool {
+        if let lhsId = lhs.id, let rhsId = rhs.id {
+            return lhsId == rhsId
+        }
+        return lhs === rhs
+    }
+
+    func hash(into hasher: inout Hasher) {
+        if let id {
+            hasher.combine(id)
+        } else {
+            hasher.combine(ObjectIdentifier(self))
+        }
+    }
+}
+
 #if DEBUG
 extension User {
     /// A populated, logged-in user for SwiftUI previews.

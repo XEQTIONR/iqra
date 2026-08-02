@@ -89,22 +89,24 @@ struct Enrollment: Codable {
     }
     
     func hasSessionOn(_ date: Date) -> Bool {
-        
+        return sessionForDate(date) != nil
+    }
+    
+    func sessionForDate(_ date: Date) -> Int? {
         guard let weekday = Calendar.current.dateComponents([.weekday], from: date).weekday else {
-            return false
+            return nil
         }
         
         for key in schedule.keys {
             if key.calendarWeekday == weekday {
-                return true
+                return schedule[key]
             }
         }
         
-        return false
+        return nil
     }
     
     func sessionDates(start: Date, end: Date?) -> [Date] {
-
         let calendar = Calendar.current
         let rangeStart = start
         let rangeEnd = end ?? endAt ?? calendar.date(byAdding: .month, value: 1, to: rangeStart)
@@ -112,7 +114,6 @@ struct Enrollment: Codable {
         var sessions: [Date] = []
         
         for (day, minutesFromMidnight) in schedule {
-            print("IN LOOP:", day, minutesFromMidnight)
             var components = DateComponents()
             components.weekday = day.calendarWeekday
             components.hour = minutesFromMidnight / 60

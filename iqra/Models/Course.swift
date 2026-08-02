@@ -63,6 +63,7 @@ struct Course: Codable, Hashable {
     var isPublished: Bool = false
     var formats: [CourseFormat]? = []
     var totalLessons: Int?
+    var instructor: User? = nil
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -77,6 +78,7 @@ struct Course: Codable, Hashable {
         case isPublished = "is_published"
         case formats
         case totalLessons = "total_lessons"
+        case instructor
     }
 }
 

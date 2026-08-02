@@ -41,24 +41,31 @@ struct ScheduleView: View {
     
     @ViewBuilder
     private var classList: some View {
-        ForEach(eventDates, id: \.self) { date in
-            Text(date.description)
-        }
-        if selectedDate == nil {
-            Text("NIL DTE")
-        } else {
-            Text(selectedDate!.description)
-                .foregroundStyle(.blue)
+        if selectedDate != nil {
+//            Text(selectedDate!.description)
+//                .foregroundStyle(.blue)
             
             if eventDates.contains(where: { calendar.isDate($0, inSameDayAs: selectedDate!) }) {
-                ForEach(enrollments, id: \.self.id) { enrollment in
-                    VStack(spacing: 20) {
-                        Text(enrollment.format!.course!.title)
+                VStack {
+                    ForEach(enrollments, id: \.self.id) { enrollment in
+                        VStack(alignment: .leading) {
+                            Text(enrollment.format!.course!.title)
+                            Text(enrollment.sessionForDate(selectedDate!)!.description)
+                            Text(enrollment.format!.course!.instructor!.name!)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                        .background(.blue.opacity(0.4))
+                        
+                        .cornerRadius(10)
+                        
                     }
+                    
                 }
+                .frame(maxWidth: .infinity)
+                
             }
         }
-        
     }
 
     var body: some View {
@@ -83,6 +90,9 @@ struct ScheduleView: View {
                 
                 Divider()
                 classList
+                .padding()
+
+                    
             }
             .task {
                 await loadEnrollments()

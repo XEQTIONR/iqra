@@ -50,13 +50,6 @@ class RequestService {
         body: Data? = nil,
         
     ) async throws -> (Data, URLResponse, Bool) {
-        
-        print("Endpoint: \(url)")
-        print("Request headers:")
-        print(headers)
-        print("Body:")
-        print(body == nil ? "NIL" : String(data: body!, encoding: .utf8))
-        
         var request = URLRequest(url: URL(string: url)!)
         request.httpMethod = method
         
