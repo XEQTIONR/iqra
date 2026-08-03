@@ -18,6 +18,7 @@ struct Enrollment: Codable {
     var schedule: [Day: Int]
     var format: CourseFormat?
     var user: User?
+    var timezone: TimeZone
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -30,6 +31,7 @@ struct Enrollment: Codable {
         case schedule
         case format
         case user
+        case timezone
     }
 
     init(
@@ -42,7 +44,8 @@ struct Enrollment: Codable {
         length: Int,
         schedule: [Day: Int],
         format: CourseFormat? = nil,
-        user: User? = nil
+        user: User? = nil,
+        timezone: TimeZone
     ) {
         self.id = id
         self.startAt = startAt
@@ -54,21 +57,32 @@ struct Enrollment: Codable {
         self.schedule = schedule
         self.format = format
         self.user = user
+        self.timezone = timezone
     }
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        id = try container.decode(Int.self, forKey: .id)
-        price = try container.decode(Double.self, forKey: .price)
-        currency = try container.decode(String.self, forKey: .currency)
-        status = try container.decode(String.self, forKey: .status)
-        length = try container.decode(Int.self, forKey: .length)
-        schedule = try container.decode([Day: Int].self, forKey: .schedule)
-        format = try container.decodeIfPresent(CourseFormat.self, forKey: .format)
-        user = try container.decodeIfPresent(User.self, forKey: .user)
-
-        // Decode start date
+        self.id = try container.decode(Int.self, forKey: .id)
+        self.price = try container.decode(Double.self, forKey: .price)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.status = try container.decode(String.self, forKey: .status)
+        self.length = try container.decode(Int.self, forKey: .length)
+        self.schedule = try container.decode([Day: Int].self, forKey: .schedule)
+        self.format = try container.decodeIfPresent(CourseFormat.self, forKey: .format)
+        self.user = try container.decodeIfPresent(User.self, forKey: .user)
+        
+        let tzString = try container.decodeIfPresent(String.self, forKey: .timezone)
+        
+        guard let tz = TimeZone(identifier: tzString!) else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .timezone,
+                in: container,
+                debugDescription: "Invalid timezone \(tzString ?? "nil")"
+            )
+        }
+        self.timezone = tz
+        
         let startDateString = try container.decode(String.self, forKey: .startAt)
         guard let startAt = dateFormatter.date(from: startDateString) else {
             throw DecodingError.dataCorruptedError(
@@ -79,7 +93,6 @@ struct Enrollment: Codable {
         }
         self.startAt = startAt
 
-        // Decode end date (optional / null)
         if let endDateString = try container.decodeIfPresent(String.self, forKey: .endAt) {
             guard let endDate = dateFormatter.date(from: endDateString) else {
                 throw DecodingError.dataCorruptedError(
@@ -103,6 +116,7 @@ struct Enrollment: Codable {
         try container.encode(status, forKey: .status)
         try container.encode(length, forKey: .length)
         try container.encode(schedule, forKey: .schedule)
+        try container.encode(timezone.identifier, forKey: .timezone)
         
         let startDateString = dateFormatter.string(from: startAt)
         try container.encode(startDateString, forKey: .startAt)
@@ -249,7 +263,8 @@ extension Enrollment {
                     .wed: 14 * 60 + 30,  // Wednesday 14:30
                 ],
                 format: readingFormat,
-                user: User.preview
+                user: User.preview,
+                timezone: .current,
             ),
             Enrollment(
                 id: 2,
@@ -265,7 +280,8 @@ extension Enrollment {
                     .fri: 9 * 60 + 30,   // Friday 09:30
                 ],
                 format: tajweedFormat,
-                user: User.preview
+                user: User.preview,
+                timezone: .current,
             ),
         ]
     }
