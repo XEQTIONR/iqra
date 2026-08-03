@@ -33,6 +33,8 @@ enum Route: Hashable {
 @Observable
 final class Router {
     var path = NavigationPath()
+    var showToast = false
+    var toastMessage = ""
 
     func push(_ route: Route) {
         path.append(route)
@@ -45,6 +47,13 @@ final class Router {
 
     func popToRoot() {
         path = NavigationPath()
+    }
+
+    func presentToast(_ message: String) {
+        toastMessage = message
+        withAnimation {
+            showToast = true
+        }
     }
 }
 

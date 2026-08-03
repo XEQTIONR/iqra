@@ -66,6 +66,7 @@ struct MainView: View {
             }
         }
         .environment(router)
+        .toast(isShowing: $router.showToast, message: router.toastMessage)
     }
 
     private func isCourseRoute(_ route: Route) -> Bool {

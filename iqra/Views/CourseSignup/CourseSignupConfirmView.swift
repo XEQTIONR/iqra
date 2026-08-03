@@ -73,8 +73,7 @@ struct CourseSignupConfirmView: View {
     var startDate: Date
     var endDate: Date?
     
-    @State private var showToast = false
-    @State private var toastMessage = ""
+    @Environment(Router.self) private var router
     
     var body: some View {
         VStack {
@@ -102,24 +101,18 @@ struct CourseSignupConfirmView: View {
                         let enrollment = try RequestService.apiUnwrapData(type: Enrollment.self, from: data)
 
                         await MainActor.run {
-                            toastMessage = "Enrollment successful"
-                            withAnimation {
-                                showToast = true
-                            }
+                            router.popToRoot()
+                            router.presentToast("Enrollment successful")
                         }
                     } catch {
                         print("ERROR:", error)
                         await MainActor.run {
-                            toastMessage = "Enrollment failed"
-                            withAnimation {
-                                showToast = true
-                            }
+                            router.presentToast("Enrollment failed")
                         }
                     }
                 }
             }
         }
-        .toast(isShowing: $showToast, message: toastMessage)
     }
 }
 
@@ -157,4 +150,5 @@ struct CourseSignupConfirmView: View {
         
         startDate: Date(),
     )
+    .environment(Router())
 }
