@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 
 struct EnrollmentFormData: Codable {
@@ -100,6 +101,19 @@ struct CourseSignupConfirmView: View {
                     
                         let enrollment = try RequestService.apiUnwrapData(type: Enrollment.self, from: data)
 
+                        if let firstClass = enrollment.sessionDates(
+                            start: enrollment.startAt,
+                            end: enrollment.endAt
+                        ).first {
+                            print("First enrollment:")
+                            print(firstClass)
+                            let reminderDate = firstClass.addingTimeInterval(-10 * 60)
+                            
+                            print("Reminder date:")
+                            print(reminderDate)
+                            await scheduleClassReminder(at: reminderDate, courseTitle: course.title)
+                        }
+
                         await MainActor.run {
                             router.popToRoot()
                             router.presentToast("Enrollment successful")
@@ -112,6 +126,37 @@ struct CourseSignupConfirmView: View {
                     }
                 }
             }
+        }
+    }
+
+    private func scheduleClassReminder(at date: Date, courseTitle: String) async {
+        guard date > Date() else { return }
+
+        let center = UNUserNotificationCenter.current()
+
+        do {
+            let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
+            guard granted else { return }
+
+            let content = UNMutableNotificationContent()
+            content.title = courseTitle
+            content.body = "Your class starts in 5 minutes"
+            content.sound = .default
+
+            let components = Calendar.current.dateComponents(
+                [.year, .month, .day, .hour, .minute, .second],
+                from: date
+            )
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            let request = UNNotificationRequest(
+                identifier: "class-reminder-\(date.timeIntervalSince1970)",
+                content: content,
+                trigger: trigger
+            )
+
+            try await center.add(request)
+        } catch {
+            print("Failed to schedule class reminder:", error)
         }
     }
 }
