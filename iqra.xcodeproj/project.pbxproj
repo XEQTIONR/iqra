@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		092BE58430290339009BF883 /* WebRTC.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 092BE58330290339009BF883 /* WebRTC.xcframework */; };
+		092BE58530290339009BF883 /* WebRTC.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 092BE58330290339009BF883 /* WebRTC.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		09A9DAC92FC20A6B00EB966D /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 09A9DAC82FC20A6B00EB966D /* CachedAsyncImage */; };
 		09A9DB172FC3DFA700EB966D /* WrapLayout in Frameworks */ = {isa = PBXBuildFile; productRef = 09A9DB162FC3DFA700EB966D /* WrapLayout */; };
 /* End PBXBuildFile section */
@@ -28,7 +30,22 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		092BE58630290339009BF883 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				092BE58530290339009BF883 /* WebRTC.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		092BE58330290339009BF883 /* WebRTC.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = WebRTC.xcframework; sourceTree = "<group>"; };
 		09A9DA7B2FC0B4BC00EB966D /* iqra.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iqra.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		09A9DA8C2FC0B4BD00EB966D /* iqraTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iqraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		09A9DA962FC0B4BD00EB966D /* iqraUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iqraUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -72,6 +89,7 @@
 			files = (
 				09A9DB172FC3DFA700EB966D /* WrapLayout in Frameworks */,
 				09A9DAC92FC20A6B00EB966D /* CachedAsyncImage in Frameworks */,
+				092BE58430290339009BF883 /* WebRTC.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -96,6 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				09A9DA7D2FC0B4BC00EB966D /* iqra */,
+				092BE58330290339009BF883 /* WebRTC.xcframework */,
 				09A9DA8F2FC0B4BD00EB966D /* iqraTests */,
 				09A9DA992FC0B4BD00EB966D /* iqraUITests */,
 				09A9DA7C2FC0B4BC00EB966D /* Products */,
@@ -122,6 +141,7 @@
 				09A9DA772FC0B4BC00EB966D /* Sources */,
 				09A9DA782FC0B4BC00EB966D /* Frameworks */,
 				09A9DA792FC0B4BC00EB966D /* Resources */,
+				092BE58630290339009BF883 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);

@@ -2,6 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>${PRODUCR_NAME} needs access to your mic for lessons</string>
+	<key>NSCameraUsageDescription</key>
+	<string>${PRODUCT_NAME} needs access to your camera for lessons</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>KFGQPC Uthmanic Script HAFS Regular.otf</string>
