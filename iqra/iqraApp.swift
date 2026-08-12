@@ -21,7 +21,9 @@ struct iqraApp: App {
     }()
 
     init() {
-        UNUserNotificationCenter.current().delegate = AppNotificationDelegate.shared
+        let notificationDelegate = AppNotificationDelegate.shared
+        notificationDelegate.registerCategories()
+        UNUserNotificationCenter.current().delegate = notificationDelegate
     }
 
     var body: some Scene {
@@ -29,6 +31,8 @@ struct iqraApp: App {
             ContentView()
                 .environment(user)
                 .task {
+                    print("TimeZone.current: \(TimeZone.current.identifier)")
+                    print("Calendar.timezone: \(Calendar.current.timeZone.identifier)")
                     await fetchUserData()
                 }
         }

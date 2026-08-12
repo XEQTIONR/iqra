@@ -7,7 +7,7 @@
 import SwiftUI
 import WebRTC
 
-struct CallView: View {
+struct ClassView: View {
     @StateObject private var webRTCManager = WebRTCManager()
     @State private var userId = ""
     @State private var targetUserId = ""
@@ -88,6 +88,6 @@ struct VideoView: UIViewRepresentable {
 }
 
 #Preview {
-    CallView()
+    ClassView()
 }
 

@@ -142,6 +142,7 @@ struct CourseSignupConfirmView: View {
             content.title = courseTitle
             content.body = "Your class starts in 5 minutes"
             content.sound = .default
+            content.categoryIdentifier = AppNotificationDelegate.classReminderCategoryId
 
             let components = Calendar.current.dateComponents(
                 [.year, .month, .day, .hour, .minute, .second],
