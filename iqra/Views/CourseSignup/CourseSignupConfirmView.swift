@@ -107,7 +107,7 @@ struct CourseSignupConfirmView: View {
                         ).first {
                             print("First enrollment:")
                             print(firstClass)
-                            let reminderDate = firstClass.addingTimeInterval(-10 * 60)
+                            let reminderDate = firstClass.addingTimeInterval(-4 * 60)
                             
                             print("Reminder date:")
                             print(reminderDate)

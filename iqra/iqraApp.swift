@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 @main
 struct iqraApp: App {
@@ -18,6 +19,10 @@ struct iqraApp: App {
         }
         return initialUser
     }()
+
+    init() {
+        UNUserNotificationCenter.current().delegate = AppNotificationDelegate.shared
+    }
 
     var body: some Scene {
         WindowGroup {

@@ -67,6 +67,10 @@ struct MainView: View {
         }
         .environment(router)
         .toast(isShowing: $router.showToast, message: router.toastMessage)
+        .onReceive(NotificationCenter.default.publisher(for: .foregroundLocalNotification)) { notification in
+            guard let message = notification.userInfo?["message"] as? String, !message.isEmpty else { return }
+            router.presentToast(message)
+        }
     }
 
     private func isCourseRoute(_ route: Route) -> Bool {
