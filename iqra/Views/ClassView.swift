@@ -9,6 +9,7 @@ import WebRTC
 
 struct ClassView: View {
     @StateObject private var webRTCManager = WebRTCManager()
+    @Binding var myClass: MyClass?
     @State private var userId = ""
     @State private var targetUserId = ""
     @State private var isConnected = false
@@ -22,6 +23,12 @@ struct ClassView: View {
                     .autocapitalization(.none)
                 
                 Button("Connect") {
+                    
+                    guard let currentClass = myClass else { return } // should handle error
+                    
+                    userId = String(currentClass.studentId)
+                    targetUserId = String(currentClass.instructorId)
+                    
                     webRTCManager.connect(userId: userId)
                     isConnected = true
                 }

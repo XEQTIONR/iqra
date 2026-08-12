@@ -14,12 +14,14 @@ extension EnvironmentValues {
 
 struct MainView: View {
     
+    @Environment(User.self) private var appUser
     @Binding var currentSection: ContentSection
     
     @State private var router = Router()
     @State private var selectedTab = 0
     @State private var exploreTabBarVisibility = Visibility.visible
     @State private var showClassView = false
+    @State private var currentClass: MyClass?
 
     var body: some View {
         @Bindable var router = router
@@ -69,13 +71,19 @@ struct MainView: View {
         .environment(router)
         .toast(isShowing: $router.showToast, message: router.toastMessage)
         .fullScreenCover(isPresented: $showClassView) {
-            ClassView()
+            ClassView(class: currentClass)
         }
         .onReceive(NotificationCenter.default.publisher(for: .foregroundLocalNotification)) { notification in
             guard let message = notification.userInfo?["message"] as? String, !message.isEmpty else { return }
             router.presentToast(message)
         }
-        .onReceive(NotificationCenter.default.publisher(for: .openClassSession)) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: .openClassSession)) { notification in
+            
+            guard let studentId = notification.userInfo?["studentId"] as? Int,
+                  let instructorId = notification.userInfo?["instructorId"] as? Int else { return }
+            
+            
+            currentClass = MyClass(studentId: studentId, instructorId: instructorId)
             showClassView = true
         }
     }

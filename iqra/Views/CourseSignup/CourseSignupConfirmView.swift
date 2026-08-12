@@ -75,6 +75,7 @@ struct CourseSignupConfirmView: View {
     var endDate: Date?
     
     @Environment(Router.self) private var router
+    @Environment(User.self) private var appUser
     
     var body: some View {
         VStack {
@@ -107,11 +108,17 @@ struct CourseSignupConfirmView: View {
                         ).first {
                             print("First enrollment:")
                             print(firstClass)
-                            let reminderDate = firstClass.addingTimeInterval(-4 * 60)
+                            
+                            let reminderDate = Date().addingTimeInterval(60)
                             
                             print("Reminder date:")
                             print(reminderDate)
-                            await scheduleClassReminder(at: reminderDate, courseTitle: course.title)
+                            await scheduleClassReminder(
+                                at: reminderDate,
+                                courseTitle: course.title,
+                                studentId: appUser.id,
+                                instructorId: course.instructor?.id
+                            )
                         }
 
                         await MainActor.run {
@@ -129,7 +136,12 @@ struct CourseSignupConfirmView: View {
         }
     }
 
-    private func scheduleClassReminder(at date: Date, courseTitle: String) async {
+    private func scheduleClassReminder(
+        at date: Date,
+        courseTitle: String,
+        studentId: Int?,
+        instructorId: Int?
+    ) async {
         guard date > Date() else { return }
 
         let center = UNUserNotificationCenter.current()
@@ -143,6 +155,14 @@ struct CourseSignupConfirmView: View {
             content.body = "Your class starts in 5 minutes"
             content.sound = .default
             content.categoryIdentifier = AppNotificationDelegate.classReminderCategoryId
+            var userInfo: [AnyHashable: Any] = [:]
+            if let studentId {
+                userInfo["studentId"] = studentId
+            }
+            if let instructorId {
+                userInfo["instructorId"] = instructorId
+            }
+            content.userInfo = userInfo
 
             let components = Calendar.current.dateComponents(
                 [.year, .month, .day, .hour, .minute, .second],
@@ -197,4 +217,5 @@ struct CourseSignupConfirmView: View {
         startDate: Date(),
     )
     .environment(Router())
+    .environment(User())
 }
