@@ -109,15 +109,21 @@ struct CourseSignupConfirmView: View {
                             print("First enrollment:")
                             print(firstClass)
                             
-                            let reminderDate = Date().addingTimeInterval(60)
+                            let reminderDate = Date().addingTimeInterval(10)
                             
                             print("Reminder date:")
                             print(reminderDate)
+
+                            let studentId = appUser.id ?? enrollment.user?.id
+                            let instructorId = course.instructor!.id
+
+                            print("Reminder payload studentId:", studentId as Any, "instructorId:", instructorId as Any)
+
                             await scheduleClassReminder(
                                 at: reminderDate,
                                 courseTitle: course.title,
-                                studentId: appUser.id,
-                                instructorId: course.instructor?.id
+                                studentId: studentId,
+                                instructorId: instructorId
                             )
                         }
 
@@ -155,14 +161,10 @@ struct CourseSignupConfirmView: View {
             content.body = "Your class starts in 5 minutes"
             content.sound = .default
             content.categoryIdentifier = AppNotificationDelegate.classReminderCategoryId
-            var userInfo: [AnyHashable: Any] = [:]
-            if let studentId {
-                userInfo["studentId"] = studentId
-            }
-            if let instructorId {
-                userInfo["instructorId"] = instructorId
-            }
-            content.userInfo = userInfo
+            content.userInfo = [
+                "studentId": studentId.map(String.init) ?? "0",
+                "instructorId": instructorId.map(String.init) ?? "0"
+            ]
 
             let components = Calendar.current.dateComponents(
                 [.year, .month, .day, .hour, .minute, .second],

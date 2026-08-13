@@ -17,6 +17,7 @@ enum ContentSection {
 struct ContentView: View {
     
     @State var currentSection: ContentSection
+    @State private var currentClass: MyClass?
     
     init() {
         let introShown = UserDefaults.standard.bool(forKey: "intro_shown")
@@ -29,18 +30,47 @@ struct ContentView: View {
     }
     
     var body: some View {
-        switch currentSection {
-            
-        case .intro:
-            IntroView($currentSection)
-        case .main:
-            MainView(currentSection: $currentSection)
+        Group {
+            switch currentSection {
+            case .intro:
+                IntroView($currentSection)
+            case .main:
+                MainView(currentSection: $currentSection)
+            }
         }
+        .fullScreenCover(item: $currentClass) { session in
+            ClassView(myClass: session)
+        }
+        .onAppear {
+            openClass(AppNotificationDelegate.shared.consumePendingClass())
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openClassSession)) { notification in
+            if let pending = AppNotificationDelegate.shared.consumePendingClass() {
+                openClass(pending)
+                return
+            }
+
+            let studentId = intValue(from: notification.userInfo, key: "studentId") ?? 0
+            let instructorId = intValue(from: notification.userInfo, key: "instructorId") ?? 0
+            openClass(MyClass(studentId: studentId, instructorId: instructorId))
+        }
+    }
+
+    private func openClass(_ session: MyClass?) {
+        guard let session else { return }
+        currentClass = session
+    }
+
+    private func intValue(from userInfo: [AnyHashable: Any]?, key: String) -> Int? {
+        guard let value = userInfo?[key] else { return nil }
+        if let int = value as? Int { return int }
+        if let number = value as? NSNumber { return number.intValue }
+        if let string = value as? String { return Int(string) }
+        return nil
     }
 }
 
 #Preview {
     ContentView()
         .environment(User())
-//        .modelContainer(for: Item.self, inMemory: true)
 }

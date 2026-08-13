@@ -17,6 +17,9 @@ final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate 
     static let classReminderCategoryId = "CLASS_REMINDER"
     static let joinClassActionId = "JOIN_CLASS"
 
+    /// Held when a notification is tapped before UI is ready to navigate.
+    private(set) var pendingClass: MyClass?
+
     private override init() {
         super.init()
     }
@@ -34,6 +37,13 @@ final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate 
             options: []
         )
         UNUserNotificationCenter.current().setNotificationCategories([category])
+    }
+
+    @MainActor
+    func consumePendingClass() -> MyClass? {
+        let pending = pendingClass
+        pendingClass = nil
+        return pending
     }
 
     func userNotificationCenter(
@@ -55,8 +65,7 @@ final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate 
             ]
         )
 
-        // Suppress the system banner; the app shows a toast instead.
-        completionHandler([])
+        completionHandler([.banner, .sound, .list])
     }
 
     func userNotificationCenter(
@@ -69,11 +78,36 @@ final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate 
             actionId == Self.joinClassActionId
             || actionId == UNNotificationDefaultActionIdentifier
 
-        if shouldOpenClass,
-           response.notification.request.content.categoryIdentifier == Self.classReminderCategoryId {
-            NotificationCenter.default.post(name: .openClassSession, object: nil)
+        if shouldOpenClass {
+            let session = Self.makeClass(from: response.notification.request.content.userInfo)
+            Task { @MainActor in
+                self.pendingClass = session
+                NotificationCenter.default.post(
+                    name: .openClassSession,
+                    object: nil,
+                    userInfo: [
+                        "studentId": String(session.studentId),
+                        "instructorId": String(session.instructorId)
+                    ]
+                )
+            }
         }
 
         completionHandler()
+    }
+
+    private static func makeClass(from userInfo: [AnyHashable: Any]) -> MyClass {
+        MyClass(
+            studentId: intValue(from: userInfo, key: "studentId") ?? 0,
+            instructorId: intValue(from: userInfo, key: "instructorId") ?? 0
+        )
+    }
+
+    private static func intValue(from userInfo: [AnyHashable: Any], key: String) -> Int? {
+        guard let value = userInfo[key] else { return nil }
+        if let int = value as? Int { return int }
+        if let number = value as? NSNumber { return number.intValue }
+        if let string = value as? String { return Int(string) }
+        return nil
     }
 }

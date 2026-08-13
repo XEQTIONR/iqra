@@ -8,14 +8,23 @@ import SwiftUI
 import WebRTC
 
 struct ClassView: View {
+    let myClass: MyClass
+
+    @Environment(User.self) private var appUser
     @StateObject private var webRTCManager = WebRTCManager()
-    @Binding var myClass: MyClass?
-    @State private var userId = ""
-    @State private var targetUserId = ""
+    @State private var userId: String
+    @State private var targetUserId: String
     @State private var isConnected = false
+
+    init(myClass: MyClass) {
+        self.myClass = myClass
+        _userId = State(initialValue: String(myClass.studentId))
+        _targetUserId = State(initialValue: String(myClass.instructorId))
+    }
     
     var body: some View {
         VStack(spacing: 20) {
+            Label("userId: \(userId)  targetUserId: \(targetUserId)", systemImage: "star")
             if !isConnected {
                 TextField("Your User ID", text: $userId)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -23,12 +32,6 @@ struct ClassView: View {
                     .autocapitalization(.none)
                 
                 Button("Connect") {
-                    
-                    guard let currentClass = myClass else { return } // should handle error
-                    
-                    userId = String(currentClass.studentId)
-                    targetUserId = String(currentClass.instructorId)
-                    
                     webRTCManager.connect(userId: userId)
                     isConnected = true
                 }
@@ -76,6 +79,26 @@ struct ClassView: View {
             }
         }
         .padding()
+        .onAppear {
+            applyParticipantIds()
+        }
+    }
+
+    private func applyParticipantIds() {
+        let student = String(myClass.studentId)
+        let instructor = String(myClass.instructorId)
+
+        if let currentId = appUser.id {
+            userId = String(currentId)
+            if currentId == myClass.instructorId {
+                targetUserId = student
+            } else {
+                targetUserId = instructor
+            }
+        } else {
+            userId = student
+            targetUserId = instructor
+        }
     }
 }
 
@@ -94,7 +117,7 @@ struct VideoView: UIViewRepresentable {
     }
 }
 
-#Preview {
-    ClassView()
-}
+//#Preview {
+//    ClassView()
+//}
 

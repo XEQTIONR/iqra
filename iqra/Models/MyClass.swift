@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct MyClass {
+struct MyClass: Identifiable, Equatable {
+    var id: String { "\(studentId)-\(instructorId)" }
     var studentId: Int
     var instructorId: Int
 }

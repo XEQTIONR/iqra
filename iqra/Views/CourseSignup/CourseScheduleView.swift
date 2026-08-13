@@ -17,6 +17,7 @@ struct CourseScheduleView: View {
     @State private var callingApi: Bool = false
     @State private var openSlots: [Day: [Date]] = [:]
     @State private var startDate = Calendar.current.startOfDay(for: Date())
+    @State private var courseInstructorId: Int?
 
     private var selectedSlot: Int? {
         schedule[selectedDay]
@@ -72,6 +73,7 @@ struct CourseScheduleView: View {
                     if ok {
                         let availability = try RequestService.apiUnwrapCollection(type: Availability.self, from: data)
                         openSlots = availability[0].toDictWithTZ()
+                        courseInstructorId = availability[0].instructorId
                     } else {
                         // error handle
                     }
@@ -222,9 +224,8 @@ struct CourseScheduleView: View {
                 lessonsPerWeek: 2,
                 totalLessons: 10,
                 price: 50.0,
-                billingCycles: 10
+                billingCycles: 10,
             )],
-        
         )
     )
         .environment(Router())
