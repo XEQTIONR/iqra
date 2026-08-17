@@ -89,7 +89,7 @@ struct CourseSignupConfirmView: View {
                 Task {
                     do {
                         let (data, _, ok) = try await RequestService.request(
-                            "http://localhost:8000/api/enrollments/\(format.id!)",
+                            "\(BASE)/api/enrollments/\(format.id!)",
                             method: "POST",
                             headers: RequestService.authJsonHeaders,
                             body: try JSONEncoder().encode(input)

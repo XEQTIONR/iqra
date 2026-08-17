@@ -16,7 +16,15 @@ class WebRTCManager: NSObject, ObservableObject {
     private var videoSource: RTCVideoSource?
     private var videoTrack: RTCVideoTrack?
     private var audioTrack: RTCAudioTrack?
-    private let factory: RTCPeerConnectionFactory
+    private lazy var factory: RTCPeerConnectionFactory = {
+        RTCInitializeSSL()
+        let videoEncoderFactory = RTCDefaultVideoEncoderFactory()
+        let videoDecoderFactory = RTCDefaultVideoDecoderFactory()
+        return RTCPeerConnectionFactory(
+            encoderFactory: videoEncoderFactory,
+            decoderFactory: videoDecoderFactory
+        )
+    }()
     private var videoCapturer: RTCCameraVideoCapturer?
     
     // Signaling client
@@ -35,25 +43,17 @@ class WebRTCManager: NSObject, ObservableObject {
     ]
     
     override init() {
-        print("📱 WebRTCManager init started")
-        
-        // Initialize WebRTC
-        RTCInitializeSSL()
-        let videoEncoderFactory = RTCDefaultVideoEncoderFactory()
-        let videoDecoderFactory = RTCDefaultVideoDecoderFactory()
-        factory = RTCPeerConnectionFactory(
-            encoderFactory: videoEncoderFactory,
-            decoderFactory: videoDecoderFactory
-        )
-        
         super.init()
-        
-        // Start camera setup immediately
+        print("📱 WebRTCManager init started")
+
+        guard !ProcessInfo.isRunningInPreview else {
+            print("📱 WebRTCManager skipped media setup (preview)")
+            return
+        }
+
         setupLocalMedia()
-        
-        // Create signaling client
         signalingClient = SignalingClient(webRTCManager: self)
-        
+
         print("📱 WebRTCManager init completed")
     }
     

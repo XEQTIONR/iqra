@@ -6,7 +6,11 @@
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
 	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>${PRODUCT_NAME} needs local network access to connect to the lesson server.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>${PRODUCR_NAME} needs access to your mic for lessons</string>
 	<key>NSCameraUsageDescription</key>
@@ -17,7 +21,6 @@
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>remote-notification</string>
 		<string>audio</string>
 	</array>
 </dict>

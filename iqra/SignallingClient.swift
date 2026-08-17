@@ -7,6 +7,7 @@
 import Foundation
 
 class SignalingClient: NSObject, URLSessionWebSocketDelegate {
+    private var session: URLSession?
     private var webSocket: URLSessionWebSocketTask?
     private let serverURL: URL
     private var userId: String?
@@ -15,8 +16,8 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
     
     init(webRTCManager: WebRTCManager) {
         self.webRTCManager = webRTCManager
-        // Use the correct URL with /ws path
-        self.serverURL = URL(string: "ws://192.168.1.71:8080/ws")!
+        // Must match the HTTPS host. A TLS server on 8080 requires wss://, not ws://.
+        self.serverURL = URL(string: "wss://0bsadh7ysww0.shares.zrok.io/ws")!
         super.init()
     }
     
@@ -25,16 +26,13 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
         
         print("🔌 Connecting to WebSocket at: \(serverURL)")
         
+        session?.invalidateAndCancel()
         let session = URLSession(configuration: .default, delegate: self, delegateQueue: .main)
+        self.session = session
         webSocket = session.webSocketTask(with: serverURL)
         webSocket?.resume()
         
         listenForMessages()
-        
-        // Send register message after connection
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            self?.sendRegister()
-        }
     }
     
     private func sendRegister() {
@@ -157,10 +155,36 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
     // URLSessionWebSocketDelegate
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
         print("✅ WebSocket connected successfully!")
+        sendRegister()
     }
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
-        print("❌ WebSocket disconnected: \(closeCode)")
+        let reasonText = reason.flatMap { String(data: $0, encoding: .utf8) } ?? "none"
+        print("❌ WebSocket disconnected: \(closeCode.rawValue) reason: \(reasonText)")
+    }
+    
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if let error = error {
+            print("❌ WebSocket task failed: \(error.localizedDescription)")
+            print("❌ Underlying: \(error)")
+        }
+    }
+    
+    // Local/dev servers often use a self-signed cert. Safari can prompt to trust it;
+    // URLSession cannot, so accept the server trust for this host only.
+    func urlSession(
+        _ session: URLSession,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        let space = challenge.protectionSpace
+        if space.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+           space.host == serverURL.host(),
+           let trust = space.serverTrust {
+            completionHandler(.useCredential, URLCredential(trust: trust))
+            return
+        }
+        completionHandler(.performDefaultHandling, nil)
     }
 }
 

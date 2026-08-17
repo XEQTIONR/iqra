@@ -7,16 +7,17 @@
 
 import SwiftUI
 
-let COURSES_ENDPOINT = "http://localhost:8000/api/courses"
-let ENROLLMENTS_ENDPOINT = "http://localhost:8000/api/enrollments"
-let FEED_ENDPOINT = "http://localhost:8000/api/feed"
-let INSTRUCTORS_ENDPOINT = "http://localhost:8000/api/instructors"
-let JWT_ENDPOINT = "http://localhost:8000/api/jwt"
-let LOGIN_ENDPOINT = "http://localhost:8000/api/sanctum/token"
-let LOGOUT_ENDPOINT = "http://localhost:8000/api/logout"
-let ME_ENDPOINT = "http://localhost:8000/api/user"
-let SIGNUP_ENDPOINT = "http://localhost:8000/api/register"
-let UPLOADS_ENDPOINT = "http://localhost:8000/api/uploads"
+let BASE = "https://gsd8s8dacnl1.shares.zrok.io"
+let COURSES_ENDPOINT = "\(BASE)/api/courses"
+let ENROLLMENTS_ENDPOINT = "\(BASE)/api/enrollments"
+let FEED_ENDPOINT = "\(BASE)/api/feed"
+let INSTRUCTORS_ENDPOINT = "\(BASE)/api/instructors"
+let JWT_ENDPOINT = "\(BASE)/api/jwt"
+let LOGIN_ENDPOINT = "\(BASE)/api/sanctum/token"
+let LOGOUT_ENDPOINT = "\(BASE)/api/logout"
+let ME_ENDPOINT = "\(BASE)/api/user"
+let SIGNUP_ENDPOINT = "\(BASE)/api/register"
+let UPLOADS_ENDPOINT = "\(BASE)/api/uploads"
 
 enum Route: Hashable {
     case course(Course)

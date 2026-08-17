@@ -64,7 +64,7 @@ struct CourseScheduleView: View {
                 do {
                     callingApi = true
                     let (data, _, ok) = try await RequestService.request(
-                        "http://localhost:8000/api/courses/\(course.id!)/availabilities",
+                        "\(BASE)/api/courses/\(course.id!)/availabilities",
                         headers: RequestService.jsonHeaders
                     )
                     print("API CALL DATA")
