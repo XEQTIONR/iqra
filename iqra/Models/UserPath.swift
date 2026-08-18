@@ -6,16 +6,17 @@
 //
 
 import SwiftUI
+import UIKit
 
 /// A single sample along a stroke, with the time it was drawn relative to the stroke start.
-struct PathSample: Equatable {
+struct PathSample: Equatable, Codable {
     var location: CGPoint
     /// Seconds since `UserPath.startedAt`.
     var offset: TimeInterval
 }
 
 /// A freehand stroke that can be redrawn later, including animated replay and fade.
-struct UserPath: Identifiable, Equatable {
+struct UserPath: Identifiable, Equatable, Codable {
     let id: UUID
     var samples: [PathSample]
     var startedAt: Date
@@ -61,6 +62,44 @@ struct UserPath: Identifiable, Equatable {
         self.fadeDuration = fadeDuration
         self.fadeStartedAt = fadeStartedAt
         self.replayStartedAt = replayStartedAt
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, samples, startedAt, completedAt
+        case color, lineWidth, lineCap, lineJoin
+        case fadeDelay, fadeDuration, fadeStartedAt, replayStartedAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        samples = try container.decode([PathSample].self, forKey: .samples)
+        startedAt = try container.decode(Date.self, forKey: .startedAt)
+        completedAt = try container.decodeIfPresent(Date.self, forKey: .completedAt)
+        color = try container.decode(RGBA.self, forKey: .color).color
+        lineWidth = try container.decode(CGFloat.self, forKey: .lineWidth)
+        lineCap = CGLineCap(codableValue: try container.decode(String.self, forKey: .lineCap))
+        lineJoin = CGLineJoin(codableValue: try container.decode(String.self, forKey: .lineJoin))
+        fadeDelay = try container.decode(TimeInterval.self, forKey: .fadeDelay)
+        fadeDuration = try container.decode(TimeInterval.self, forKey: .fadeDuration)
+        fadeStartedAt = try container.decodeIfPresent(Date.self, forKey: .fadeStartedAt)
+        replayStartedAt = try container.decodeIfPresent(Date.self, forKey: .replayStartedAt)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(samples, forKey: .samples)
+        try container.encode(startedAt, forKey: .startedAt)
+        try container.encodeIfPresent(completedAt, forKey: .completedAt)
+        try container.encode(RGBA(color), forKey: .color)
+        try container.encode(lineWidth, forKey: .lineWidth)
+        try container.encode(lineCap.codableValue, forKey: .lineCap)
+        try container.encode(lineJoin.codableValue, forKey: .lineJoin)
+        try container.encode(fadeDelay, forKey: .fadeDelay)
+        try container.encode(fadeDuration, forKey: .fadeDuration)
+        try container.encodeIfPresent(fadeStartedAt, forKey: .fadeStartedAt)
+        try container.encodeIfPresent(replayStartedAt, forKey: .replayStartedAt)
     }
 
     var strokeDuration: TimeInterval {
@@ -178,5 +217,66 @@ struct UserPath: Identifiable, Equatable {
         var context = context
         context.opacity = opacity(at: date)
         context.stroke(Path(displayedCGPath(at: date)), with: .color(color), style: strokeStyle)
+    }
+}
+
+private struct RGBA: Codable {
+    var red: Double
+    var green: Double
+    var blue: Double
+    var opacity: Double
+
+    init(_ color: Color) {
+        var r: CGFloat = 0
+        var g: CGFloat = 0
+        var b: CGFloat = 0
+        var a: CGFloat = 0
+        UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a)
+        red = Double(r)
+        green = Double(g)
+        blue = Double(b)
+        opacity = Double(a)
+    }
+
+    var color: Color {
+        Color(red: red, green: green, blue: blue, opacity: opacity)
+    }
+}
+
+private extension CGLineCap {
+    var codableValue: String {
+        switch self {
+        case .butt: "butt"
+        case .round: "round"
+        case .square: "square"
+        @unknown default: "round"
+        }
+    }
+
+    init(codableValue: String) {
+        switch codableValue {
+        case "butt": self = .butt
+        case "square": self = .square
+        default: self = .round
+        }
+    }
+}
+
+private extension CGLineJoin {
+    var codableValue: String {
+        switch self {
+        case .miter: "miter"
+        case .round: "round"
+        case .bevel: "bevel"
+        @unknown default: "round"
+        }
+    }
+
+    init(codableValue: String) {
+        switch codableValue {
+        case "miter": self = .miter
+        case "bevel": self = .bevel
+        default: self = .round
+        }
     }
 }
