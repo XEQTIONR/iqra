@@ -14,8 +14,7 @@ struct ZView: View {
 
     var body: some View {
         ZStack {
-            Rectangle()
-                .fill(Color.blue)
+            ReaderView()
 
             GeometryReader { geo in
                 Rectangle()
@@ -42,9 +41,8 @@ struct ZView: View {
                             }
                     )
             }
-            .border(Color.yellow, width: 2)
         }
-        .ignoresSafeArea(.all)
+//        .ignoresSafeArea(.all)
     }
 
     private func clampedPosition(_ location: CGPoint, in size: CGSize) -> CGPoint {

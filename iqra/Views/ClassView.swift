@@ -117,7 +117,10 @@ struct VideoView: UIViewRepresentable {
     }
 }
 
-//#Preview {
-//    ClassView()
-//}
+#Preview {
+    ClassView(myClass: MyClass(
+        studentId: 1, instructorId: 2
+    ))
+    .environment(User.preview)
+}
 
