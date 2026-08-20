@@ -57,7 +57,9 @@ struct MainView: View {
             }
             Tab("Resources", systemImage: "book.pages", value: 3) {
                 NavigationStack(path: $router.path) {
-                    ReaderView()
+                    ReaderView(onDraw: { thing in
+                        print("YO:", thing)
+                    })
                 }
             }
             Tab("Settings", systemImage: "gearshape", value: 4) {

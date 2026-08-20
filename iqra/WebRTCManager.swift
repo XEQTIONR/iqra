@@ -36,24 +36,28 @@ class WebRTCManager: NSObject, ObservableObject {
     @Published var localVideoTrack: RTCVideoTrack?
     @Published var remoteVideoTrack: RTCVideoTrack?
     
+    public var onDraw: ((UserPath) -> Void)?
+    
     // Configuration
     private let stunServers = [
         "stun:stun.l.google.com:19302",
         "stun:stun1.l.google.com:19302"
     ]
     
-    override init() {
+    init(onDraw: ((UserPath) -> Void)? = nil) {
         super.init()
+        
         print("📱 WebRTCManager init started")
 
         guard !ProcessInfo.isRunningInPreview else {
             print("📱 WebRTCManager skipped media setup (preview)")
             return
         }
-
+        
         setupLocalMedia()
+        self.onDraw = onDraw
         signalingClient = SignalingClient(webRTCManager: self)
-
+        
         print("📱 WebRTCManager init completed")
     }
     

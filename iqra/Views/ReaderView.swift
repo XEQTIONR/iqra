@@ -12,6 +12,8 @@ struct ReaderView: View {
     // PostScript names (not file names). Verified via the font's `name` table.
     private static let uthmanicFontName = "KFGQPCUthmanicScriptHAFS" // KFGQPC ... HAFS Regular.otf
 
+    var onDraw: ((UserPath) -> Void)? = nil
+
     @State private var identifiablePaths: [UserPath] = []
     @State private var currentPath = UserPath()
     @State private var canDraw = true
@@ -59,10 +61,6 @@ struct ReaderView: View {
                     .environment(\.layoutDirection, .rightToLeft)
                     .padding()
                 }
-                .frame(height: .infinity)
-                .background(Color.gray.opacity(0.1))
-
-                Spacer()
             }
             .overlay {
                 drawingOverlay(scrollProxy: proxy)
@@ -121,6 +119,7 @@ struct ReaderView: View {
                 var finished = currentPath
                 finished.finish(color: .blue)
                 identifiablePaths.append(finished)
+                onDraw?(finished)
                 currentPath = UserPath()
                 scheduleFade(for: finished)
             }

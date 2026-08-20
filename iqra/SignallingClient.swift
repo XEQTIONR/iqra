@@ -76,6 +76,28 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
         send(iceDict)
     }
     
+    func sendPath(to userId: String, path: [UserPath]) {
+        guard let pathJSON = encodeJSONObject(path) else { return }
+        let pathsDict: [String: Any] = [
+            "type": "paths",
+            "to": userId,
+            "payload": ["path": pathJSON]
+        ]
+        send(pathsDict)
+    }
+    
+    private func encodeJSONObject<T: Encodable>(_ value: T) -> Any? {
+        guard let data = try? JSONEncoder().encode(value) else { return nil }
+        return try? JSONSerialization.jsonObject(with: data)
+    }
+    
+    private static func decode<T: Decodable>(_ type: T.Type, fromJSONObject object: Any?) -> T? {
+        guard let object,
+              JSONSerialization.isValidJSONObject(object),
+              let data = try? JSONSerialization.data(withJSONObject: object) else { return nil }
+        return try? JSONDecoder().decode(type, from: data)
+    }
+    
     private func send(_ dict: [String: Any]) {
         guard let data = try? JSONSerialization.data(withJSONObject: dict),
               let jsonString = String(data: data, encoding: .utf8) else { return }
@@ -138,6 +160,12 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
                    let sdpMid = payload["sdpMid"] as? String,
                    let sdpMLineIndex = payload["sdpMLineIndex"] as? Int32 {
                     self?.webRTCManager?.handleICECandidate(candidate, sdpMid: sdpMid, sdpMLineIndex: sdpMLineIndex)
+                }
+                
+            case "path":
+                if let payload = json["payload"] as? [String: Any],
+                   let path = Self.decode(UserPath.self, fromJSONObject: payload["path"]) {
+                    self?.webRTCManager?.onDraw?(path)
                 }
                 
             case "success":
