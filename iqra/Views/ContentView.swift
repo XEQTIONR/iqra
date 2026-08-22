@@ -17,7 +17,7 @@ enum ContentSection {
 struct ContentView: View {
     
     @State var currentSection: ContentSection
-    @State private var currentClass: MyClass?
+    @State private var classSession = ClassSession()
     
     init() {
         let introShown = UserDefaults.standard.bool(forKey: "intro_shown")
@@ -30,15 +30,18 @@ struct ContentView: View {
     }
     
     var body: some View {
+        @Bindable var classSession = classSession
+
         Group {
             switch currentSection {
             case .intro:
                 IntroView($currentSection)
             case .main:
                 MainView(currentSection: $currentSection)
+                    .environment(classSession)
             }
         }
-        .fullScreenCover(item: $currentClass) { session in
+        .fullScreenCover(item: $classSession.current) { session in
             ClassView(myClass: session)
         }
         .onAppear {
@@ -58,7 +61,7 @@ struct ContentView: View {
 
     private func openClass(_ session: MyClass?) {
         guard let session else { return }
-        currentClass = session
+        classSession.current = session
     }
 
     private func intValue(from userInfo: [AnyHashable: Any]?, key: String) -> Int? {

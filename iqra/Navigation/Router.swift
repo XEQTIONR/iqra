@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-let BASE = "https://gsd8s8dacnl1.shares.zrok.io"
+let BASE = "http://localhost:8000"
 let COURSES_ENDPOINT = "\(BASE)/api/courses"
 let ENROLLMENTS_ENDPOINT = "\(BASE)/api/enrollments"
 let FEED_ENDPOINT = "\(BASE)/api/feed"

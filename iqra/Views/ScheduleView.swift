@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct ScheduleView: View {
+    
+    @Environment(ClassSession.self) private var classSession
+    @Environment(User.self) private var currentUser
 
     @State private var enrollments: [Enrollment]
     @State private var eventDates: [Date] = []
@@ -28,17 +31,18 @@ struct ScheduleView: View {
     }
     
     init(enrollments: [Enrollment] = []) {
-        self.enrollments = enrollments
-        selectedDate = nil
+        _enrollments = State(initialValue: enrollments)
+        _selectedDate = State(initialValue: nil)
 
+        let calendar = Calendar.current
         guard let interval = calendar.dateInterval(of: .month, for: Date()) else {
-            eventDates = []
+            _eventDates = State(initialValue: [])
             return
         }
 
-        startDate = interval.start
-        endDate = nil
-        eventDates = Self.eventDates(for: enrollments, in: interval, endDate: nil)
+        _startDate = State(initialValue: interval.start)
+        _endDate = State(initialValue: nil)
+        _eventDates = State(initialValue: Self.eventDates(for: enrollments, in: interval, endDate: nil))
     }
 
     private static func eventDates(
@@ -58,31 +62,61 @@ struct ScheduleView: View {
     
     @ViewBuilder
     private var classList: some View {
-        if selectedDate != nil {
-//            Text(selectedDate!.description)
-//                .foregroundStyle(.blue)
-            
-            if eventDates.contains(where: { calendar.isDate($0, inSameDayAs: selectedDate!) }) {
-                VStack {
-                    ForEach(enrollments.filter { $0.hasSessionOn(selectedDate!) }, id: \.id) { enrollment in
-                        VStack(alignment: .leading) {
-                            Text(enrollment.format!.course!.title)
-                            Text(enrollment.sessionForDate(selectedDate!)!.description)
-                            Text(enrollment.format!.course!.instructor!.name!)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding()
-                        .background(.blue.opacity(0.4))
-                        
-                        .cornerRadius(10)
-                        
-                    }
-                    
+        if let selectedDate,
+           eventDates.contains(where: { calendar.isDate($0, inSameDayAs: selectedDate) }) {
+            VStack {
+                ForEach(enrollments.filter { $0.hasSessionOn(selectedDate) }, id: \.id) { enrollment in
+                    enrollmentRow(enrollment, on: selectedDate)
                 }
-                .frame(maxWidth: .infinity)
-                
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    private func enrollmentRow(_ enrollment: Enrollment, on date: Date) -> some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(enrollment.format?.course?.title ?? "Class")
+                if let minutes = enrollment.sessionForDate(date) {
+                    Text(minutes.description)
+                }
+                if let instructorName = enrollment.format?.course?.instructor?.name {
+                    Text(instructorName)
+                }
+            }
+
+            Spacer()
+
+            Button("Join") {
+                join(enrollment)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(.blue.opacity(0.4))
+        .cornerRadius(10)
+    }
+
+    private func join(_ enrollment: Enrollment) {
+        guard
+            let studentId = enrollment.user?.id,
+            let instructorId = enrollment.format?.course?.instructor?.id
+        else {
+            print("Enrollment is missing student or instructor")
+            return
+        }
+
+        let isInstructor = currentUser.id == instructorId
+        let isStudent = currentUser.id == studentId
+        guard isInstructor || isStudent else {
+            print("Not instructor or student")
+            return
+        }
+
+        classSession.current = MyClass(
+            studentId: studentId,
+            instructorId: instructorId
+        )
     }
 
     var body: some View {
@@ -147,4 +181,7 @@ struct ScheduleView: View {
 
 #Preview {
     ScheduleView(enrollments: Enrollment.previewEnrollments)
+        .environment(User.preview)
+        .environment(ClassSession())
 }
+
