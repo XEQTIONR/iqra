@@ -102,20 +102,7 @@ struct ClassView: View {
     }
 }
 
-// Video rendering view
-struct VideoView: UIViewRepresentable {
-    let videoTrack: RTCVideoTrack
-    
-    func makeUIView(context: Context) -> RTCMTLVideoView {
-        let videoView = RTCMTLVideoView(frame: .zero)
-        videoView.videoContentMode = .scaleAspectFill
-        return videoView
-    }
-    
-    func updateUIView(_ uiView: RTCMTLVideoView, context: Context) {
-        videoTrack.add(uiView)
-    }
-}
+
 
 #Preview {
     ClassView(myClass: MyClass(

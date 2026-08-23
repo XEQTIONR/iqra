@@ -42,7 +42,7 @@ struct ContentView: View {
             }
         }
         .fullScreenCover(item: $classSession.current) { session in
-            ClassView(myClass: session)
+            ZView(myClass: session)
         }
         .onAppear {
             openClass(AppNotificationDelegate.shared.consumePendingClass())
