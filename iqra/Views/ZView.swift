@@ -72,35 +72,35 @@ struct ZView: View {
             
         } else {
             ZStack {
-                ReaderView()
+//                ReaderView()
 
                 if let localTrack = webRTCManager.localVideoTrack {
                     GeometryReader { geo in
                         let frameSize = videoFrameSize(in: geo.size)
                         VideoView(videoTrack: localTrack, videoSize: $videoSize)
-                            .frame(width: frameSize.width, height: frameSize.height)
+                            .frame(width: geo.size.width, height: geo.size.height)
                             .clipped()
-                            .position(orangePosition)
-                            .gesture(
-                                DragGesture()
-                                    .onChanged { value in
-                                        if dragStart == nil {
-                                            dragStart = orangePosition
-                                        }
-                                        let start = dragStart ?? orangePosition
-                                        orangePosition = clampedPosition(
-                                            CGPoint(
-                                                x: start.x + value.translation.width,
-                                                y: start.y + value.translation.height
-                                            ),
-                                            in: geo.size,
-                                            frameSize: frameSize
-                                        )
-                                    }
-                                    .onEnded { _ in
-                                        dragStart = nil
-                                    }
-                            )
+//                            .position(orangePosition)
+//                            .gesture(
+//                                DragGesture()
+//                                    .onChanged { value in
+//                                        if dragStart == nil {
+//                                            dragStart = orangePosition
+//                                        }
+//                                        let start = dragStart ?? orangePosition
+//                                        orangePosition = clampedPosition(
+//                                            CGPoint(
+//                                                x: start.x + value.translation.width,
+//                                                y: start.y + value.translation.height
+//                                            ),
+//                                            in: geo.size,
+//                                            frameSize: frameSize
+//                                        )
+//                                    }
+//                                    .onEnded { _ in
+//                                        dragStart = nil
+//                                    }
+//                            )
                     }
                 }
                

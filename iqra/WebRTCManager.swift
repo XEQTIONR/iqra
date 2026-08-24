@@ -136,21 +136,22 @@ class WebRTCManager: NSObject, ObservableObject {
         }
         print("📱 Using camera: \(camera.localizedName)")
         
-        // Get best format
         let formats = RTCCameraVideoCapturer.supportedFormats(for: camera)
         print("📐 Available formats: \(formats.count)")
-        
-        guard let format = formats.first else {
+
+        guard let format = selectCaptureFormat(
+            from: formats,
+            preferredPixelFormat: capturer.preferredOutputPixelFormat()
+        ) else {
             print("❌ No formats available")
             return
         }
-        
+
         let size = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
-        let maxFps = format.videoSupportedFrameRateRanges.first?.maxFrameRate ?? 30
-        print("📐 Selected format: \(size.width)x\(size.height) at \(maxFps) fps")
-        
-        // Start capture
-        capturer.startCapture(with: camera, format: format, fps: 30) { [weak self] error in
+        let fps = selectCaptureFps(for: format)
+        print("📐 Selected format: \(size.width)x\(size.height) at \(fps) fps")
+
+        capturer.startCapture(with: camera, format: format, fps: fps) { [weak self] error in
             if let error = error {
                 print("❌ Failed to start capture: \(error.localizedDescription)")
             } else {
@@ -165,6 +166,36 @@ class WebRTCManager: NSObject, ObservableObject {
                 }
             }
         }
+    }
+
+    private func selectCaptureFormat(
+        from formats: [AVCaptureDevice.Format],
+        preferredPixelFormat: FourCharCode
+    ) -> AVCaptureDevice.Format? {
+        let targetWidth: Int32 = 1280
+        let targetHeight: Int32 = 720
+        var selectedFormat: AVCaptureDevice.Format?
+        var closestDiff = Int32.max
+
+        for format in formats {
+            let dimension = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+            let diff = abs(targetWidth - dimension.width) + abs(targetHeight - dimension.height)
+            let pixelFormat = CMFormatDescriptionGetMediaSubType(format.formatDescription)
+
+            if diff < closestDiff {
+                selectedFormat = format
+                closestDiff = diff
+            } else if diff == closestDiff && pixelFormat == preferredPixelFormat {
+                selectedFormat = format
+            }
+        }
+
+        return selectedFormat
+    }
+
+    private func selectCaptureFps(for format: AVCaptureDevice.Format, target: Float64 = 30) -> Int {
+        let maxSupported = format.videoSupportedFrameRateRanges.map(\.maxFrameRate).max() ?? target
+        return Int(min(maxSupported, target))
     }
     
     func startCall(to userId: String) {
