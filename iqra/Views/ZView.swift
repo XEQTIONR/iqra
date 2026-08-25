@@ -9,12 +9,13 @@ import SwiftUI
 
 struct ZView: View {
     
-    @Environment(User.self) private var appUser
-    @StateObject private var webRTCManager = WebRTCManager()
+    private var appUser: User
+    @StateObject private var webRTCManager: WebRTCManager
     
-    //@State private var userId: String
-    //@State private var targetUserId: String
-    @State private var isConnected = false
+    @State private var userId: String
+    @State private var targetUserId: String
+    @State private var isConnected: Bool
+    @State private var isLive: Bool = false
     
     @State private var orangePosition = CGPoint(x: 50, y: 50)
     @State private var dragStart: CGPoint?
@@ -38,24 +39,27 @@ struct ZView: View {
         return CGSize(width: orangeSize * displaySize.width / displaySize.height, height: orangeSize)
     }
 
-    init(myClass: MyClass) {
+    init(myClass: MyClass, user: User) {
+        
         self.myClass = myClass
+        self.appUser = user
         
-//        if appUser.id == myClass.studentId {
-//            _userId = State(initialValue: String(myClass.studentId))
-//            _targetUserId = State(initialValue: String(myClass.instructorId))
-//        }
-//        
-//        if (appUser.id == myClass.instructorId) {
-//            _userId = State(initialValue: String(myClass.instructorId))
-//            _targetUserId = State(initialValue: String(myClass.studentId))
-//        }
+        if appUser.id == myClass.studentId {
+            _userId = State(initialValue: String(myClass.studentId))
+            _targetUserId = State(initialValue: String(myClass.instructorId))
+        } else { // (appUser.id == myClass.instructorId)
+            _userId = State(initialValue: String(myClass.instructorId))
+            _targetUserId = State(initialValue: String(myClass.studentId))
+        }
         
+        let webRTCManager = WebRTCManager()
+        webRTCManager.connect(userId: String(user.id!))
+        _webRTCManager = StateObject(wrappedValue: webRTCManager)
+        _isConnected = State(initialValue: true)
     }
 
     var body: some View {
-        
-        if !isConnected {
+        if !isLive {
             VStack {
                 HStack {
                     Circle()
@@ -64,44 +68,83 @@ struct ZView: View {
                     
                     Text(appUser.name!)
                 }
-                Button("Connect") {
-                        webRTCManager.connect(userId: String(appUser.id!))
-                        isConnected = true
+                Button("Call") {
+                    webRTCManager.startCall(to: targetUserId)
+                    isLive = true
+//                        webRTCManager.connect(userId: String(appUser.id!))
+//                        isConnected = true
                 }
             }
-            
         } else {
             ZStack {
 //                ReaderView()
 
                 if let localTrack = webRTCManager.localVideoTrack {
                     GeometryReader { geo in
+                        
                         let frameSize = videoFrameSize(in: geo.size)
-                        VideoView(videoTrack: localTrack, videoSize: $videoSize)
-                            .frame(width: geo.size.width, height: geo.size.height)
-                            .clipped()
-//                            .position(orangePosition)
-//                            .gesture(
-//                                DragGesture()
-//                                    .onChanged { value in
-//                                        if dragStart == nil {
-//                                            dragStart = orangePosition
-//                                        }
-//                                        let start = dragStart ?? orangePosition
-//                                        orangePosition = clampedPosition(
-//                                            CGPoint(
-//                                                x: start.x + value.translation.width,
-//                                                y: start.y + value.translation.height
-//                                            ),
-//                                            in: geo.size,
-//                                            frameSize: frameSize
-//                                        )
-//                                    }
-//                                    .onEnded { _ in
-//                                        dragStart = nil
-//                                    }
-//                            )
+                        
+                        if let remoteTrack = webRTCManager.remoteVideoTrack {
+
+                            VideoView(videoTrack: remoteTrack, videoSize: $videoSize)
+                                .frame(width: geo.size.width, height: geo.size.height)
+                                .clipped()
+                            
+                            
+                            VideoView(videoTrack: localTrack, videoSize: $videoSize)
+                                .frame(width: frameSize.width, height: frameSize.height)
+                                .clipped()
+                                .position(orangePosition)
+                                .gesture(
+                                    DragGesture()
+                                        .onChanged { value in
+                                            if dragStart == nil {
+                                                dragStart = orangePosition
+                                            }
+                                            let start = dragStart ?? orangePosition
+                                            orangePosition = clampedPosition(
+                                                CGPoint(
+                                                    x: start.x + value.translation.width,
+                                                    y: start.y + value.translation.height
+                                                ),
+                                                in: geo.size,
+                                                frameSize: frameSize
+                                            )
+                                        }
+                                        .onEnded { _ in
+                                            dragStart = nil
+                                        }
+                                )
+                        } else {
+                            VideoView(videoTrack: localTrack, videoSize: $videoSize)
+                                .frame(width: geo.size.width, height: geo.size.height)
+                                .clipped()
+    //                            .position(orangePosition)
+    //                            .gesture(
+    //                                DragGesture()
+    //                                    .onChanged { value in
+    //                                        if dragStart == nil {
+    //                                            dragStart = orangePosition
+    //                                        }
+    //                                        let start = dragStart ?? orangePosition
+    //                                        orangePosition = clampedPosition(
+    //                                            CGPoint(
+    //                                                x: start.x + value.translation.width,
+    //                                                y: start.y + value.translation.height
+    //                                            ),
+    //                                            in: geo.size,
+    //                                            frameSize: frameSize
+    //                                        )
+    //                                    }
+    //                                    .onEnded { _ in
+    //                                        dragStart = nil
+    //                                    }
+    //                            )
+                        }
+                        
                     }
+                    
+                    
                 }
                
             }
@@ -121,8 +164,12 @@ struct ZView: View {
 }
 
 #Preview {
-    ZView(myClass: MyClass(
-        studentId: User.studentPreview.id!, instructorId: User.instructorPreview.id!
-    ))
-    .environment(User.preview)
+    ZView(
+        myClass: MyClass(
+            studentId: User.studentPreview.id!,
+            instructorId: User.instructorPreview.id!
+        ),
+        user: User.studentPreview
+    )
+
 }
