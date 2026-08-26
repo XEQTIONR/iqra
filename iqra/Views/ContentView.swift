@@ -16,6 +16,7 @@ enum ContentSection {
 
 struct ContentView: View {
     
+    @Environment(User.self) var appUser
     @State var currentSection: ContentSection
     @State private var classSession = ClassSession()
     
@@ -42,7 +43,7 @@ struct ContentView: View {
             }
         }
         .fullScreenCover(item: $classSession.current) { session in
-            ZView(myClass: session)
+            ZView(myClass: session, user: appUser)
         }
         .onAppear {
             openClass(AppNotificationDelegate.shared.consumePendingClass())
