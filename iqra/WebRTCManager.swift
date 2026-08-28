@@ -36,7 +36,9 @@ class WebRTCManager: NSObject, ObservableObject {
     @Published var localVideoTrack: RTCVideoTrack?
     @Published var remoteVideoTrack: RTCVideoTrack?
     
-    public var onDraw: ((UserPath) -> Void)?
+    public var onDraw: ((UserPath) -> Void)? = nil
+    public var onGuestJoin: ((String) -> Void)? = nil
+    public var onGuestLeave: ((String) -> Void)? = nil
     
     // Configuration
     private let stunServers = [
@@ -44,7 +46,11 @@ class WebRTCManager: NSObject, ObservableObject {
         "stun:stun1.l.google.com:19302"
     ]
     
-    init(onDraw: ((UserPath) -> Void)? = nil) {
+    init(
+        onDraw: ((UserPath) -> Void)? = nil,
+        onGuestJoin: ((String) -> Void)? = nil,
+        onGuestLeave: ((String) -> Void)? = nil
+    ) {
         super.init()
         
         print("📱 WebRTCManager init started")
@@ -55,15 +61,15 @@ class WebRTCManager: NSObject, ObservableObject {
         }
         
         setupLocalMedia()
-        self.onDraw = onDraw
+
         signalingClient = SignalingClient(webRTCManager: self)
         
         print("📱 WebRTCManager init completed")
     }
     
-    func connect(userId: String) {
-        print("🔌 Connecting to signaling server as: \(userId)")
-        signalingClient?.connect(userId: userId)
+    func connect(userId: String, classId: String) {
+        print("🔌 Connecting to signaling server as: \(userId) for class: \(classId)")
+        signalingClient?.connect(userId: userId, classId: classId)
     }
     
     private func setupLocalMedia() {
@@ -200,16 +206,21 @@ class WebRTCManager: NSObject, ObservableObject {
     
     func startCall(to userId: String) {
         print("📞 Starting call to: \(userId)")
+        // Step #2
         createPeerConnection()
+        
+        
         createOffer { [weak self] sdp in
             self?.signalingClient?.sendCall(to: userId, sdp: sdp)
         }
     }
     
+    // Step #5
     func acceptCall(from userId: String, withOffer sdp: String) {
         print("📞 Accepting call from: \(userId)")
         createPeerConnection()
         setRemoteDescription(sdp: sdp, type: .offer) { [weak self] in
+            // Step #6
             self?.createAnswer { answerSdp in
                 self?.signalingClient?.sendAnswer(to: userId, sdp: answerSdp)
             }

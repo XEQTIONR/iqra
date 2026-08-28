@@ -87,7 +87,8 @@ final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate 
                     object: nil,
                     userInfo: [
                         "studentId": String(session.studentId),
-                        "instructorId": String(session.instructorId)
+                        "instructorId": String(session.instructorId),
+                        "courseFormatId": String(session.courseFormatId),
                     ]
                 )
             }
@@ -99,7 +100,8 @@ final class AppNotificationDelegate: NSObject, UNUserNotificationCenterDelegate 
     private static func makeClass(from userInfo: [AnyHashable: Any]) -> MyClass {
         MyClass(
             studentId: intValue(from: userInfo, key: "studentId") ?? 0,
-            instructorId: intValue(from: userInfo, key: "instructorId") ?? 0
+            instructorId: intValue(from: userInfo, key: "instructorId") ?? 0,
+            courseFormatId: intValue(from: userInfo, key: "courseFormatId") ?? 0
         )
     }
 

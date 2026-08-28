@@ -82,4 +82,41 @@ struct Course: Codable, Hashable {
     }
 }
 
+#if DEBUG
+
+extension Course {
+    static var preview: Course {
+        return Course(
+            id: 0,
+            title: "2 days a week",
+            description: "Some description",
+            image: "",
+            video: "",
+            difficulty: .beginner,
+            category: .reading,
+            lengthType: .fixed,
+            ageGroups: [.kids, .seniors, .teens, .youngAdults]
+        )
+    }
+}
+
+
+extension CourseFormat {
+    static var preview: CourseFormat {
+        return CourseFormat(
+            id: 0,
+            title: "2 days a week",
+            description: "Some description",
+            unit: .lesson,
+            lessonLength: 60,
+            lessonsPerWeek: 2,
+            totalLessons: 10,
+            price: 50,
+            billingCycles: 5,
+            course: Course.preview
+        )
+    }
+}
+#endif
+
 

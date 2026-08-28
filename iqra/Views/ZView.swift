@@ -22,7 +22,7 @@ struct ZView: View {
     @State private var videoSize = CGSize(width: 9, height: 16)
     
     let myClass: MyClass
-    private let orangeSize: CGFloat = 150
+    private let orangeSize: CGFloat = 300
 
     /// Camera buffers are often landscape; swap so the preview matches the container.
     private func videoFrameSize(in containerSize: CGSize) -> CGSize {
@@ -53,27 +53,30 @@ struct ZView: View {
         }
         
         let webRTCManager = WebRTCManager()
-        webRTCManager.connect(userId: String(user.id!))
+        webRTCManager.connect(userId: String(user.id!), classId: myClass.id)
         _webRTCManager = StateObject(wrappedValue: webRTCManager)
         _isConnected = State(initialValue: true)
     }
 
     var body: some View {
         if !isLive {
-            VStack {
-                HStack {
-                    Circle()
-                        .fill(Color.orange)
-                        .frame(width: 30, height: 30)
-                    
-                    Text(appUser.name!)
+            
+            GeometryReader { geo in
+                VStack {
+                    let frameSize = videoFrameSize(in: geo.size)
+                    if let localTrack = webRTCManager.localVideoTrack {
+                        VideoView(videoTrack: localTrack, videoSize: $videoSize)
+                            .frame(width: frameSize.width, height: frameSize.height)
+                            .clipped()
+                    }
+
+                    Button("Call") {
+                        // Step #1
+                        webRTCManager.startCall(to: targetUserId)
+                        isLive = true
+                    }
                 }
-                Button("Call") {
-                    webRTCManager.startCall(to: targetUserId)
-                    isLive = true
-//                        webRTCManager.connect(userId: String(appUser.id!))
-//                        isConnected = true
-                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         } else {
             ZStack {
@@ -81,7 +84,6 @@ struct ZView: View {
 
                 if let localTrack = webRTCManager.localVideoTrack {
                     GeometryReader { geo in
-                        
                         let frameSize = videoFrameSize(in: geo.size)
                         
                         if let remoteTrack = webRTCManager.remoteVideoTrack {
@@ -167,7 +169,8 @@ struct ZView: View {
     ZView(
         myClass: MyClass(
             studentId: User.studentPreview.id!,
-            instructorId: User.instructorPreview.id!
+            instructorId: User.instructorPreview.id!,
+            courseFormatId: CourseFormat.preview.id!
         ),
         user: User.studentPreview
     )

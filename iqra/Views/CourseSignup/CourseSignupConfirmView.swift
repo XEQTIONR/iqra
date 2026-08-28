@@ -116,14 +116,16 @@ struct CourseSignupConfirmView: View {
 
                             let studentId = appUser.id ?? enrollment.user?.id
                             let instructorId = course.instructor!.id
+                            let courseFormatId = format.id!
 
                             print("Reminder payload studentId:", studentId as Any, "instructorId:", instructorId as Any)
 
                             await scheduleClassReminder(
                                 at: reminderDate,
                                 courseTitle: course.title,
-                                studentId: studentId,
-                                instructorId: instructorId
+                                studentId: studentId!,
+                                instructorId: instructorId!,
+                                courseFormatId: courseFormatId
                             )
                         }
 
@@ -145,8 +147,9 @@ struct CourseSignupConfirmView: View {
     private func scheduleClassReminder(
         at date: Date,
         courseTitle: String,
-        studentId: Int?,
-        instructorId: Int?
+        studentId: Int,
+        instructorId: Int,
+        courseFormatId: Int
     ) async {
         guard date > Date() else { return }
 
@@ -162,8 +165,9 @@ struct CourseSignupConfirmView: View {
             content.sound = .default
             content.categoryIdentifier = AppNotificationDelegate.classReminderCategoryId
             content.userInfo = [
-                "studentId": studentId.map(String.init) ?? "0",
-                "instructorId": instructorId.map(String.init) ?? "0"
+                "studentId": studentId,
+                "instructorId": instructorId,
+                "courseFormatId": courseFormatId
             ]
 
             let components = Calendar.current.dateComponents(

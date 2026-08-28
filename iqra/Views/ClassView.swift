@@ -32,7 +32,7 @@ struct ClassView: View {
                     .autocapitalization(.none)
                 
                 Button("Connect") {
-                    webRTCManager.connect(userId: userId)
+                    webRTCManager.connect(userId: userId, classId: myClass.id)
                     isConnected = true
                 }
                 .buttonStyle(.borderedProminent)
@@ -106,7 +106,7 @@ struct ClassView: View {
 
 #Preview {
     ClassView(myClass: MyClass(
-        studentId: 1, instructorId: 2
+        studentId: 1, instructorId: 2, courseFormatId: CourseFormat.preview.id!
     ))
     .environment(User.preview)
 }

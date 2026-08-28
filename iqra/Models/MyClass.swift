@@ -10,13 +10,15 @@ import Observation
 
 @Observable
 class MyClass: Identifiable, Equatable {
-    var id: String { "\(studentId)-\(instructorId)" }
+    var id: String { "\(courseFormatId)-\(instructorId)-\(studentId)" }
     var studentId: Int
     var instructorId: Int
+    var courseFormatId: Int
     
-    init(studentId: Int, instructorId: Int) {
+    init(studentId: Int, instructorId: Int, courseFormatId: Int) {
         self.studentId = studentId
         self.instructorId = instructorId
+        self.courseFormatId = courseFormatId
     }
     
     static func == (lhs: MyClass, rhs: MyClass) -> Bool {
@@ -34,7 +36,8 @@ extension MyClass {
     static var preview: MyClass {
         return MyClass(
             studentId: User.studentPreview.id!,
-            instructorId: User.instructorPreview.id!
+            instructorId: User.instructorPreview.id!,
+            courseFormatId: CourseFormat.preview.id!
         )
     }
 }

@@ -54,9 +54,11 @@ struct ContentView: View {
                 return
             }
 
-            let studentId = intValue(from: notification.userInfo, key: "studentId") ?? 0
-            let instructorId = intValue(from: notification.userInfo, key: "instructorId") ?? 0
-            openClass(MyClass(studentId: studentId, instructorId: instructorId))
+            let studentId = intValue(from: notification.userInfo, key: "studentId")!
+            let instructorId = intValue(from: notification.userInfo, key: "instructorId")!
+            let courseFormatId = intValue(from: notification.userInfo, key: "courseFormatId")!
+            
+            openClass(MyClass(studentId: studentId, instructorId: instructorId, courseFormatId: courseFormatId))
         }
     }
 

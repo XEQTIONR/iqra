@@ -100,6 +100,7 @@ struct ScheduleView: View {
     private func join(_ enrollment: Enrollment) {
         guard
             let studentId = enrollment.user?.id,
+            let formatId = enrollment.format?.id,
             let instructorId = enrollment.format?.course?.instructor?.id
         else {
             print("Enrollment is missing student or instructor")
@@ -115,7 +116,8 @@ struct ScheduleView: View {
 
         classSession.current = MyClass(
             studentId: studentId,
-            instructorId: instructorId
+            instructorId: instructorId,
+            courseFormatId: formatId
         )
     }
 

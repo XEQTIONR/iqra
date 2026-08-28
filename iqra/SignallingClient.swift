@@ -11,6 +11,7 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
     private var webSocket: URLSessionWebSocketTask?
     private let serverURL: URL
     private var userId: String?
+    private var classId: String?
     private weak var webRTCManager: WebRTCManager?
     var currentCallPartner: String?
     
@@ -21,8 +22,9 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
         super.init()
     }
     
-    func connect(userId: String) {
+    func connect(userId: String, classId: String) {
         self.userId = userId
+        self.classId = classId
         
         print("🔌 Connecting to WebSocket at: \(serverURL)")
         
@@ -37,14 +39,21 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
     
     private func sendRegister() {
         guard let userId = userId else { return }
+        guard let classId = classId else { return }
+        
         let registerDict: [String: Any] = [
             "type": "register",
-            "payload": ["userId": userId]
+            "payload": [
+                "userId": userId,
+                "classId": classId,
+            ]
         ]
         send(registerDict)
     }
     
+    // Step #3 --> Signalling Client -> Go App -> On client SignallingClient.handleMessage
     func sendCall(to userId: String, sdp: String) {
+        print("SEND CALL TO : \(userId)")
         currentCallPartner = userId
         let callDict: [String: Any] = [
             "type": "call",
@@ -54,6 +63,7 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
         send(callDict)
     }
     
+    //Step #7 -> Signalling Client -> Go app -> Back to original SignallingClient.handleMessage
     func sendAnswer(to userId: String, sdp: String) {
         let answerDict: [String: Any] = [
             "type": "answer",
@@ -138,6 +148,7 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
         
         DispatchQueue.main.async { [weak self] in
             switch type {
+            //Step #4
             case "incoming_call":
                 if let from = json["from"] as? String,
                    let payload = json["payload"] as? [String: Any],
@@ -145,7 +156,7 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
                     self?.currentCallPartner = from
                     self?.webRTCManager?.acceptCall(from: from, withOffer: sdp)
                 }
-                
+            // Step #8
             case "call_answered":
                 if let payload = json["payload"] as? [String: Any],
                    let sdp = payload["sdp"] as? String {
@@ -166,6 +177,14 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
                 if let payload = json["payload"] as? [String: Any],
                    let path = Self.decode(UserPath.self, fromJSONObject: payload["path"]) {
                     self?.webRTCManager?.onDraw?(path)
+                }
+                
+            case "new_user_joined":
+                
+                if let payload = json["payload"] as? [String: Any],
+                   let userId = payload["user_id"] {
+                    //self?.webRTCManager?.onDraw?(path)
+                    print("New User joined: \(userId)")
                 }
                 
             case "success":
