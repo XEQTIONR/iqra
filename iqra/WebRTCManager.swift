@@ -36,9 +36,9 @@ class WebRTCManager: NSObject, ObservableObject {
     @Published var localVideoTrack: RTCVideoTrack?
     @Published var remoteVideoTrack: RTCVideoTrack?
     
-    public var onDraw: ((UserPath) -> Void)? = nil
-    public var onGuestJoin: ((String) -> Void)? = nil
-    public var onGuestLeave: ((String) -> Void)? = nil
+    public var onDraw: ((UserPath) -> Void)?
+    public var onGuestJoin: ((String) -> Void)?
+    public var onGuestLeave: ((String) -> Void)?
     
     // Configuration
     private let stunServers = [
@@ -49,9 +49,13 @@ class WebRTCManager: NSObject, ObservableObject {
     init(
         onDraw: ((UserPath) -> Void)? = nil,
         onGuestJoin: ((String) -> Void)? = nil,
-        onGuestLeave: ((String) -> Void)? = nil
+        onGuestLeave: ((String) -> Void)? = nil,
     ) {
         super.init()
+        
+        self.onDraw = onDraw
+        self.onGuestJoin = onGuestJoin
+        self.onGuestLeave = onGuestLeave
         
         print("📱 WebRTCManager init started")
 
