@@ -179,19 +179,16 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
                     self?.webRTCManager?.onDraw?(path)
                 }
                 
-            case "new_user_joined":
-                
-                if let payload = json["payload"] as? [String: Any],
-                   let userId = payload["user_id"] as? String {
-                    
+            case "user_joined":
+                if let userId = json["from"] as? String {
                     print("New User joined: \(userId)")
                     self?.webRTCManager?.onGuestJoin?(userId)
-                    
                 }
             
             case "user_left":
                 if let userId = json["from"] as? String {
                     print("User left: \(userId)")
+                    self?.webRTCManager?.onGuestLeave?(userId)
                 }
                 
             case "success":

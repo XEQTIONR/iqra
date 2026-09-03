@@ -53,7 +53,9 @@ struct ZView: View {
         }
         
         let webRTCManager = WebRTCManager()
-        webRTCManager.connect(userId: String(user.id!), classId: myClass.id)
+        webRTCManager.onGuestJoin = { [weak webRTCManager] idStr in
+            webRTCManager?.startCall(to: idStr)
+        }
         _webRTCManager = StateObject(wrappedValue: webRTCManager)
         _isConnected = State(initialValue: true)
     }
@@ -70,9 +72,9 @@ struct ZView: View {
                             .clipped()
                     }
 
-                    Button("Call") {
+                    Button("Connect") {
                         // Step #1
-                        webRTCManager.startCall(to: targetUserId)
+                        webRTCManager.connect(userId: String(userId), classId: myClass.id)
                         isLive = true
                     }
                 }
