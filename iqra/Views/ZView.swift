@@ -56,6 +56,9 @@ struct ZView: View {
         webRTCManager.onGuestJoin = { [weak webRTCManager] idStr in
             webRTCManager?.startCall(to: idStr)
         }
+        webRTCManager.onGuestLeave = { [weak webRTCManager] _ in
+            webRTCManager?.hangUp()
+        }
         _webRTCManager = StateObject(wrappedValue: webRTCManager)
         _isConnected = State(initialValue: true)
     }

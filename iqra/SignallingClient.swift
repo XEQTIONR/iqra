@@ -74,6 +74,7 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
     }
     
     func sendICECandidate(to userId: String, candidate: String, sdpMid: String, sdpMLineIndex: Int32) {
+        guard !userId.isEmpty else { return }
         let iceDict: [String: Any] = [
             "type": "ice-candidate",
             "to": userId,
@@ -166,6 +167,12 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
                 }
                 
             case "ice-candidate":
+                if let from = json["from"] as? String,
+                   let partner = self?.currentCallPartner,
+                   from != partner {
+                    print("⚠️ Ignoring ICE candidate from \(from); current partner is \(partner)")
+                    return
+                }
                 if let payload = json["payload"] as? [String: Any],
                    let candidate = payload["candidate"] as? String,
                    let sdpMid = payload["sdpMid"] as? String,
@@ -188,6 +195,9 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
             case "user_left":
                 if let userId = json["from"] as? String {
                     print("User left: \(userId)")
+                    if userId == self?.currentCallPartner {
+                        self?.webRTCManager?.hangUp()
+                    }
                     self?.webRTCManager?.onGuestLeave?(userId)
                 }
                 

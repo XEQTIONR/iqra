@@ -29,6 +29,8 @@ class WebRTCManager: NSObject, ObservableObject {
     
     // Signaling client
     private var signalingClient: SignalingClient?
+    private var iceDisconnectWorkItem: DispatchWorkItem?
+    private let iceDisconnectGracePeriod: TimeInterval = 5
     
     // State
     @Published var isConnected = false
@@ -233,6 +235,7 @@ class WebRTCManager: NSObject, ObservableObject {
     
     private func createPeerConnection() {
         print("🔌 Creating peer connection")
+        closePeerConnection()
         
         let config = RTCConfiguration()
         config.iceServers = stunServers.map { RTCIceServer(urlStrings: [$0]) }
@@ -279,8 +282,9 @@ class WebRTCManager: NSObject, ObservableObject {
                 return
             }
             
-            guard let sdp = sdp else { return }
-            self?.peerConnection?.setLocalDescription(sdp) { error in
+            guard let self, let sdp else { return }
+            guard let peerConnection = self.peerConnection else { return }
+            peerConnection.setLocalDescription(sdp) { error in
                 if let error = error {
                     print("❌ Failed to set local description: \(error)")
                 }
@@ -304,8 +308,9 @@ class WebRTCManager: NSObject, ObservableObject {
                 return
             }
             
-            guard let sdp = sdp else { return }
-            self?.peerConnection?.setLocalDescription(sdp) { error in
+            guard let self, let sdp else { return }
+            guard let peerConnection = self.peerConnection else { return }
+            peerConnection.setLocalDescription(sdp) { error in
                 if let error = error {
                     print("❌ Failed to set local description: \(error)")
                 }
@@ -315,12 +320,17 @@ class WebRTCManager: NSObject, ObservableObject {
     }
     
     func setRemoteDescription(sdp: String, type: RTCSdpType, completion: @escaping () -> Void) {
+        guard peerConnection != nil else {
+            print("⚠️ Ignoring remote description; no active peer connection")
+            return
+        }
         let sessionDescription = RTCSessionDescription(type: type, sdp: sdp)
-        peerConnection?.setRemoteDescription(sessionDescription) { error in
+        peerConnection?.setRemoteDescription(sessionDescription) { [weak self] error in
             if let error = error {
                 print("❌ Failed to set remote description: \(error)")
                 return
             }
+            guard self?.peerConnection != nil else { return }
             DispatchQueue.main.async {
                 completion()
             }
@@ -328,26 +338,65 @@ class WebRTCManager: NSObject, ObservableObject {
     }
     
     func handleICECandidate(_ candidate: String, sdpMid: String, sdpMLineIndex: Int32) {
+        guard peerConnection != nil else {
+            print("⚠️ Ignoring ICE candidate; no active peer connection")
+            return
+        }
+        
         let candidateObj = RTCIceCandidate(
             sdp: candidate,
             sdpMLineIndex: sdpMLineIndex,
             sdpMid: sdpMid
         )
-        // Use the new completion handler method
-            peerConnection?.add(candidateObj) { error in
-                if let error = error {
-                    print("❌ Failed to add ICE candidate: \(error.localizedDescription)")
-                } else {
-                    print("✅ ICE candidate added successfully")
-                }
+        peerConnection?.add(candidateObj) { error in
+            if let error = error {
+                print("❌ Failed to add ICE candidate: \(error.localizedDescription)")
+            } else {
+                print("✅ ICE candidate added successfully")
             }
+        }
     }
     
     func hangUp() {
         print("📞 Hanging up")
+        closePeerConnection()
+        signalingClient?.currentCallPartner = nil
+    }
+    
+    private func closePeerConnection() {
+        cancelIceDisconnectHangUp()
         peerConnection?.close()
         peerConnection = nil
-        isCallActive = false
+        
+        let applyIdleState = { [weak self] in
+            guard let self, self.peerConnection == nil else { return }
+            self.remoteVideoTrack = nil
+            self.isCallActive = false
+        }
+        if Thread.isMainThread {
+            applyIdleState()
+        } else {
+            DispatchQueue.main.async(execute: applyIdleState)
+        }
+    }
+    
+    private func isCurrent(_ peerConnection: RTCPeerConnection) -> Bool {
+        peerConnection === self.peerConnection
+    }
+    
+    private func scheduleHangUpAfterIceDisconnect() {
+        cancelIceDisconnectHangUp()
+        let workItem = DispatchWorkItem { [weak self] in
+            print("⏱️ ICE disconnect grace expired; hanging up")
+            self?.hangUp()
+        }
+        iceDisconnectWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + iceDisconnectGracePeriod, execute: workItem)
+    }
+    
+    private func cancelIceDisconnectHangUp() {
+        iceDisconnectWorkItem?.cancel()
+        iceDisconnectWorkItem = nil
     }
     
     func checkVideoState() {
@@ -367,9 +416,11 @@ extension WebRTCManager: RTCPeerConnectionDelegate {
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {
+        guard isCurrent(peerConnection) else { return }
         print("Stream added with \(stream.videoTracks.count) video tracks")
         if let videoTrack = stream.videoTracks.first {
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.isCurrent(peerConnection) else { return }
                 self.remoteVideoTrack = videoTrack
                 print("✅ Remote video track received")
             }
@@ -377,8 +428,10 @@ extension WebRTCManager: RTCPeerConnectionDelegate {
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {
+        guard isCurrent(peerConnection) else { return }
         print("Stream removed")
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.isCurrent(peerConnection) else { return }
             self.remoteVideoTrack = nil
         }
     }
@@ -389,18 +442,26 @@ extension WebRTCManager: RTCPeerConnectionDelegate {
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
         print("ICE connection state: \(newState.rawValue)")
+        guard isCurrent(peerConnection) else { return }
         
-        switch newState {
-        case .connected, .completed:
-            DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.isCurrent(peerConnection) else { return }
+            
+            switch newState {
+            case .connected, .completed:
+                self.cancelIceDisconnectHangUp()
                 self.isCallActive = true
-            }
-        case .failed, .disconnected, .closed:
-            DispatchQueue.main.async {
+            case .disconnected:
                 self.isCallActive = false
+                self.scheduleHangUpAfterIceDisconnect()
+            case .failed:
+                print("❌ ICE failed; hanging up")
+                self.hangUp()
+            case .closed:
+                self.isCallActive = false
+            default:
+                break
             }
-        default:
-            break
         }
     }
     
@@ -409,9 +470,14 @@ extension WebRTCManager: RTCPeerConnectionDelegate {
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
+        guard isCurrent(peerConnection) else { return }
+        guard let partner = signalingClient?.currentCallPartner, !partner.isEmpty else {
+            print("⚠️ Skipping ICE candidate; no call partner")
+            return
+        }
         print("Generated ICE candidate")
         signalingClient?.sendICECandidate(
-            to: signalingClient?.currentCallPartner ?? "",
+            to: partner,
             candidate: candidate.sdp,
             sdpMid: candidate.sdpMid ?? "",
             sdpMLineIndex: candidate.sdpMLineIndex
