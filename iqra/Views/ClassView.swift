@@ -1,113 +1,183 @@
 //
-//  CallView.swift
+//  ClassView.swift
 //  iqra
 //
-//  Created by Ovi Hussain on 2026-08-10.
+//  Created by Ovi Hussain on 2026-09-06.
 //
+
 import SwiftUI
-import WebRTC
 
 struct ClassView: View {
-    let myClass: MyClass
-
-    @Environment(User.self) private var appUser
-    @StateObject private var webRTCManager = WebRTCManager()
+    
+    private var appUser: User
+    @StateObject private var webRTCManager: WebRTCManager
+    
     @State private var userId: String
     @State private var targetUserId: String
-    @State private var isConnected = false
-
-    init(myClass: MyClass) {
-        self.myClass = myClass
-        _userId = State(initialValue: String(myClass.studentId))
-        _targetUserId = State(initialValue: String(myClass.instructorId))
-    }
+    @State private var isConnected: Bool
+    @State private var isLive: Bool = false
     
-    var body: some View {
-        VStack(spacing: 20) {
-            Label("userId: \(userId)  targetUserId: \(targetUserId)", systemImage: "star")
-            if !isConnected {
-                TextField("Your User ID", text: $userId)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding()
-                    .autocapitalization(.none)
-                
-                Button("Connect") {
-                    webRTCManager.connect(userId: userId, classId: myClass.id)
-                    isConnected = true
-                }
-                .buttonStyle(.borderedProminent)
-            } else {
-                // Local video preview
-                if let localTrack = webRTCManager.localVideoTrack {
-                    VideoView(videoTrack: localTrack)
-                        .frame(height: 200)
-                        .border(Color.gray)
-                        .cornerRadius(8)
-                }
-                
-                // Remote video
-                if let remoteTrack = webRTCManager.remoteVideoTrack {
-                    VideoView(videoTrack: remoteTrack)
-                        .frame(height: 400)
-                        .border(Color.gray)
-                        .cornerRadius(8)
-                } else {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 400)
-                        .overlay(Text("Waiting for remote video..."))
-                        .cornerRadius(8)
-                }
-                
-                TextField("Call User ID", text: $targetUserId)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .autocapitalization(.none)
-                
-                HStack(spacing: 20) {
-                    Button("Start Call") {
-                        webRTCManager.startCall(to: targetUserId)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(targetUserId.isEmpty)
-                    
-                    Button("Hang Up") {
-                        webRTCManager.hangUp()
-                    }
-                    .buttonStyle(.bordered)
-                    .foregroundColor(.red)
-                }
-            }
+    @State private var orangePosition = CGPoint(x: 50, y: 50)
+    @State private var dragStart: CGPoint?
+    @State private var videoSize = CGSize(width: 9, height: 16)
+    
+    let myClass: MyClass
+    private let orangeSize: CGFloat = 300
+
+    /// Camera buffers are often landscape; swap so the preview matches the container.
+    private func videoFrameSize(in containerSize: CGSize) -> CGSize {
+        var displaySize = videoSize
+        print("VIDEO SIZE:", videoSize)
+        let bufferIsLandscape = videoSize.width > videoSize.height
+        let containerIsPortrait = containerSize.height >= containerSize.width
+        if containerIsPortrait && bufferIsLandscape {
+            displaySize = CGSize(width: videoSize.height, height: videoSize.width)
         }
-        .padding()
-        .onAppear {
-            applyParticipantIds()
+        guard displaySize.height > 0 else {
+            return CGSize(width: orangeSize * 9 / 16, height: orangeSize)
         }
+        return CGSize(width: orangeSize * displaySize.width / displaySize.height, height: orangeSize)
     }
 
-    private func applyParticipantIds() {
-        let student = String(myClass.studentId)
-        let instructor = String(myClass.instructorId)
+    init(myClass: MyClass, user: User) {
+        
+        self.myClass = myClass
+        self.appUser = user
+        
+        if appUser.id == myClass.studentId {
+            _userId = State(initialValue: String(myClass.studentId))
+            _targetUserId = State(initialValue: String(myClass.instructorId))
+        } else { // (appUser.id == myClass.instructorId)
+            _userId = State(initialValue: String(myClass.instructorId))
+            _targetUserId = State(initialValue: String(myClass.studentId))
+        }
+        
+        let webRTCManager = WebRTCManager()
+        webRTCManager.onGuestJoin = { [weak webRTCManager] idStr in
+            webRTCManager?.startCall(to: idStr)
+        }
+        webRTCManager.onGuestLeave = { [weak webRTCManager] _ in
+            webRTCManager?.hangUp()
+        }
+        _webRTCManager = StateObject(wrappedValue: webRTCManager)
+        _isConnected = State(initialValue: true)
+    }
 
-        if let currentId = appUser.id {
-            userId = String(currentId)
-            if currentId == myClass.instructorId {
-                targetUserId = student
-            } else {
-                targetUserId = instructor
+    var body: some View {
+        if !isLive {
+            
+            GeometryReader { geo in
+                VStack {
+                    let frameSize = videoFrameSize(in: geo.size)
+                    if let localTrack = webRTCManager.localVideoTrack {
+                        VideoView(videoTrack: localTrack, videoSize: $videoSize)
+                            .frame(width: frameSize.width, height: frameSize.height)
+                            .clipped()
+                    }
+
+                    Button("Connect") {
+                        // Step #1
+                        webRTCManager.connect(userId: String(userId), classId: myClass.id)
+                        isLive = true
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         } else {
-            userId = student
-            targetUserId = instructor
+            ZStack {
+//                ReaderView()
+
+                if let localTrack = webRTCManager.localVideoTrack {
+                    GeometryReader { geo in
+                        let frameSize = videoFrameSize(in: geo.size)
+                        
+                        if let remoteTrack = webRTCManager.remoteVideoTrack {
+
+                            VideoView(videoTrack: remoteTrack, videoSize: $videoSize)
+                                .frame(width: geo.size.width, height: geo.size.height)
+                                .clipped()
+                            
+                            
+                            VideoView(videoTrack: localTrack, videoSize: $videoSize)
+                                .frame(width: frameSize.width, height: frameSize.height)
+                                .clipped()
+                                .position(orangePosition)
+                                .gesture(
+                                    DragGesture()
+                                        .onChanged { value in
+                                            if dragStart == nil {
+                                                dragStart = orangePosition
+                                            }
+                                            let start = dragStart ?? orangePosition
+                                            orangePosition = clampedPosition(
+                                                CGPoint(
+                                                    x: start.x + value.translation.width,
+                                                    y: start.y + value.translation.height
+                                                ),
+                                                in: geo.size,
+                                                frameSize: frameSize
+                                            )
+                                        }
+                                        .onEnded { _ in
+                                            dragStart = nil
+                                        }
+                                )
+                        } else {
+                            VideoView(videoTrack: localTrack, videoSize: $videoSize)
+                                .frame(width: geo.size.width, height: geo.size.height)
+                                .clipped()
+    //                            .position(orangePosition)
+    //                            .gesture(
+    //                                DragGesture()
+    //                                    .onChanged { value in
+    //                                        if dragStart == nil {
+    //                                            dragStart = orangePosition
+    //                                        }
+    //                                        let start = dragStart ?? orangePosition
+    //                                        orangePosition = clampedPosition(
+    //                                            CGPoint(
+    //                                                x: start.x + value.translation.width,
+    //                                                y: start.y + value.translation.height
+    //                                            ),
+    //                                            in: geo.size,
+    //                                            frameSize: frameSize
+    //                                        )
+    //                                    }
+    //                                    .onEnded { _ in
+    //                                        dragStart = nil
+    //                                    }
+    //                            )
+                        }
+                        
+                    }
+                    
+                    
+                }
+               
+            }
         }
+        
+//        .ignoresSafeArea(.all)
+    }
+
+    private func clampedPosition(_ location: CGPoint, in size: CGSize, frameSize: CGSize) -> CGPoint {
+        let halfWidth = frameSize.width / 2
+        let halfHeight = frameSize.height / 2
+        return CGPoint(
+            x: min(max(location.x, halfWidth), size.width - halfWidth),
+            y: min(max(location.y, halfHeight), size.height - halfHeight)
+        )
     }
 }
 
-
-
 #Preview {
-    ClassView(myClass: MyClass(
-        studentId: 1, instructorId: 2, courseFormatId: CourseFormat.preview.id!
-    ))
-    .environment(User.preview)
-}
+    ClassView(
+        myClass: MyClass(
+            studentId: User.studentPreview.id!,
+            instructorId: User.instructorPreview.id!,
+            courseFormatId: CourseFormat.preview.id!
+        ),
+        user: User.studentPreview
+    )
 
+}
