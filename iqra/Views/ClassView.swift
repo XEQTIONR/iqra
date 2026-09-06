@@ -9,34 +9,33 @@ import SwiftUI
 
 struct ClassView: View {
     
-    private var appUser: User
-    @StateObject private var webRTCManager: WebRTCManager
+    private let appUser: User
+    private let myClass: MyClass
+    private let remoteVideoScaleFactor: CGFloat = 300
     
     @State private var userId: String
     @State private var targetUserId: String
     @State private var isConnected: Bool
     @State private var isLive: Bool = false
-    
-    @State private var orangePosition = CGPoint(x: 50, y: 50)
+    @State private var remoteVideoPosition = CGPoint(x: 50, y: 50)
     @State private var dragStart: CGPoint?
     @State private var videoSize = CGSize(width: 9, height: 16)
     
-    let myClass: MyClass
-    private let orangeSize: CGFloat = 300
+    @StateObject private var webRTCManager: WebRTCManager
 
     /// Camera buffers are often landscape; swap so the preview matches the container.
     private func videoFrameSize(in containerSize: CGSize) -> CGSize {
         var displaySize = videoSize
-        print("VIDEO SIZE:", videoSize)
+        // print("VIDEO SIZE:", videoSize)
         let bufferIsLandscape = videoSize.width > videoSize.height
         let containerIsPortrait = containerSize.height >= containerSize.width
         if containerIsPortrait && bufferIsLandscape {
             displaySize = CGSize(width: videoSize.height, height: videoSize.width)
         }
         guard displaySize.height > 0 else {
-            return CGSize(width: orangeSize * 9 / 16, height: orangeSize)
+            return CGSize(width: remoteVideoScaleFactor * 9 / 16, height: remoteVideoScaleFactor)
         }
-        return CGSize(width: orangeSize * displaySize.width / displaySize.height, height: orangeSize)
+        return CGSize(width: remoteVideoScaleFactor * displaySize.width / displaySize.height, height: remoteVideoScaleFactor)
     }
 
     init(myClass: MyClass, user: User) {
@@ -101,15 +100,15 @@ struct ClassView: View {
                             VideoView(videoTrack: localTrack, videoSize: $videoSize)
                                 .frame(width: frameSize.width, height: frameSize.height)
                                 .clipped()
-                                .position(orangePosition)
+                                .position(remoteVideoPosition)
                                 .gesture(
                                     DragGesture()
                                         .onChanged { value in
                                             if dragStart == nil {
-                                                dragStart = orangePosition
+                                                dragStart = remoteVideoPosition
                                             }
-                                            let start = dragStart ?? orangePosition
-                                            orangePosition = clampedPosition(
+                                            let start = dragStart ?? remoteVideoPosition
+                                            remoteVideoPosition = clampedPosition(
                                                 CGPoint(
                                                     x: start.x + value.translation.width,
                                                     y: start.y + value.translation.height

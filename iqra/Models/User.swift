@@ -144,7 +144,7 @@ extension User {
     static var studentPreview = preview
     
     static var instructorPreview: User {
-        var user = preview
+        let user = preview
         user.id = 1
         user.name = "Troy McBarker"
         user.email = "someone@example.com"
