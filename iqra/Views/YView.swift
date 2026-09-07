@@ -8,26 +8,41 @@
 import SwiftUI
 
 struct YView: View {
-    @State private var isMenuPresented = false
+    private enum MenuAnchor {
+        case top
+        case bottom
+    }
+
+    @State private var menuAnchor: MenuAnchor?
     @State private var isCameraOn = true
+    @State private var isMicOn = true
     @State private var canDraw = false
+    @State private var collapseProgress: CGFloat = 0
+    @State private var collapseDrag: CGFloat = 0
+    @State private var splitRestLength: CGFloat = 300
+
+    private var displayedCollapse: CGFloat {
+        min(max(collapseProgress + collapseDrag, 0), 1)
+    }
 
     var r1: some View {
         VStack {
             Text("Hello")
+                .foregroundStyle(.white)
         }
             
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(.red.opacity(0.5))
+            .background(.pink)
     }
 
     var r2: some View {
         VStack {
             Text("Hello2")
+                .foregroundStyle(.white)
         }
             
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(.teal.opacity(0.5))
+            .background(.blue)
     }
 
     var body: some View {
@@ -35,19 +50,56 @@ struct YView: View {
             ZStack(alignment: .topTrailing) {
                 GeometryReader { geo in
                     let isLandscape = geo.size.width > geo.size.height
-                    let layout = isLandscape
-                        ? AnyLayout(HStackLayout(spacing: 0))
-                        : AnyLayout(VStackLayout(spacing: 0))
+                    let progress = displayedCollapse
+                    let spacing = 10 * (1 - progress)
+                    let restLength = isLandscape
+                        ? (geo.size.width - 10) / 2
+                        : (geo.size.height - 10) / 2
+                    let r1Size = isLandscape
+                        ? CGSize(
+                            width: restLength + progress * (geo.size.width - restLength),
+                            height: geo.size.height
+                        )
+                        : CGSize(
+                            width: geo.size.width,
+                            height: restLength + progress * (geo.size.height - restLength)
+                        )
+                    let r2Size = isLandscape
+                        ? CGSize(width: restLength, height: geo.size.height)
+                        : CGSize(width: geo.size.width, height: restLength)
+                    let r2Offset = isLandscape
+                        ? CGSize(width: r1Size.width + spacing, height: progress * geo.size.height)
+                        : CGSize(width: 0, height: r1Size.height + spacing)
+                    let cornerRadius = 25 * (1 - progress)
 
-                    layout {
+                    ZStack(alignment: .topLeading) {
                         r1
+                            .frame(width: r1Size.width, height: r1Size.height)
+                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                            .gesture(progress > 0.02 ? collapseDragGesture(restLength: restLength) : nil)
+
                         r2
+                            .frame(width: r2Size.width, height: r2Size.height)
+                            .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
+                            .offset(x: r2Offset.width, y: r2Offset.height)
+                            .contentShape(Rectangle())
+                            .highPriorityGesture(progress < 0.98 ? collapseDragGesture(restLength: restLength) : nil)
+                        
+                        
+                            
+                        
                     }
-                    .frame(width: geo.size.width, height: geo.size.height)
+                    .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+                    .clipped()
+                    .background(.black)
+                    .onAppear { splitRestLength = restLength }
+                    .onChange(of: restLength) { _, newValue in
+                        splitRestLength = newValue
+                    }
                 }
                 .ignoresSafeArea()
 
-                if isMenuPresented {
+                if let menuAnchor {
                     Color.clear
                         .contentShape(Rectangle())
                         .ignoresSafeArea()
@@ -57,73 +109,134 @@ struct YView: View {
 
                     dropdownMenu
                         .padding(.trailing, 12)
-                        .padding(.top, 20)
+                        .padding(.top, menuAnchor == .top ? 20 : 0)
+                        .padding(.bottom, menuAnchor == .bottom ? 63 : 0)
+                        .safeAreaPadding(menuAnchor == .bottom ? .bottom : [])
+                        .frame(
+                            maxWidth: .infinity,
+                            maxHeight: .infinity,
+                            alignment: menuAnchor == .top ? .topTrailing : .bottomTrailing
+                        )
                         .transition(
-                            .scale(scale: 0.5, anchor: .topTrailing)
+                            .scale(
+                                scale: 0.5,
+                                anchor: menuAnchor == .top ? .topTrailing : .bottomTrailing
+                            )
                             .combined(with: .opacity)
                         )
+                }
+// Bottom Bar
+                VStack(spacing: 0) {
+                    Spacer()
+                        .allowsHitTesting(false)
+                    bottomButtonBar
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 20)
+                        .contentShape(Rectangle())
+                        .simultaneousGesture(collapseDragGesture(restLength: splitRestLength))
                 }
             }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: 8) {
-                        toolbarCircleButton(
-                            title: isCameraOn ? "Turn Camera Off" : "Turn Camera On",
-                            systemImage: isCameraOn ? "video.fill" : "video.slash.fill",
-                            foreground: isCameraOn ? .accentColor : .secondary
-                        ) {
-                            isCameraOn.toggle()
-                        }
-                        .accessibilityAddTraits(isCameraOn ? [.isSelected] : [])
-                        .accessibilityHint("Toggles the camera")
-
-                        toolbarCircleButton(
-                            title: "Add",
-                            systemImage: "ellipsis"
-                        ) {
-                            withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
-                                isMenuPresented.toggle()
-                            }
-                        }
-                        .accessibilityHint(isMenuPresented ? "Closes the menu" : "Opens the menu")
+//                        cameraToggleButton
+                        menuButton(anchor: .top)
                     }
                     .padding(.top, 20)
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    HStack(spacing: 8) {
-                        toolbarCircleButton(
-                            title: canDraw ? "Disabled Drawing" : "Disable Drawing",
-                            systemImage: canDraw ? "pencil" : "pencil.slash",
-                            foreground: canDraw ? .accentColor : .secondary
-                        ) {
-                            canDraw.toggle()
-                        }
-                        .accessibilityAddTraits(isCameraOn ? [.isSelected] : [])
-                        .accessibilityHint("Toggles the camera")
-                    }
-                    .padding(.top, 20)
-                }
-            }
+//            .toolbar {
+//                ToolbarItem(placement: .cancellationAction) {
+//                    HStack(spacing: 8) {
+//                        drawToggleButton
+//                    }
+//                    .padding(.top, 20)
+//                }
+//            }
             .toolbarBackground(.hidden, for: .navigationBar)
         }
+    }
+
+    private var bottomButtonBar: some View {
+        HStack(spacing: 8) {
+            Spacer()
+            toolbarCircleButton(
+                title: isMicOn ? "Disable Mic" : "Enable Mic",
+                systemImage: isMicOn ? "mic.fill" : "mic.slash.fill",
+                foreground:  isMicOn ? .primary : .secondary,
+                size: 60
+            ) {
+                isMicOn.toggle()
+            }
+            .accessibilityAddTraits(isMicOn ? [.isSelected] : [])
+            .accessibilityHint("Toggles mic on/off")
+//            drawToggleButton
+            toolbarCircleButton(
+                title: isCameraOn ? "Turn Camera Off" : "Turn Camera On",
+                systemImage: isCameraOn ? "video.fill" : "video.slash.fill",
+                foreground: isCameraOn ? .primary : .secondary,
+                size: 60
+            ) {
+                isCameraOn.toggle()
+            }
+            .accessibilityAddTraits(isCameraOn ? [.isSelected] : [])
+            .accessibilityHint("Toggles the camera")
+//            menuButton(anchor: .bottom)
+            Spacer()
+        }
+        .padding(.horizontal)
+    }
+
+//    private var cameraToggleButton: some View {
+//        toolbarCircleButton(
+//            title: isCameraOn ? "Turn Camera Off" : "Turn Camera On",
+//            systemImage: isCameraOn ? "video.fill" : "video.slash.fill",
+//            foreground: isCameraOn ? .accentColor : .secondary,
+//            size: 60
+//        ) {
+//            isCameraOn.toggle()
+//        }
+//        .accessibilityAddTraits(isCameraOn ? [.isSelected] : [])
+//        .accessibilityHint("Toggles the camera")
+//    }
+
+    private var drawToggleButton: some View {
+        toolbarCircleButton(
+            title: canDraw ? "Disable Drawing" : "Enable Drawing",
+            systemImage: canDraw ? "pencil" : "pencil.slash",
+            foreground: canDraw ? .accentColor : .secondary
+        ) {
+            canDraw.toggle()
+        }
+        .accessibilityAddTraits(canDraw ? [.isSelected] : [])
+        .accessibilityHint("Toggles drawing")
+    }
+
+    private func menuButton(anchor: MenuAnchor) -> some View {
+        toolbarCircleButton(
+            title: "Add",
+            systemImage: "ellipsis"
+        ) {
+            toggleMenu(from: anchor)
+        }
+        .accessibilityHint(menuAnchor == anchor ? "Closes the menu" : "Opens the menu")
     }
 
     private func toolbarCircleButton(
         title: String,
         systemImage: String,
         foreground: Color = .primary,
+        size: CGFloat = 35,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             Label(title, systemImage: systemImage)
-                .font(.caption)
+                .font(.system(size: size/3.0))
                 .labelStyle(.iconOnly)
                 .font(.body.weight(.semibold))
                 .foregroundStyle(foreground)
-                .frame(width: 35, height: 35)
-                .background(.ultraThinMaterial, in: Circle())
+                .frame(width: size, height: size)
+                .background(.thinMaterial, in: Circle())
         }
         .buttonStyle(.plain)
     }
@@ -172,13 +285,44 @@ struct YView: View {
         .buttonStyle(.plain)
     }
 
+    private func collapseDragGesture(restLength: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 12)
+            .onChanged { value in
+                collapseDrag = value.translation.height / max(restLength, 1)
+            }
+            .onEnded { value in
+                finishCollapseDrag(
+                    translation: value.translation.height,
+                    velocity: value.velocity.height,
+                    restLength: restLength
+                )
+            }
+    }
+
+    private func finishCollapseDrag(translation: CGFloat, velocity: CGFloat, restLength: CGFloat) {
+        let length = max(restLength, 1)
+        let current = collapseProgress + translation / length
+        let projected = current + velocity / length * 0.25
+        withAnimation(.spring(response: 0.38, dampingFraction: 0.86)) {
+            collapseProgress = projected > 0.5 ? 1 : 0
+            collapseDrag = 0
+        }
+    }
+
+    private func toggleMenu(from anchor: MenuAnchor) {
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+            menuAnchor = menuAnchor == anchor ? nil : anchor
+        }
+    }
+
     private func dismissMenu() {
         withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
-            isMenuPresented = false
+            menuAnchor = nil
         }
     }
 }
 
 #Preview {
     YView()
+//        .environment(\.colorScheme, .dark)
 }
