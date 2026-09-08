@@ -8,31 +8,86 @@
 import SwiftUI
 
 struct YView: View {
+
     private enum MenuAnchor {
         case top
         case bottom
     }
+    
+    private let appUser: User
+    private let myClass: MyClass
+    private let remoteVideoScaleFactor: CGFloat = 300
+    
+    @State private var userId: String
+    @State private var targetUserId: String
+    @State private var isConnected: Bool
+    @State private var isLive: Bool = false
+    @State private var remoteVideoPosition = CGPoint(x: 50, y: 50)
+    @State private var dragStart: CGPoint?
+    @State private var videoSize = CGSize(width: 9, height: 16)
+    
+    @StateObject private var webRTCManager: WebRTCManager
 
     @State private var menuAnchor: MenuAnchor?
     @State private var isCameraOn = true
     @State private var isMicOn = true
     @State private var canDraw = false
-    @State private var collapseProgress: CGFloat = 0
-    @State private var collapseDrag: CGFloat = 0
+    @State private var collapseProgress: CGFloat = 0 //minmax 0 or 1
+    @State private var collapseDrag: CGFloat = 0 //minmax 0 or 1
     @State private var splitRestLength: CGFloat = 300
+    
+    
+    /// Camera buffers are often landscape; swap so the preview matches the container.
+    private func videoFrameSize(in containerSize: CGSize) -> CGFloat {
+        
+        enum Dim {
+            case width
+            case height
+        }
+        
+        let displaySize = containerSize
+        let shortDim = displaySize.width < displaySize.height ? Dim.width : Dim.height
+        let sideLength = shortDim == Dim.width ? displaySize.width : displaySize.height
+        // print("VIDEO SIZE:", videoSize)
+//        let bufferIsLandscape = videoSize.width > videoSize.height
+//        let containerIsPortrait = containerSize.height >= containerSize.width
+//        if containerIsPortrait && bufferIsLandscape {
+//            displaySize = CGSize(width: videoSize.height, height: videoSize.width)
+//        }
+//        guard displaySize.height > 0 else {
+//            return CGSize(width: remoteVideoScaleFactor * 9 / 16, height: remoteVideoScaleFactor)
+//        }
+        return sideLength
+    }
 
     private var displayedCollapse: CGFloat {
         min(max(collapseProgress + collapseDrag, 0), 1)
     }
 
     var r1: some View {
-        VStack {
-            Text("Hello")
-                .foregroundStyle(.white)
-        }
-            
+        GeometryReader { geo in
+            VStack {
+//                let frameSize = videoFrameSize(in: geo.size)
+                if let localTrack = webRTCManager.localVideoTrack {
+                    VideoView(videoTrack: localTrack, videoSize: $videoSize)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
+                } else {
+                    
+                    Rectangle()
+                        .fill(Color.gray)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                }
+            }
+            .padding(0)
+            .ignoresSafeArea(edges: .bottom)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
             .background(.pink)
+        }
+        
+            
+            
     }
 
     var r2: some View {
@@ -43,6 +98,31 @@ struct YView: View {
             
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(.blue)
+    }
+    
+    init(myClass: MyClass, user: User) {
+        
+        self.myClass = myClass
+        self.appUser = user
+        
+        if appUser.id == myClass.studentId {
+            _userId = State(initialValue: String(myClass.studentId))
+            _targetUserId = State(initialValue: String(myClass.instructorId))
+        } else { // (appUser.id == myClass.instructorId)
+            _userId = State(initialValue: String(myClass.instructorId))
+            _targetUserId = State(initialValue: String(myClass.studentId))
+        }
+        
+        let webRTCManager = WebRTCManager()
+        webRTCManager.onGuestJoin = { [weak webRTCManager] idStr in
+            webRTCManager?.startCall(to: idStr)
+        }
+        webRTCManager.onGuestLeave = { [weak webRTCManager] _ in
+            webRTCManager?.hangUp()
+        }
+        _webRTCManager = StateObject(wrappedValue: webRTCManager)
+        _isConnected = State(initialValue: true)
+
     }
 
     var body: some View {
@@ -323,6 +403,13 @@ struct YView: View {
 }
 
 #Preview {
-    YView()
+    YView(
+        myClass: MyClass(
+            studentId: User.studentPreview.id!,
+            instructorId: User.instructorPreview.id!,
+            courseFormatId: CourseFormat.preview.id!
+        ),
+        user: User.studentPreview
+    )
 //        .environment(\.colorScheme, .dark)
 }

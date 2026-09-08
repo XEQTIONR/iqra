@@ -72,6 +72,11 @@ struct ClassView: View {
                         VideoView(videoTrack: localTrack, videoSize: $videoSize)
                             .frame(width: frameSize.width, height: frameSize.height)
                             .clipped()
+                    } else {
+                        
+                        Rectangle()
+                            .fill(Color.gray)
+                            .frame(width: frameSize.width, height: frameSize.height)
                     }
 
                     Button("Connect") {
