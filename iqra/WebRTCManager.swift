@@ -11,6 +11,11 @@ import AVFoundation
 import UIKit
 
 class WebRTCManager: NSObject, ObservableObject {
+    enum MediaCaptureMode {
+        case video
+        case audioOnly
+    }
+
     // WebRTC components
     private var peerConnection: RTCPeerConnection?
     private var videoSource: RTCVideoSource?
@@ -35,6 +40,8 @@ class WebRTCManager: NSObject, ObservableObject {
     // State
     @Published var isConnected = false
     @Published var isCallActive = false
+    @Published var isCameraEnabled = true
+    @Published var isMicrophoneEnabled = true
     @Published var localVideoTrack: RTCVideoTrack?
     @Published var remoteVideoTrack: RTCVideoTrack?
     
@@ -49,12 +56,15 @@ class WebRTCManager: NSObject, ObservableObject {
     ]
     
     init(
+        captureMode: MediaCaptureMode = .video,
         onDraw: ((UserPath) -> Void)? = nil,
         onGuestJoin: ((String) -> Void)? = nil,
         onGuestLeave: ((String) -> Void)? = nil,
     ) {
         super.init()
         
+        self.isCameraEnabled = captureMode == .video
+        self.isMicrophoneEnabled = true
         self.onDraw = onDraw
         self.onGuestJoin = onGuestJoin
         self.onGuestLeave = onGuestLeave
@@ -72,6 +82,11 @@ class WebRTCManager: NSObject, ObservableObject {
         
         print("📱 WebRTCManager init completed")
     }
+
+    deinit {
+        videoCapturer?.stopCapture()
+        peerConnection?.close()
+    }
     
     func connect(userId: String, classId: String) {
         print("🔌 Connecting to signaling server as: \(userId) for class: \(classId)")
@@ -81,21 +96,127 @@ class WebRTCManager: NSObject, ObservableObject {
     private func setupLocalMedia() {
         print("📍 setupLocalMedia called")
         
-        // Create audio track
+        configureAudioSession()
+        setupAudioTrack()
+        setupVideoTrack()
+        
+        if isMicrophoneEnabled {
+            checkMicrophonePermissionAndEnable()
+        }
+        
+        if isCameraEnabled {
+            checkCameraPermissionAndStartCapture()
+        } else {
+            videoTrack?.isEnabled = false
+            localVideoTrack = nil
+            print("🎙️ Audio-only capture; camera not started")
+        }
+    }
+
+    func setCaptureMode(_ mode: MediaCaptureMode) {
+        setCameraEnabled(mode == .video)
+    }
+
+    func setCameraEnabled(_ enabled: Bool) {
+        let apply = { [weak self] in
+            guard let self else { return }
+            self.isCameraEnabled = enabled
+            if enabled {
+                self.configureAudioSession()
+                self.checkCameraPermissionAndStartCapture()
+            } else {
+                self.stopVideoCapture()
+                self.configureAudioSession()
+            }
+        }
+        if Thread.isMainThread {
+            apply()
+        } else {
+            DispatchQueue.main.async(execute: apply)
+        }
+    }
+
+    func setMicrophoneEnabled(_ enabled: Bool) {
+        let apply = { [weak self] in
+            guard let self else { return }
+            self.isMicrophoneEnabled = enabled
+            if enabled {
+                self.checkMicrophonePermissionAndEnable()
+            } else {
+                self.audioTrack?.isEnabled = false
+                print("🔇 Microphone disabled")
+            }
+        }
+        if Thread.isMainThread {
+            apply()
+        } else {
+            DispatchQueue.main.async(execute: apply)
+        }
+    }
+
+    private func configureAudioSession() {
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(
+                .playAndRecord,
+                mode: isCameraEnabled ? .videoChat : .voiceChat,
+                options: [.allowBluetooth, .defaultToSpeaker]
+            )
+            try session.setActive(true)
+            print("✅ Audio session configured")
+        } catch {
+            print("❌ Failed to configure audio session: \(error.localizedDescription)")
+        }
+    }
+
+    private func setupAudioTrack() {
         let audioSource = factory.audioSource(with: nil)
         let audioTrack = factory.audioTrack(with: audioSource, trackId: "audio0")
+        audioTrack.isEnabled = isMicrophoneEnabled
         self.audioTrack = audioTrack
         print("✅ Audio track created")
-        
-        // Create video source and track
+    }
+
+    private func setupVideoTrack() {
         videoSource = factory.videoSource()
         let videoTrack = factory.videoTrack(with: videoSource!, trackId: "video0")
+        videoTrack.isEnabled = isCameraEnabled
         self.videoTrack = videoTrack
-        self.localVideoTrack = videoTrack
-        print("✅ Video track created and published")
-        
-        // Request and start camera capture
-        checkCameraPermissionAndStartCapture()
+        print("✅ Video track created")
+    }
+
+    private func checkMicrophonePermissionAndEnable() {
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            print("🎙️ Microphone already authorized")
+            audioTrack?.isEnabled = true
+            isMicrophoneEnabled = true
+
+        case .notDetermined:
+            print("🎙️ Requesting microphone permission")
+            AVCaptureDevice.requestAccess(for: .audio) { [weak self] granted in
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    if granted {
+                        self.audioTrack?.isEnabled = true
+                        self.isMicrophoneEnabled = true
+                        print("✅ Microphone permission granted")
+                    } else {
+                        self.audioTrack?.isEnabled = false
+                        self.isMicrophoneEnabled = false
+                        print("❌ Microphone permission denied")
+                    }
+                }
+            }
+
+        case .denied, .restricted:
+            audioTrack?.isEnabled = false
+            isMicrophoneEnabled = false
+            print("❌ Microphone permission denied or restricted")
+
+        @unknown default:
+            print("❌ Unknown microphone permission status")
+        }
     }
     
     private func checkCameraPermissionAndStartCapture() {
@@ -107,25 +228,57 @@ class WebRTCManager: NSObject, ObservableObject {
         case .notDetermined:
             print("📷 Requesting camera permission")
             AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-                if granted {
-                    DispatchQueue.main.async {
-                        self?.startVideoCapture()
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    if granted {
+                        self.startVideoCapture()
+                    } else {
+                        self.isCameraEnabled = false
+                        self.videoTrack?.isEnabled = false
+                        self.localVideoTrack = nil
+                        print("❌ Camera permission denied")
                     }
-                } else {
-                    print("❌ Camera permission denied")
                 }
             }
             
         case .denied, .restricted:
+            isCameraEnabled = false
+            videoTrack?.isEnabled = false
+            localVideoTrack = nil
             print("❌ Camera permission denied or restricted")
             
         @unknown default:
             print("❌ Unknown camera permission status")
         }
     }
+
+    private func stopVideoCapture() {
+        videoTrack?.isEnabled = false
+        localVideoTrack = nil
+
+        guard let capturer = videoCapturer else {
+            print("🛑 Camera already stopped")
+            return
+        }
+
+        capturer.stopCapture { [weak self] in
+            DispatchQueue.main.async {
+                self?.videoCapturer = nil
+                print("🛑 Camera capture stopped")
+            }
+        }
+    }
     
     private func startVideoCapture() {
         print("🎥 startVideoCapture called")
+
+        if videoCapturer != nil {
+            videoTrack?.isEnabled = true
+            localVideoTrack = videoTrack
+            isCameraEnabled = true
+            print("🎥 Video capture already running")
+            return
+        }
         
         guard let videoSource = videoSource else {
             print("❌ videoSource is nil")
@@ -141,8 +294,10 @@ class WebRTCManager: NSObject, ObservableObject {
         let devices = RTCCameraVideoCapturer.captureDevices()
         print("📱 Available cameras: \(devices.map { $0.localizedName })")
         
-        // Get front camera
         guard let camera = devices.first(where: { $0.position == .front }) else {
+            videoCapturer = nil
+            isCameraEnabled = false
+            videoTrack?.isEnabled = false
             print("❌ No front camera found")
             return
         }
@@ -155,6 +310,9 @@ class WebRTCManager: NSObject, ObservableObject {
             from: formats,
             preferredPixelFormat: capturer.preferredOutputPixelFormat()
         ) else {
+            videoCapturer = nil
+            isCameraEnabled = false
+            videoTrack?.isEnabled = false
             print("❌ No formats available")
             return
         }
@@ -164,18 +322,21 @@ class WebRTCManager: NSObject, ObservableObject {
         print("📐 Selected format: \(size.width)x\(size.height) at \(fps) fps")
 
         capturer.startCapture(with: camera, format: format, fps: fps) { [weak self] error in
-            if let error = error {
-                print("❌ Failed to start capture: \(error.localizedDescription)")
-            } else {
-                print("✅ Camera capture started successfully!")
-                
-                // Force a UI update on main thread
-                DispatchQueue.main.async {
-                    // Ensure video track is still published
-                    if self?.localVideoTrack == nil {
-                        self?.localVideoTrack = self?.videoTrack
-                    }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let error = error {
+                    self.videoCapturer = nil
+                    self.videoTrack?.isEnabled = false
+                    self.localVideoTrack = nil
+                    self.isCameraEnabled = false
+                    print("❌ Failed to start capture: \(error.localizedDescription)")
+                    return
                 }
+
+                self.videoTrack?.isEnabled = true
+                self.localVideoTrack = self.videoTrack
+                self.isCameraEnabled = true
+                print("✅ Camera capture started successfully!")
             }
         }
     }
@@ -254,16 +415,16 @@ class WebRTCManager: NSObject, ObservableObject {
             delegate: self
         )
         
-        // Add tracks
         if let videoTrack = videoTrack {
+            videoTrack.isEnabled = isCameraEnabled
             peerConnection?.add(videoTrack, streamIds: ["stream0"])
-            videoTrack.isEnabled = true
-            print("✅ Video track added to peer connection")
+            print("✅ Video track added to peer connection (enabled: \(isCameraEnabled))")
         }
         
         if let audioTrack = audioTrack {
+            audioTrack.isEnabled = isMicrophoneEnabled
             peerConnection?.add(audioTrack, streamIds: ["stream0"])
-            print("✅ Audio track added to peer connection")
+            print("✅ Audio track added to peer connection (enabled: \(isMicrophoneEnabled))")
         }
     }
     
@@ -400,10 +561,13 @@ class WebRTCManager: NSObject, ObservableObject {
     }
     
     func checkVideoState() {
-        print("=== Video State Debug ===")
+        print("=== Media State Debug ===")
+        print("audioTrack: \(audioTrack != nil)")
+        print("isMicrophoneEnabled: \(isMicrophoneEnabled)")
         print("videoSource: \(videoSource != nil)")
         print("videoTrack: \(videoTrack != nil)")
         print("videoCapturer: \(videoCapturer != nil)")
+        print("isCameraEnabled: \(isCameraEnabled)")
         print("localVideoTrack published: \(localVideoTrack != nil)")
         print("=========================")
     }
