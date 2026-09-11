@@ -38,6 +38,7 @@ struct YView: View {
     @State private var splitRestLength: CGFloat = 300
     
     @State private var isLocalPreviewOn = false
+    @State private var isLocalAudioOn = false
     
     
     /// Camera buffers are often landscape; swap so the preview matches the container.
@@ -91,19 +92,28 @@ struct YView: View {
                     
                 VStack(spacing: 10) {
                     HStack {
-                        Button("Join with audio", systemImage: "mic.fill") {
+                        Button("Join with audio", systemImage: isLocalAudioOn ? "mic.slash.fill" : "mic.fill") {
                             startWebRTCIfNeeded(captureMode: .audioOnly)
-                            webRTCManager?.setCaptureMode(.audioOnly)
-                            isLocalPreviewOn = false
+                            if isLocalAudioOn {
+                                webRTCManager?.setMicrophoneEnabled(false)
+                                isLocalAudioOn = false
+                            } else {
+                                webRTCManager?.setMicrophoneEnabled(true)
+                                webRTCManager?.setCaptureMode(.audioOnly)
+                                isLocalPreviewOn = false
+                                isLocalAudioOn = true
+                            }
                         }
                         .filledBackground()
                         
                         Button("Join with video", systemImage: isLocalPreviewOn ? "video.slash.fill" : "video.fill") {
                             startWebRTCIfNeeded(captureMode: .video)
                             if isLocalPreviewOn {
+                                webRTCManager?.setCaptureMode(.audioOnly)
                                 isLocalPreviewOn = false
                             } else {
                                 webRTCManager?.setCaptureMode(.video)
+                                webRTCManager?.setMicrophoneEnabled(true)
                                 isLocalPreviewOn = true
                             }
                         }

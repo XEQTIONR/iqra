@@ -29,6 +29,14 @@ class MyClass: Identifiable, Equatable {
 @Observable
 final class ClassSession {
     var current: MyClass?
+    
+    init() {
+        current = nil
+    }
+    
+    init(_ currentClass: MyClass) {
+        current = currentClass
+    }
 }
 
 #if DEBUG
