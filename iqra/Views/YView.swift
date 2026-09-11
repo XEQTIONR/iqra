@@ -33,12 +33,14 @@ struct YView: View {
 
     @State private var menuAnchor: MenuAnchor?
     @State private var canDraw = false
+    @State private var canDrag = true
     @State private var collapseProgress: CGFloat = 1 //minmax 0 or 1
     @State private var collapseDrag: CGFloat = 1 //minmax 0 or 1
     @State private var splitRestLength: CGFloat = 300
     
     @State private var isLocalPreviewOn = false
     @State private var isLocalAudioOn = false
+    @State private var isCollapsed: Bool = true
     
     
     /// Camera buffers are often landscape; swap so the preview matches the container.
@@ -121,6 +123,7 @@ struct YView: View {
                     }
                     
                     Button("Join") {
+                        setR2Collapsed(!isCollapsed)
                         //startWebRTCIfNeeded(captureMode: .video)
                     }
                     .filledBackground()
@@ -212,14 +215,22 @@ struct YView: View {
                         r1
                             .frame(width: r1Size.width, height: r1Size.height)
                             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-                            .gesture(progress > 0.02 ? collapseDragGesture(restLength: restLength) : nil)
+                            .gesture(
+                                canDrag && progress > 0.02
+                                    ? collapseDragGesture(restLength: restLength)
+                                    : nil
+                            )
 
                         r2
                             .frame(width: r2Size.width, height: r2Size.height)
                             .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
                             .offset(x: r2Offset.width, y: r2Offset.height)
                             .contentShape(Rectangle())
-                            .highPriorityGesture(progress < 0.98 ? collapseDragGesture(restLength: restLength) : nil)
+                            .highPriorityGesture(
+                                canDrag && progress < 0.98
+                                    ? collapseDragGesture(restLength: restLength)
+                                    : nil
+                            )
                     }
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
                     .clipped()
@@ -424,8 +435,13 @@ struct YView: View {
         let length = max(restLength, 1)
         let current = collapseProgress + translation / length
         let projected = current + velocity / length * 0.25
+        setR2Collapsed(projected > 0.5)
+    }
+
+    private func setR2Collapsed(_ collapsed: Bool) {
+        isCollapsed = collapsed
         withAnimation(.spring(response: 0.38, dampingFraction: 0.86)) {
-            collapseProgress = projected > 0.5 ? 1 : 0
+            collapseProgress = collapsed ? 1 : 0
             collapseDrag = 0
         }
     }
@@ -516,5 +532,6 @@ private struct CallMediaControls: View {
         ),
         user: User.studentPreview
     )
+    .environment(ClassSession(MyClass.preview))
 //        .environment(\.colorScheme, .dark)
 }
