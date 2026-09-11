@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import WebRTC
 
 struct YView: View {
 
@@ -13,6 +14,8 @@ struct YView: View {
         case top
         case bottom
     }
+    
+    @Environment(ClassSession.self) private var classSession
     
     private let appUser: User
     private let myClass: MyClass
@@ -26,15 +29,15 @@ struct YView: View {
     @State private var dragStart: CGPoint?
     @State private var videoSize = CGSize(width: 9, height: 16)
     
-    @StateObject private var webRTCManager: WebRTCManager
+    @State private var webRTCManager: WebRTCManager?
 
     @State private var menuAnchor: MenuAnchor?
-    @State private var isCameraOn = true
-    @State private var isMicOn = true
     @State private var canDraw = false
-    @State private var collapseProgress: CGFloat = 0 //minmax 0 or 1
-    @State private var collapseDrag: CGFloat = 0 //minmax 0 or 1
+    @State private var collapseProgress: CGFloat = 1 //minmax 0 or 1
+    @State private var collapseDrag: CGFloat = 1 //minmax 0 or 1
     @State private var splitRestLength: CGFloat = 300
+    
+    @State private var isLocalPreviewOn = false
     
     
     /// Camera buffers are often landscape; swap so the preview matches the container.
@@ -66,22 +69,61 @@ struct YView: View {
 
     var r1: some View {
         GeometryReader { geo in
-            VStack {
-//                let frameSize = videoFrameSize(in: geo.size)
-                if let localTrack = webRTCManager.localVideoTrack {
-                    VideoView(videoTrack: localTrack, videoSize: $videoSize)
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .clipped()
+            let minDim = min(geo.size.width, geo.size.height)
+            
+            VStack() {
+                
+                Spacer()
+                
+                if let webRTCManager, isLocalPreviewOn {
+                    LocalCameraPreview(
+                        webRTCManager: webRTCManager,
+                        videoSize: $videoSize,
+                        minDim: minDim
+                    )
                 } else {
-                    
                     Rectangle()
-                        .fill(Color.gray)
-                        .frame(width: geo.size.width, height: geo.size.height)
+                        .fill(Color.purple.opacity(0.4))
+                        .frame(width: minDim, height: minDim)
                 }
+                
+                Spacer()
+                    
+                VStack(spacing: 10) {
+                    HStack {
+                        Button("Join with audio", systemImage: "mic.fill") {
+                            startWebRTCIfNeeded(captureMode: .audioOnly)
+                            webRTCManager?.setCaptureMode(.audioOnly)
+                            isLocalPreviewOn = false
+                        }
+                        .filledBackground()
+                        
+                        Button("Join with video", systemImage: isLocalPreviewOn ? "video.slash.fill" : "video.fill") {
+                            startWebRTCIfNeeded(captureMode: .video)
+                            if isLocalPreviewOn {
+                                isLocalPreviewOn = false
+                            } else {
+                                webRTCManager?.setCaptureMode(.video)
+                                isLocalPreviewOn = true
+                            }
+                        }
+                        .filledBackground()
+                    }
+                    
+                    Button("Join") {
+                        //startWebRTCIfNeeded(captureMode: .video)
+                    }
+                    .filledBackground()
+                    .disabled(webRTCManager == nil)
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 75)
+                    
             }
-            .padding(0)
-            .ignoresSafeArea(edges: .bottom)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+//            .padding(.top, 200)
+//            .padding(.bottom, 75)
+                .ignoresSafeArea(edges: .bottom)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             
             .background(.pink)
         }
@@ -112,17 +154,21 @@ struct YView: View {
             _userId = State(initialValue: String(myClass.instructorId))
             _targetUserId = State(initialValue: String(myClass.studentId))
         }
-        
-        let webRTCManager = WebRTCManager()
-        webRTCManager.onGuestJoin = { [weak webRTCManager] idStr in
-            webRTCManager?.startCall(to: idStr)
-        }
-        webRTCManager.onGuestLeave = { [weak webRTCManager] _ in
-            webRTCManager?.hangUp()
-        }
-        _webRTCManager = StateObject(wrappedValue: webRTCManager)
+
         _isConnected = State(initialValue: true)
 
+    }
+
+    private func startWebRTCIfNeeded(captureMode: WebRTCManager.MediaCaptureMode) {
+        guard webRTCManager == nil else { return }
+        let manager = WebRTCManager(captureMode: captureMode)
+        manager.onGuestJoin = { [weak manager] idStr in
+            manager?.startCall(to: idStr)
+        }
+        manager.onGuestLeave = { [weak manager] _ in
+            manager?.hangUp()
+        }
+        webRTCManager = manager
     }
 
     var body: some View {
@@ -164,10 +210,6 @@ struct YView: View {
                             .offset(x: r2Offset.width, y: r2Offset.height)
                             .contentShape(Rectangle())
                             .highPriorityGesture(progress < 0.98 ? collapseDragGesture(restLength: restLength) : nil)
-                        
-                        
-                            
-                        
                     }
                     .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
                     .clipped()
@@ -209,30 +251,27 @@ struct YView: View {
                 VStack(spacing: 0) {
                     Spacer()
                         .allowsHitTesting(false)
-                    bottomButtonBar
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 20)
-                        .contentShape(Rectangle())
-                        .simultaneousGesture(collapseDragGesture(restLength: splitRestLength))
+//                    bottomButtonBar
+//                        .padding(.horizontal, 16)
+//                        .padding(.bottom, 20)
+//                        .contentShape(Rectangle())
+//                        .simultaneousGesture(collapseDragGesture(restLength: splitRestLength))
                 }
             }
             .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    HStack(spacing: 8) {
+                        backButton
+                    }
+                    .padding(.top, 20)
+                }
                 ToolbarItem(placement: .primaryAction) {
                     HStack(spacing: 8) {
-//                        cameraToggleButton
                         menuButton(anchor: .top)
                     }
                     .padding(.top, 20)
                 }
             }
-//            .toolbar {
-//                ToolbarItem(placement: .cancellationAction) {
-//                    HStack(spacing: 8) {
-//                        drawToggleButton
-//                    }
-//                    .padding(.top, 20)
-//                }
-//            }
             .toolbarBackground(.hidden, for: .navigationBar)
         }
     }
@@ -240,28 +279,9 @@ struct YView: View {
     private var bottomButtonBar: some View {
         HStack(spacing: 8) {
             Spacer()
-            toolbarCircleButton(
-                title: isMicOn ? "Disable Mic" : "Enable Mic",
-                systemImage: isMicOn ? "mic.fill" : "mic.slash.fill",
-                foreground:  isMicOn ? .primary : .secondary,
-                size: 60
-            ) {
-                isMicOn.toggle()
+            if let webRTCManager {
+                CallMediaControls(webRTCManager: webRTCManager)
             }
-            .accessibilityAddTraits(isMicOn ? [.isSelected] : [])
-            .accessibilityHint("Toggles mic on/off")
-//            drawToggleButton
-            toolbarCircleButton(
-                title: isCameraOn ? "Turn Camera Off" : "Turn Camera On",
-                systemImage: isCameraOn ? "video.fill" : "video.slash.fill",
-                foreground: isCameraOn ? .primary : .secondary,
-                size: 60
-            ) {
-                isCameraOn.toggle()
-            }
-            .accessibilityAddTraits(isCameraOn ? [.isSelected] : [])
-            .accessibilityHint("Toggles the camera")
-//            menuButton(anchor: .bottom)
             Spacer()
         }
         .padding(.horizontal)
@@ -290,6 +310,17 @@ struct YView: View {
         }
         .accessibilityAddTraits(canDraw ? [.isSelected] : [])
         .accessibilityHint("Toggles drawing")
+    }
+    
+    private var backButton: some View {
+        toolbarCircleButton(
+            title: "Back",
+            systemImage: "chevron.left"
+        ) {
+            print("back Clicked")
+            classSession.current = nil
+        }
+        .accessibilityHint("Go back")
     }
 
     private func menuButton(anchor: MenuAnchor) -> some View {
@@ -399,6 +430,70 @@ struct YView: View {
         withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
             menuAnchor = nil
         }
+    }
+}
+
+private struct LocalCameraPreview: View {
+    @ObservedObject var webRTCManager: WebRTCManager
+    @Binding var videoSize: CGSize
+    let minDim: CGFloat
+
+    var body: some View {
+        if let track = webRTCManager.localVideoTrack {
+            VideoView(videoTrack: track, videoSize: $videoSize)
+                .frame(width: minDim, height: minDim)
+                .clipped()
+        } else {
+            Rectangle()
+                .fill(Color.purple.opacity(0.4))
+                .frame(width: minDim, height: minDim)
+        }
+    }
+}
+
+private struct CallMediaControls: View {
+    @ObservedObject var webRTCManager: WebRTCManager
+
+    var body: some View {
+        HStack(spacing: 8) {
+            mediaButton(
+                title: webRTCManager.isMicrophoneEnabled ? "Disable Mic" : "Enable Mic",
+                systemImage: webRTCManager.isMicrophoneEnabled ? "mic.fill" : "mic.slash.fill",
+                foreground: webRTCManager.isMicrophoneEnabled ? .primary : .secondary
+            ) {
+                webRTCManager.setMicrophoneEnabled(!webRTCManager.isMicrophoneEnabled)
+            }
+            .accessibilityAddTraits(webRTCManager.isMicrophoneEnabled ? [.isSelected] : [])
+            .accessibilityHint("Toggles mic on/off")
+
+            mediaButton(
+                title: webRTCManager.isCameraEnabled ? "Turn Camera Off" : "Turn Camera On",
+                systemImage: webRTCManager.isCameraEnabled ? "video.fill" : "video.slash.fill",
+                foreground: webRTCManager.isCameraEnabled ? .primary : .secondary
+            ) {
+                webRTCManager.setCameraEnabled(!webRTCManager.isCameraEnabled)
+            }
+            .accessibilityAddTraits(webRTCManager.isCameraEnabled ? [.isSelected] : [])
+            .accessibilityHint("Toggles the camera")
+        }
+    }
+
+    private func mediaButton(
+        title: String,
+        systemImage: String,
+        foreground: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.system(size: 20))
+                .labelStyle(.iconOnly)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(foreground)
+                .frame(width: 60, height: 60)
+                .background(.thinMaterial, in: Circle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
