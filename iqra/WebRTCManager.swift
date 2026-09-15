@@ -544,6 +544,16 @@ class WebRTCManager: NSObject, ObservableObject {
     private func isCurrent(_ peerConnection: RTCPeerConnection) -> Bool {
         peerConnection === self.peerConnection
     }
+
+    private func applyRemoteVideoTrack(_ track: RTCVideoTrack?, from peerConnection: RTCPeerConnection) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.isCurrent(peerConnection) else { return }
+            self.remoteVideoTrack = track
+            if track != nil {
+                print("✅ Remote video track received")
+            }
+        }
+    }
     
     private func scheduleHangUpAfterIceDisconnect() {
         cancelIceDisconnectHangUp()
@@ -582,22 +592,30 @@ extension WebRTCManager: RTCPeerConnectionDelegate {
     func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {
         guard isCurrent(peerConnection) else { return }
         print("Stream added with \(stream.videoTracks.count) video tracks")
-        if let videoTrack = stream.videoTracks.first {
-            DispatchQueue.main.async { [weak self] in
-                guard let self, self.isCurrent(peerConnection) else { return }
-                self.remoteVideoTrack = videoTrack
-                print("✅ Remote video track received")
-            }
-        }
+        guard let videoTrack = stream.videoTracks.first else { return }
+        applyRemoteVideoTrack(videoTrack, from: peerConnection)
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {
         guard isCurrent(peerConnection) else { return }
         print("Stream removed")
-        DispatchQueue.main.async { [weak self] in
-            guard let self, self.isCurrent(peerConnection) else { return }
-            self.remoteVideoTrack = nil
-        }
+        applyRemoteVideoTrack(nil, from: peerConnection)
+    }
+
+    func peerConnection(
+        _ peerConnection: RTCPeerConnection,
+        didAdd rtpReceiver: RTCRtpReceiver,
+        streams mediaStreams: [RTCMediaStream]
+    ) {
+        guard isCurrent(peerConnection) else { return }
+        guard let videoTrack = rtpReceiver.track as? RTCVideoTrack else { return }
+        applyRemoteVideoTrack(videoTrack, from: peerConnection)
+    }
+
+    func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
+        guard isCurrent(peerConnection) else { return }
+        guard rtpReceiver.track is RTCVideoTrack else { return }
+        applyRemoteVideoTrack(nil, from: peerConnection)
     }
     
     func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {

@@ -23,7 +23,6 @@ struct YView: View {
     
     @State private var userId: String
     @State private var targetUserId: String
-    @State private var isConnected: Bool
     @State private var isLive: Bool = false
     @State private var remoteVideoPosition = CGPoint(x: 50, y: 50)
     @State private var dragStart: CGPoint?
@@ -33,15 +32,15 @@ struct YView: View {
 
     @State private var menuAnchor: MenuAnchor?
     @State private var canDraw = false
-    @State private var canDrag = true
+    @State private var canDrag = false
     @State private var collapseProgress: CGFloat = 1 //minmax 0 or 1
     @State private var collapseDrag: CGFloat = 1 //minmax 0 or 1
     @State private var splitRestLength: CGFloat = 300
     
-    @State private var isLocalPreviewOn = false
-    @State private var isLocalAudioOn = false
+    @State private var isLocalPreviewOn: Bool = false
+    @State private var isLocalAudioOn: Bool = false
     @State private var isCollapsed: Bool = true
-    
+    @State private var isPeerConnected: Bool = false
     
     /// Camera buffers are often landscape; swap so the preview matches the container.
     private func videoFrameSize(in containerSize: CGSize) -> CGFloat {
@@ -74,85 +73,120 @@ struct YView: View {
         GeometryReader { geo in
             let minDim = min(geo.size.width, geo.size.height)
             
-            VStack() {
-                
-                Spacer()
-                
-                if let webRTCManager, isLocalPreviewOn {
-                    LocalCameraPreview(
-                        webRTCManager: webRTCManager,
-                        videoSize: $videoSize,
-                        minDim: minDim
-                    )
-                } else {
-                    Rectangle()
-                        .fill(Color.purple.opacity(0.4))
-                        .frame(width: minDim, height: minDim)
-                }
-                
-                Spacer()
+            if !isLive {
+                VStack() {
+                    Spacer()
+
+                    if let webRTCManager, isLocalPreviewOn {
+                        LocalCameraPreview(
+                            webRTCManager: webRTCManager,
+                            videoSize: $videoSize,
+                            width: minDim,
+                            height: minDim
+                        )
+                    } else {
+                        Rectangle()
+                            .fill(Color.purple.opacity(0.4))
+                            .frame(width: minDim, height: minDim)
+                    }
+
+                    Spacer()
                     
-                VStack(spacing: 10) {
-                    HStack {
-                        Button("Join with audio", systemImage: isLocalAudioOn ? "mic.slash.fill" : "mic.fill") {
-                            startWebRTCIfNeeded(captureMode: .audioOnly)
-                            if isLocalAudioOn {
-                                webRTCManager?.setMicrophoneEnabled(false)
-                                isLocalAudioOn = false
-                            } else {
-                                webRTCManager?.setMicrophoneEnabled(true)
-                                webRTCManager?.setCaptureMode(.audioOnly)
-                                isLocalPreviewOn = false
-                                isLocalAudioOn = true
+                    VStack(spacing: 10) {
+                        HStack {
+                            Button("Join with audio", systemImage: isLocalAudioOn ? "mic.slash.fill" : "mic.fill") {
+                                print("HWA")
+                                
+                                isLocalAudioOn.toggle()
+                                startWebRTCIfNeeded(captureMode: .audioOnly)
                             }
+                            .filledBackground()
+                            
+                            Button("Join with video", systemImage: isLocalPreviewOn ? "video.slash.fill" : "video.fill") {
+                                startWebRTCIfNeeded(captureMode: .video)
+                                
+                                if !isLocalPreviewOn {
+                                    isLocalPreviewOn.toggle() // true
+                                    webRTCManager?.setMicrophoneEnabled(true)
+                                    isLocalAudioOn = true
+                                } else {
+                                    isLocalPreviewOn.toggle() // false
+                                    webRTCManager?.setMicrophoneEnabled(false)
+                                    isLocalAudioOn = false
+                                }
+                                
+                            }
+                            .filledBackground()
                         }
-                        .filledBackground()
                         
-                        Button("Join with video", systemImage: isLocalPreviewOn ? "video.slash.fill" : "video.fill") {
-                            startWebRTCIfNeeded(captureMode: .video)
-                            if isLocalPreviewOn {
+                        Button("Join") {
+                            print("Join")
+                            guard isLocalAudioOn else {
+                                print("Guard failed audio: \(isLocalAudioOn), video: \(isLocalPreviewOn)")
+                                return
+                            }
+                            
+                            if !isLocalPreviewOn {
                                 webRTCManager?.setCaptureMode(.audioOnly)
-                                isLocalPreviewOn = false
                             } else {
                                 webRTCManager?.setCaptureMode(.video)
-                                webRTCManager?.setMicrophoneEnabled(true)
-                                isLocalPreviewOn = true
+                            }
+                            webRTCManager?.setMicrophoneEnabled(true)
+                            
+                            startWebRTCIfNeeded(captureMode: isLocalPreviewOn ? .video : .audioOnly)
+                            
+                            guard let webRTCManager else {
+                                print("WebRTCManager is missing")
+                                return
+                            }
+                            guard let userId = appUser.id else {
+                                print("User not found \(userId)")
+                                return
+                            }
+                            
+                            webRTCManager.connect(userId: String(userId), classId: myClass.id)
+                            
+                            isLive = true
+                            canDrag = true
+                            setR2Collapsed(false)
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                canDrag = false
                             }
                         }
                         .filledBackground()
+                        .disabled(webRTCManager == nil)
                     }
+                    .padding(.horizontal)
+                    .padding(.bottom, 75)
                     
-                    Button("Join") {
-                        setR2Collapsed(!isCollapsed)
-                        //startWebRTCIfNeeded(captureMode: .video)
-                    }
-                    .filledBackground()
-                    .disabled(webRTCManager == nil)
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 75)
-                    
-            }
-//            .padding(.top, 200)
-//            .padding(.bottom, 75)
                 .ignoresSafeArea(edges: .bottom)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            
-            .background(.pink)
+                .background(.pink)
+            }
+            else {
+                if let webRTCManager {
+                    ObservedVideoTrackView(
+                        webRTCManager: webRTCManager,
+                        videoSize: $videoSize,
+                        isRemote: true
+                    )
+                }
+            }
         }
-        
-            
-            
     }
 
     var r2: some View {
-        VStack {
-            Text("Hello2")
-                .foregroundStyle(.white)
+        GeometryReader { geo in
+            if let webRTCManager, isLive {
+                ObservedVideoTrackView(
+                    webRTCManager: webRTCManager,
+                    videoSize: $videoSize,
+                    isRemote: false
+                )
+            }
         }
-            
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(.blue)
     }
     
     init(myClass: MyClass, user: User) {
@@ -167,20 +201,22 @@ struct YView: View {
             _userId = State(initialValue: String(myClass.instructorId))
             _targetUserId = State(initialValue: String(myClass.studentId))
         }
-
-        _isConnected = State(initialValue: true)
-
     }
 
     private func startWebRTCIfNeeded(captureMode: WebRTCManager.MediaCaptureMode) {
         guard webRTCManager == nil else { return }
         let manager = WebRTCManager(captureMode: captureMode)
         manager.onGuestJoin = { [weak manager] idStr in
+            print("Guest joined: \(idStr). Starting call...")
+            isPeerConnected = true
             manager?.startCall(to: idStr)
         }
-        manager.onGuestLeave = { [weak manager] _ in
-            manager?.hangUp()
+        manager.onGuestLeave = { [weak manager] idStr in
+            print("Guest left: \(idStr). Hanging up...")
+            isPeerConnected = false
+            manager?.hangUp() //:)
         }
+        print("Setting web RTC manager")
         webRTCManager = manager
     }
 
@@ -459,20 +495,35 @@ struct YView: View {
     }
 }
 
+private struct ObservedVideoTrackView: View {
+    @ObservedObject var webRTCManager: WebRTCManager
+    @Binding var videoSize: CGSize
+    let isRemote: Bool
+
+    var body: some View {
+        if let track = isRemote ? webRTCManager.remoteVideoTrack : webRTCManager.localVideoTrack {
+            VideoView(videoTrack: track, videoSize: $videoSize)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
+        }
+    }
+}
+
 private struct LocalCameraPreview: View {
     @ObservedObject var webRTCManager: WebRTCManager
     @Binding var videoSize: CGSize
-    let minDim: CGFloat
+    let width: CGFloat
+    let height: CGFloat
 
     var body: some View {
         if let track = webRTCManager.localVideoTrack {
             VideoView(videoTrack: track, videoSize: $videoSize)
-                .frame(width: minDim, height: minDim)
+                .frame(width: width, height: height)
                 .clipped()
         } else {
             Rectangle()
                 .fill(Color.purple.opacity(0.4))
-                .frame(width: minDim, height: minDim)
+                .frame(width: width, height: height)
         }
     }
 }
