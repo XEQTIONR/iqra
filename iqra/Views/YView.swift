@@ -54,14 +54,7 @@ struct YView: View {
         let shortDim = displaySize.width < displaySize.height ? Dim.width : Dim.height
         let sideLength = shortDim == Dim.width ? displaySize.width : displaySize.height
         // print("VIDEO SIZE:", videoSize)
-//        let bufferIsLandscape = videoSize.width > videoSize.height
-//        let containerIsPortrait = containerSize.height >= containerSize.width
-//        if containerIsPortrait && bufferIsLandscape {
-//            displaySize = CGSize(width: videoSize.height, height: videoSize.width)
-//        }
-//        guard displaySize.height > 0 else {
-//            return CGSize(width: remoteVideoScaleFactor * 9 / 16, height: remoteVideoScaleFactor)
-//        }
+
         return sideLength
     }
 
@@ -73,7 +66,32 @@ struct YView: View {
         GeometryReader { geo in
             let minDim = min(geo.size.width, geo.size.height)
             
-            if !isLive {
+            
+            if isLive {
+                ZStack {
+                    VStack {
+                        ZStack {
+                            Circle()
+                                .fill(.gray)
+                                .frame(width: 50, height: 50)
+
+                            Text("S")
+                                .font(.system(size: 12, weight: .bold, design: .default))
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(.black)
+
+                    if let webRTCManager {
+                        ObservedVideoTrackView(
+                            webRTCManager: webRTCManager,
+                            videoSize: $videoSize,
+                            isRemote: true
+                        )
+                    }
+                }
+            }
+            else {
                 VStack() {
                     Spacer()
 
@@ -151,7 +169,7 @@ struct YView: View {
                             setR2Collapsed(false)
                             
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                canDrag = false
+                                //canDrag = false
                             }
                         }
                         .filledBackground()
@@ -164,15 +182,6 @@ struct YView: View {
                 .ignoresSafeArea(edges: .bottom)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(.pink)
-            }
-            else {
-                if let webRTCManager {
-                    ObservedVideoTrackView(
-                        webRTCManager: webRTCManager,
-                        videoSize: $videoSize,
-                        isRemote: true
-                    )
-                }
             }
         }
     }
@@ -197,7 +206,7 @@ struct YView: View {
         if appUser.id == myClass.studentId {
             _userId = State(initialValue: String(myClass.studentId))
             _targetUserId = State(initialValue: String(myClass.instructorId))
-        } else { // (appUser.id == myClass.instructorId)
+        } else { // appUser.id == myClass.instructorId
             _userId = State(initialValue: String(myClass.instructorId))
             _targetUserId = State(initialValue: String(myClass.studentId))
         }
@@ -206,6 +215,7 @@ struct YView: View {
     private func startWebRTCIfNeeded(captureMode: WebRTCManager.MediaCaptureMode) {
         guard webRTCManager == nil else { return }
         let manager = WebRTCManager(captureMode: captureMode)
+        
         manager.onGuestJoin = { [weak manager] idStr in
             print("Guest joined: \(idStr). Starting call...")
             isPeerConnected = true
@@ -216,6 +226,11 @@ struct YView: View {
             isPeerConnected = false
             manager?.hangUp() //:)
         }
+        
+        manager.onDraw = { _ in
+            print("On draw called")
+        }
+        
         print("Setting web RTC manager")
         webRTCManager = manager
     }
@@ -343,19 +358,6 @@ struct YView: View {
         }
         .padding(.horizontal)
     }
-
-//    private var cameraToggleButton: some View {
-//        toolbarCircleButton(
-//            title: isCameraOn ? "Turn Camera Off" : "Turn Camera On",
-//            systemImage: isCameraOn ? "video.fill" : "video.slash.fill",
-//            foreground: isCameraOn ? .accentColor : .secondary,
-//            size: 60
-//        ) {
-//            isCameraOn.toggle()
-//        }
-//        .accessibilityAddTraits(isCameraOn ? [.isSelected] : [])
-//        .accessibilityHint("Toggles the camera")
-//    }
 
     private var drawToggleButton: some View {
         toolbarCircleButton(
