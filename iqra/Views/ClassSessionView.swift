@@ -1,5 +1,5 @@
 //
-//  YView.swift
+//  ClassSessionView.swift
 //  iqra
 //
 //  Created by Ovi Hussain on 2026-09-01.
@@ -8,7 +8,7 @@
 import SwiftUI
 import WebRTC
 
-struct YView: View {
+struct ClassSessionView: View {
 
     private enum MenuAnchor {
         case top
@@ -343,7 +343,10 @@ struct YView: View {
                 .toolbarBackground(.hidden, for: .navigationBar)
             }
             .sheet(isPresented: $showSettings) {
-                ReaderView()
+                ReaderView(onDraw: { path in
+                    print("Draw Path:")
+                    print(path)
+                })
             }
             
         }
@@ -590,7 +593,7 @@ private struct CallMediaControls: View {
 }
 
 #Preview {
-    YView(
+    ClassSessionView(
         myClass: MyClass(
             studentId: User.studentPreview.id!,
             instructorId: User.instructorPreview.id!,
