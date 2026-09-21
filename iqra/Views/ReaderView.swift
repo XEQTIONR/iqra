@@ -16,7 +16,7 @@ struct ReaderView: View {
 
     @State private var identifiablePaths: [UserPath] = []
     @State private var currentPath = UserPath()
-    @State private var canDraw = true
+    @State private var canDraw = false
 
     private var isPathCanvasAnimating: Bool {
         identifiablePaths.contains { $0.isAnimating(at: Date()) }
@@ -24,48 +24,63 @@ struct ReaderView: View {
 
     var body: some View {
         let surahs: [Surah] = JSONService.loadLocalJSON(fileName: "quran-full-tashkeel") ?? []
-        let surah = surahs[1]
+        let surah = surahs[0]
         let verses = surah.verses
 
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack {
-                    Text(surah.name)
-                    VStack(alignment: .leading, spacing: 24) {
-                        ForEach(verses.indices, id: \.self) { index in
-                            let words = verses[index].text.split(separator: " ")
-                            WrapLayout {
-                                ForEach(words, id: \.self) { word in
-                                    HStack {
-                                        Text(word)
-                                            .font(.custom(Self.uthmanicFontName, size: 34))
-                                            .padding(.horizontal, 5)
-                                            .opacity(0)
+        NavigationStack {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack {
+                        Text(surah.name)
+                        VStack(alignment: .leading, spacing: 24) {
+                            ForEach(verses.indices, id: \.self) { index in
+                                let words = verses[index].text.split(separator: " ")
+                                WrapLayout {
+                                    ForEach(words, id: \.self) { word in
+                                        HStack {
+                                            Text(word)
+                                                .font(.custom(Self.uthmanicFontName, size: 34))
+                                                .foregroundStyle(.primary)
+                                                .padding(.horizontal, 5)
+                                                .opacity(1)
+                                        }
                                     }
+                                    VStack(alignment: .center) {
+                                        Text("\(index + 1)")
+                                            .font(.caption)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 20)
+                                                    .stroke(lineWidth: 1)
+                                                    .frame(width: 25, height: 25)
+                                            )
+                                    }
+                                    .padding(.top, 25)
+                                    .padding(.leading, 20)
                                 }
-                                VStack(alignment: .center) {
-                                    Text("\(index + 1)")
-                                        .font(.caption)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 20)
-                                                .stroke(lineWidth: 1)
-                                                .frame(width: 25, height: 25)
-                                        )
-                                }
-                                .padding(.top, 25)
-                                .padding(.leading, 20)
                             }
                         }
+                        .frame(maxWidth: .infinity)
+                        .environment(\.layoutDirection, .rightToLeft)
+                        .padding()
                     }
-                    .frame(maxWidth: .infinity)
-                    .environment(\.layoutDirection, .rightToLeft)
-                    .padding()
+                    .background(Color.secondary)
+                }
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button(action: {
+                            canDraw.toggle()
+                        }) {
+                            Image(systemName: "gear")
+                                .renderingMode(.original)
+                        }
+                    }
+                }
+                .overlay {
+                    drawingOverlay(scrollProxy: proxy)
                 }
             }
-            .overlay {
-                drawingOverlay(scrollProxy: proxy)
-            }
         }
+        
     }
 
     private func drawingOverlay(scrollProxy: ScrollViewProxy) -> some View {
@@ -83,23 +98,6 @@ struct ReaderView: View {
                         .gesture(drawGesture(scrollProxy: scrollProxy))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
-                } else {
-                    Text(String(format: "%.2f x %.2f", geometry.size.width, geometry.size.height))
-                }
-
-                VStack {
-                    HStack {
-                        Spacer()
-                        Button("Tap Me!") {
-                            withAnimation {
-                                canDraw = !canDraw
-                            }
-                        }
-                        .padding()
-                        Text(String(format: "%.2f x %.2f", geometry.size.width, geometry.size.height))
-                            .font(.caption)
-                    }
-                    Spacer()
                 }
             }
         }

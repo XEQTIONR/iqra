@@ -36,6 +36,7 @@ class WebRTCManager: NSObject, ObservableObject {
     private var signalingClient: SignalingClient?
     private var iceDisconnectWorkItem: DispatchWorkItem?
     private let iceDisconnectGracePeriod: TimeInterval = 5
+    private var isShutdown = false
     
     // State
     @Published var isConnected = false
@@ -84,8 +85,11 @@ class WebRTCManager: NSObject, ObservableObject {
     }
 
     deinit {
+        iceDisconnectWorkItem?.cancel()
+        iceDisconnectWorkItem = nil
         videoCapturer?.stopCapture()
-        peerConnection?.close()
+        videoCapturer = nil
+        signalingClient?.disconnect()
     }
     
     func connect(userId: String, classId: String) {
@@ -396,7 +400,7 @@ class WebRTCManager: NSObject, ObservableObject {
     
     private func createPeerConnection() {
         print("🔌 Creating peer connection")
-        closePeerConnection()
+        teardownPeerConnection()
         
         let config = RTCConfiguration()
         config.iceServers = stunServers.map { RTCIceServer(urlStrings: [$0]) }
@@ -519,26 +523,64 @@ class WebRTCManager: NSObject, ObservableObject {
     }
     
     func hangUp() {
+        guard !isShutdown else { return }
         print("📞 Hanging up")
         closePeerConnection()
         signalingClient?.currentCallPartner = nil
     }
+
+    func shutdown() {
+        guard !isShutdown else { return }
+        isShutdown = true
+        print("🔌 Shutting down WebRTC session")
+
+        cancelIceDisconnectHangUp()
+        signalingClient?.disconnect()
+        signalingClient = nil
+
+        teardownPeerConnection()
+
+        videoTrack?.isEnabled = false
+        audioTrack?.isEnabled = false
+        localVideoTrack = nil
+        remoteVideoTrack = nil
+        isCameraEnabled = false
+        isMicrophoneEnabled = false
+        isConnected = false
+        isCallActive = false
+
+        if let capturer = videoCapturer {
+            capturer.stopCapture()
+            videoCapturer = nil
+            print("🛑 Camera capture stopped")
+        }
+
+        deactivateAudioSession()
+    }
+
+    private func deactivateAudioSession() {
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setActive(false, options: [.notifyOthersOnDeactivation])
+            print("✅ Audio session deactivated")
+        } catch {
+            print("❌ Failed to deactivate audio session: \(error.localizedDescription)")
+        }
+    }
     
     private func closePeerConnection() {
+        teardownPeerConnection()
+        remoteVideoTrack = nil
+        isCallActive = false
+    }
+
+    /// Nil `peerConnection` before `close()` so teardown callbacks cannot pass `isCurrent`
+    /// and later overwrite a newly received remote track.
+    private func teardownPeerConnection() {
         cancelIceDisconnectHangUp()
-        peerConnection?.close()
+        let connection = peerConnection
         peerConnection = nil
-        
-        let applyIdleState = { [weak self] in
-            guard let self, self.peerConnection == nil else { return }
-            self.remoteVideoTrack = nil
-            self.isCallActive = false
-        }
-        if Thread.isMainThread {
-            applyIdleState()
-        } else {
-            DispatchQueue.main.async(execute: applyIdleState)
-        }
+        connection?.close()
     }
     
     private func isCurrent(_ peerConnection: RTCPeerConnection) -> Bool {
@@ -546,12 +588,18 @@ class WebRTCManager: NSObject, ObservableObject {
     }
 
     private func applyRemoteVideoTrack(_ track: RTCVideoTrack?, from peerConnection: RTCPeerConnection) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self, self.isCurrent(peerConnection) else { return }
-            self.remoteVideoTrack = track
-            if track != nil {
+        let apply = { [weak self] in
+            guard let self, !self.isShutdown, self.isCurrent(peerConnection) else { return }
+            if let track {
+                track.isEnabled = true
                 print("✅ Remote video track received")
             }
+            self.remoteVideoTrack = track
+        }
+        if Thread.isMainThread {
+            apply()
+        } else {
+            DispatchQueue.main.async(execute: apply)
         }
     }
     
@@ -590,16 +638,15 @@ extension WebRTCManager: RTCPeerConnectionDelegate {
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {
-        guard isCurrent(peerConnection) else { return }
         print("Stream added with \(stream.videoTracks.count) video tracks")
         guard let videoTrack = stream.videoTracks.first else { return }
         applyRemoteVideoTrack(videoTrack, from: peerConnection)
     }
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {
-        guard isCurrent(peerConnection) else { return }
+        // Unified Plan still emits stream removal while the RTP receiver remains.
+        // Clearing here hides remote video as soon as the peer connects.
         print("Stream removed")
-        applyRemoteVideoTrack(nil, from: peerConnection)
     }
 
     func peerConnection(
@@ -607,15 +654,17 @@ extension WebRTCManager: RTCPeerConnectionDelegate {
         didAdd rtpReceiver: RTCRtpReceiver,
         streams mediaStreams: [RTCMediaStream]
     ) {
-        guard isCurrent(peerConnection) else { return }
         guard let videoTrack = rtpReceiver.track as? RTCVideoTrack else { return }
         applyRemoteVideoTrack(videoTrack, from: peerConnection)
     }
 
     func peerConnection(_ peerConnection: RTCPeerConnection, didRemove rtpReceiver: RTCRtpReceiver) {
-        guard isCurrent(peerConnection) else { return }
-        guard rtpReceiver.track is RTCVideoTrack else { return }
-        applyRemoteVideoTrack(nil, from: peerConnection)
+        guard let videoTrack = rtpReceiver.track as? RTCVideoTrack else { return }
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !self.isShutdown, self.isCurrent(peerConnection) else { return }
+            guard self.remoteVideoTrack === videoTrack else { return }
+            self.remoteVideoTrack = nil
+        }
     }
     
     func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {
@@ -624,10 +673,10 @@ extension WebRTCManager: RTCPeerConnectionDelegate {
     
     func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {
         print("ICE connection state: \(newState.rawValue)")
-        guard isCurrent(peerConnection) else { return }
+        guard !isShutdown, isCurrent(peerConnection) else { return }
         
         DispatchQueue.main.async { [weak self] in
-            guard let self, self.isCurrent(peerConnection) else { return }
+            guard let self, !self.isShutdown, self.isCurrent(peerConnection) else { return }
             
             switch newState {
             case .connected, .completed:

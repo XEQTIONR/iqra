@@ -21,26 +21,24 @@ struct YView: View {
     private let myClass: MyClass
     private let remoteVideoScaleFactor: CGFloat = 300
     
-    @State private var userId: String
-    @State private var targetUserId: String
-    @State private var isLive: Bool = false
-    @State private var remoteVideoPosition = CGPoint(x: 50, y: 50)
-    @State private var dragStart: CGPoint?
-    @State private var videoSize = CGSize(width: 9, height: 16)
-    
-    @State private var webRTCManager: WebRTCManager?
-
-    @State private var menuAnchor: MenuAnchor?
-    @State private var canDraw = false
     @State private var canDrag = false
-    @State private var collapseProgress: CGFloat = 1 //minmax 0 or 1
+    @State private var canDraw = false
     @State private var collapseDrag: CGFloat = 1 //minmax 0 or 1
-    @State private var splitRestLength: CGFloat = 300
-    
-    @State private var isLocalPreviewOn: Bool = false
-    @State private var isLocalAudioOn: Bool = false
+    @State private var collapseProgress: CGFloat = 1 //minmax 0 or 1
+    @State private var dragStart: CGPoint?
     @State private var isCollapsed: Bool = true
+    @State private var isLive: Bool = false
+    @State private var isLocalAudioOn: Bool = false
+    @State private var isLocalPreviewOn: Bool = false
     @State private var isPeerConnected: Bool = false
+    @State private var menuAnchor: MenuAnchor?
+    @State private var remoteVideoPosition = CGPoint(x: 50, y: 50)
+    @State private var splitRestLength: CGFloat = 300
+    @State private var showSettings: Bool = false
+    @State private var targetUserId: String
+    @State private var userId: String
+    @State private var videoSize = CGSize(width: 9, height: 16)
+    @State private var webRTCManager: WebRTCManager?
     
     /// Camera buffers are often landscape; swap so the preview matches the container.
     private func videoFrameSize(in containerSize: CGSize) -> CGFloat {
@@ -50,12 +48,9 @@ struct YView: View {
             case height
         }
         
-        let displaySize = containerSize
-        let shortDim = displaySize.width < displaySize.height ? Dim.width : Dim.height
-        let sideLength = shortDim == Dim.width ? displaySize.width : displaySize.height
-        // print("VIDEO SIZE:", videoSize)
-
-        return sideLength
+        let shortDim = containerSize.width < containerSize.height ? Dim.width : Dim.height
+        
+        return shortDim == Dim.width ? containerSize.width : containerSize.height
     }
 
     private var displayedCollapse: CGFloat {
@@ -237,114 +232,120 @@ struct YView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .topTrailing) {
-                GeometryReader { geo in
-                    let isLandscape = geo.size.width > geo.size.height
-                    let progress = displayedCollapse
-                    let spacing = 10 * (1 - progress)
-                    let restLength = isLandscape
-                        ? (geo.size.width - 10) / 2
-                        : (geo.size.height - 10) / 2
-                    let r1Size = isLandscape
-                        ? CGSize(
-                            width: restLength + progress * (geo.size.width - restLength),
-                            height: geo.size.height
-                        )
-                        : CGSize(
-                            width: geo.size.width,
-                            height: restLength + progress * (geo.size.height - restLength)
-                        )
-                    let r2Size = isLandscape
-                        ? CGSize(width: restLength, height: geo.size.height)
-                        : CGSize(width: geo.size.width, height: restLength)
-                    let r2Offset = isLandscape
-                        ? CGSize(width: r1Size.width + spacing, height: progress * geo.size.height)
-                        : CGSize(width: 0, height: r1Size.height + spacing)
-                    let cornerRadius = 25 * (1 - progress)
-
-                    ZStack(alignment: .topLeading) {
-                        r1
-                            .frame(width: r1Size.width, height: r1Size.height)
-                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-                            .gesture(
-                                canDrag && progress > 0.02
-                                    ? collapseDragGesture(restLength: restLength)
-                                    : nil
+            VStack {
+                ZStack(alignment: .topTrailing) {
+                    GeometryReader { geo in
+                        let isLandscape = geo.size.width > geo.size.height
+                        let progress = displayedCollapse
+                        let spacing = 10 * (1 - progress)
+                        let restLength = isLandscape
+                            ? (geo.size.width - 10) / 2
+                            : (geo.size.height - 10) / 2
+                        let r1Size = isLandscape
+                            ? CGSize(
+                                width: restLength + progress * (geo.size.width - restLength),
+                                height: geo.size.height
                             )
-
-                        r2
-                            .frame(width: r2Size.width, height: r2Size.height)
-                            .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
-                            .offset(x: r2Offset.width, y: r2Offset.height)
-                            .contentShape(Rectangle())
-                            .highPriorityGesture(
-                                canDrag && progress < 0.98
-                                    ? collapseDragGesture(restLength: restLength)
-                                    : nil
+                            : CGSize(
+                                width: geo.size.width,
+                                height: restLength + progress * (geo.size.height - restLength)
                             )
-                    }
-                    .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
-                    .clipped()
-                    .background(.black)
-                    .onAppear { splitRestLength = restLength }
-                    .onChange(of: restLength) { _, newValue in
-                        splitRestLength = newValue
-                    }
-                }
-                .ignoresSafeArea()
+                        let r2Size = isLandscape
+                            ? CGSize(width: restLength, height: geo.size.height)
+                            : CGSize(width: geo.size.width, height: restLength)
+                        let r2Offset = isLandscape
+                            ? CGSize(width: r1Size.width + spacing, height: progress * geo.size.height)
+                            : CGSize(width: 0, height: r1Size.height + spacing)
+                        let cornerRadius = 25 * (1 - progress)
 
-                if let menuAnchor {
-                    Color.clear
-                        .contentShape(Rectangle())
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            dismissMenu()
+                        ZStack(alignment: .topLeading) {
+                            r1
+                                .frame(width: r1Size.width, height: r1Size.height)
+                                .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                                .gesture(
+                                    canDrag && progress > 0.02
+                                        ? collapseDragGesture(restLength: restLength)
+                                        : nil
+                                )
+
+                            r2
+                                .frame(width: r2Size.width, height: r2Size.height)
+                                .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
+                                .offset(x: r2Offset.width, y: r2Offset.height)
+                                .contentShape(Rectangle())
+                                .highPriorityGesture(
+                                    canDrag && progress < 0.98
+                                        ? collapseDragGesture(restLength: restLength)
+                                        : nil
+                                )
                         }
+                        .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
+                        .clipped()
+                        .background(.black)
+                        .onAppear { splitRestLength = restLength }
+                        .onChange(of: restLength) { _, newValue in
+                            splitRestLength = newValue
+                        }
+                    }
+                    .ignoresSafeArea()
 
-                    dropdownMenu
-                        .padding(.trailing, 12)
-                        .padding(.top, menuAnchor == .top ? 20 : 0)
-                        .padding(.bottom, menuAnchor == .bottom ? 63 : 0)
-                        .safeAreaPadding(menuAnchor == .bottom ? .bottom : [])
-                        .frame(
-                            maxWidth: .infinity,
-                            maxHeight: .infinity,
-                            alignment: menuAnchor == .top ? .topTrailing : .bottomTrailing
-                        )
-                        .transition(
-                            .scale(
-                                scale: 0.5,
-                                anchor: menuAnchor == .top ? .topTrailing : .bottomTrailing
+                    if let menuAnchor {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .ignoresSafeArea()
+                            .onTapGesture {
+                                dismissMenu()
+                            }
+
+                        dropdownMenu
+                            .padding(.trailing, 12)
+                            .padding(.top, menuAnchor == .top ? 20 : 0)
+                            .padding(.bottom, menuAnchor == .bottom ? 63 : 0)
+                            .safeAreaPadding(menuAnchor == .bottom ? .bottom : [])
+                            .frame(
+                                maxWidth: .infinity,
+                                maxHeight: .infinity,
+                                alignment: menuAnchor == .top ? .topTrailing : .bottomTrailing
                             )
-                            .combined(with: .opacity)
-                        )
-                }
-// Bottom Bar
-                VStack(spacing: 0) {
-                    Spacer()
-                        .allowsHitTesting(false)
-//                    bottomButtonBar
-//                        .padding(.horizontal, 16)
-//                        .padding(.bottom, 20)
-//                        .contentShape(Rectangle())
-//                        .simultaneousGesture(collapseDragGesture(restLength: splitRestLength))
-                }
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    HStack(spacing: 8) {
-                        backButton
+                            .transition(
+                                .scale(
+                                    scale: 0.5,
+                                    anchor: menuAnchor == .top ? .topTrailing : .bottomTrailing
+                                )
+                                .combined(with: .opacity)
+                            )
                     }
-                    .padding(.top, 20)
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    HStack(spacing: 8) {
-                        menuButton(anchor: .top)
+    // Bottom Bar
+                    VStack(spacing: 0) {
+                        Spacer()
+                            .allowsHitTesting(false)
+    //                    bottomButtonBar
+    //                        .padding(.horizontal, 16)
+    //                        .padding(.bottom, 20)
+    //                        .contentShape(Rectangle())
+    //                        .simultaneousGesture(collapseDragGesture(restLength: splitRestLength))
                     }
-                    .padding(.top, 20)
                 }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        HStack(spacing: 8) {
+                            backButton
+                        }
+                        .padding(.top, 20)
+                    }
+                    ToolbarItem(placement: .primaryAction) {
+                        HStack(spacing: 8) {
+                            menuButton(anchor: .top)
+                        }
+                        .padding(.top, 20)
+                    }
+                }
+                .toolbarBackground(.hidden, for: .navigationBar)
             }
-            .toolbarBackground(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showSettings) {
+                ReaderView()
+            }
+            
         }
     }
 
@@ -377,9 +378,20 @@ struct YView: View {
             systemImage: "chevron.left"
         ) {
             print("back Clicked")
-            classSession.current = nil
+            leaveSession()
         }
         .accessibilityHint("Go back")
+    }
+
+    private func leaveSession() {
+        webRTCManager?.shutdown()
+        webRTCManager = nil
+        
+        isLocalAudioOn = false
+        isPeerConnected = false
+        classSession.current = nil
+        isLive = false
+        isLocalPreviewOn = false
     }
 
     private func menuButton(anchor: MenuAnchor) -> some View {
@@ -415,6 +427,7 @@ struct YView: View {
         VStack(alignment: .leading, spacing: 0) {
             menuRow("New Item", systemImage: "plus") {
                 print("New Item")
+                showSettings.toggle()
             }
             menuRow("Share", systemImage: "square.and.arrow.up") {
                 print("Share")

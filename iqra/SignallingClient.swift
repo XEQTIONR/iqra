@@ -21,6 +21,10 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
         self.serverURL = URL(string: "wss://0bsadh7ysww0.shares.zrok.io/ws")!
         super.init()
     }
+
+    deinit {
+        disconnect()
+    }
     
     func connect(userId: String, classId: String) {
         self.userId = userId
@@ -35,6 +39,18 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
         webSocket?.resume()
         
         listenForMessages()
+    }
+
+    func disconnect() {
+        print("🔌 Disconnecting WebSocket")
+        webRTCManager = nil
+        webSocket?.cancel(with: .goingAway, reason: nil)
+        webSocket = nil
+        session?.invalidateAndCancel()
+        session = nil
+        currentCallPartner = nil
+        userId = nil
+        classId = nil
     }
     
     private func sendRegister() {
@@ -196,7 +212,7 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
                 if let userId = json["from"] as? String {
                     print("User left: \(userId)")
                     if userId == self?.currentCallPartner {
-                        self?.webRTCManager?.hangUp()
+                        self?.webRTCManager?.hangUp() //:) dup
                     }
                     self?.webRTCManager?.onGuestLeave?(userId)
                 }
