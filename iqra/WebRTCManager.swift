@@ -46,9 +46,11 @@ class WebRTCManager: NSObject, ObservableObject {
     @Published var localVideoTrack: RTCVideoTrack?
     @Published var remoteVideoTrack: RTCVideoTrack?
     
-    public var onDraw: ((UserPath) -> Void)?
+    
     public var onGuestJoin: ((String) -> Void)?
     public var onGuestLeave: ((String) -> Void)?
+    
+    
     
     // Configuration
     private let stunServers = [
@@ -58,7 +60,6 @@ class WebRTCManager: NSObject, ObservableObject {
     
     init(
         captureMode: MediaCaptureMode = .video,
-        onDraw: ((UserPath) -> Void)? = nil,
         onGuestJoin: ((String) -> Void)? = nil,
         onGuestLeave: ((String) -> Void)? = nil,
     ) {
@@ -66,7 +67,6 @@ class WebRTCManager: NSObject, ObservableObject {
         
         self.isCameraEnabled = captureMode == .video
         self.isMicrophoneEnabled = true
-        self.onDraw = onDraw
         self.onGuestJoin = onGuestJoin
         self.onGuestLeave = onGuestLeave
         
@@ -90,6 +90,16 @@ class WebRTCManager: NSObject, ObservableObject {
         videoCapturer?.stopCapture()
         videoCapturer = nil
         signalingClient?.disconnect()
+    }
+    
+    public func sendPath(path: UserPath) {
+        
+        guard isCallActive,
+              let signalingClient,
+              let partner = signalingClient.currentCallPartner
+        else { return }
+        
+        signalingClient.sendPath(to: partner, path: path)
     }
     
     func connect(userId: String, classId: String) {

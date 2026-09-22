@@ -103,10 +103,11 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
         send(iceDict)
     }
     
-    func sendPath(to userId: String, path: [UserPath]) {
+    func sendPath(to userId: String, path: UserPath) {
         guard let pathJSON = encodeJSONObject(path) else { return }
+        
         let pathsDict: [String: Any] = [
-            "type": "paths",
+            "type": "draw-path",
             "to": userId,
             "payload": ["path": pathJSON]
         ]
@@ -196,10 +197,13 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
                     self?.webRTCManager?.handleICECandidate(candidate, sdpMid: sdpMid, sdpMLineIndex: sdpMLineIndex)
                 }
                 
-            case "path":
+            case "partner-drew-path":
                 if let payload = json["payload"] as? [String: Any],
                    let path = Self.decode(UserPath.self, fromJSONObject: payload["path"]) {
-                    self?.webRTCManager?.onDraw?(path)
+                    print("Got path: \(path)")
+                    
+                } else {
+                    print("OOPS draw-path")
                 }
                 
             case "user_joined":

@@ -108,8 +108,6 @@ struct ClassSessionView: View {
                     VStack(spacing: 10) {
                         HStack {
                             Button("Join with audio", systemImage: isLocalAudioOn ? "mic.slash.fill" : "mic.fill") {
-                                print("HWA")
-                                
                                 isLocalAudioOn.toggle()
                                 startWebRTCIfNeeded(captureMode: .audioOnly)
                             }
@@ -220,10 +218,6 @@ struct ClassSessionView: View {
             print("Guest left: \(idStr). Hanging up...")
             isPeerConnected = false
             manager?.hangUp() //:)
-        }
-        
-        manager.onDraw = { _ in
-            print("On draw called")
         }
         
         print("Setting web RTC manager")
@@ -344,6 +338,10 @@ struct ClassSessionView: View {
             }
             .sheet(isPresented: $showSettings) {
                 ReaderView(onDraw: { path in
+                    
+                    guard let webRTCManager else { return }
+                     
+                    webRTCManager.sendPath(path: path)
                     print("Draw Path:")
                     print(path)
                 })
