@@ -13,10 +13,12 @@ struct ReaderView: View {
     private static let uthmanicFontName = "KFGQPCUthmanicScriptHAFS" // KFGQPC ... HAFS Regular.otf
 
     var onDraw: ((UserPath) -> Void)? = nil
+    var remotePaths: [UserPath] = []
 
     @State private var identifiablePaths: [UserPath] = []
     @State private var currentPath = UserPath()
     @State private var canDraw = false
+    @State private var ingestedRemoteIDs: Set<UUID> = []
 
     private var isPathCanvasAnimating: Bool {
         identifiablePaths.contains { $0.isAnimating(at: Date()) }
@@ -78,6 +80,10 @@ struct ReaderView: View {
                 .overlay {
                     drawingOverlay(scrollProxy: proxy)
                 }
+                .onAppear { ingestRemotePaths(remotePaths) }
+                .onChange(of: remotePaths) { _, newPaths in
+                    ingestRemotePaths(newPaths)
+                }
             }
         }
         
@@ -86,16 +92,19 @@ struct ReaderView: View {
     private func drawingOverlay(scrollProxy: ScrollViewProxy) -> some View {
         GeometryReader { geometry in
             ZStack {
-                if canDraw {
+                if canDraw || !identifiablePaths.isEmpty {
                     TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: !isPathCanvasAnimating)) { timeline in
                         Canvas { context, _ in
                             let now = timeline.date
                             for path in identifiablePaths {
                                 path.draw(into: context, at: now)
                             }
-                            currentPath.draw(into: context, at: now)
+                            if canDraw {
+                                currentPath.draw(into: context, at: now)
+                            }
                         }
-                        .gesture(drawGesture(scrollProxy: scrollProxy))
+                        .gesture(canDraw ? drawGesture(scrollProxy: scrollProxy) : nil)
+                        .allowsHitTesting(canDraw)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
@@ -123,10 +132,19 @@ struct ReaderView: View {
             }
     }
 
+    private func ingestRemotePaths(_ paths: [UserPath]) {
+        for path in paths where ingestedRemoteIDs.insert(path.id).inserted {
+            let incoming = path.replaying(from: Date())
+            identifiablePaths.append(incoming)
+            scheduleFade(for: incoming)
+        }
+    }
+
     private func scheduleFade(for path: UserPath) {
         let pathID = path.id
         Task { @MainActor in
-            try? await Task.sleep(for: .seconds(path.fadeDelay))
+            let holdTime = (path.replayStartedAt == nil ? 0 : path.strokeDuration) + path.fadeDelay
+            try? await Task.sleep(for: .seconds(holdTime))
             guard let index = identifiablePaths.firstIndex(where: { $0.id == pathID }) else { return }
             identifiablePaths[index].beginFade()
             try? await Task.sleep(for: .seconds(path.fadeDuration))

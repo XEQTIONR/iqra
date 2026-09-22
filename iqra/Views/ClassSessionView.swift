@@ -39,6 +39,7 @@ struct ClassSessionView: View {
     @State private var userId: String
     @State private var videoSize = CGSize(width: 9, height: 16)
     @State private var webRTCManager: WebRTCManager?
+    @State private var remotePaths: [UserPath] = []
     
     /// Camera buffers are often landscape; swap so the preview matches the container.
     private func videoFrameSize(in containerSize: CGSize) -> CGFloat {
@@ -219,6 +220,9 @@ struct ClassSessionView: View {
             isPeerConnected = false
             manager?.hangUp() //:)
         }
+        manager.onPartnerDrewPath = { path in
+            remotePaths.append(path)
+        }
         
         print("Setting web RTC manager")
         webRTCManager = manager
@@ -337,14 +341,17 @@ struct ClassSessionView: View {
                 .toolbarBackground(.hidden, for: .navigationBar)
             }
             .sheet(isPresented: $showSettings) {
-                ReaderView(onDraw: { path in
+                ReaderView(
+                    onDraw: { path in
                     
-                    guard let webRTCManager else { return }
-                     
-                    webRTCManager.sendPath(path: path)
-                    print("Draw Path:")
-                    print(path)
-                })
+                        guard let webRTCManager else { return }
+                        
+                        webRTCManager.sendPath(path: path)
+                        print("Draw Path:")
+                        print(path)
+                    },
+                    remotePaths: remotePaths
+                )
             }
             
         }
@@ -393,6 +400,7 @@ struct ClassSessionView: View {
         classSession.current = nil
         isLive = false
         isLocalPreviewOn = false
+        remotePaths = []
     }
 
     private func menuButton(anchor: MenuAnchor) -> some View {

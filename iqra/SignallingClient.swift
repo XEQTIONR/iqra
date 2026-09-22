@@ -201,7 +201,7 @@ class SignalingClient: NSObject, URLSessionWebSocketDelegate {
                 if let payload = json["payload"] as? [String: Any],
                    let path = Self.decode(UserPath.self, fromJSONObject: payload["path"]) {
                     print("Got path: \(path)")
-                    
+                    self?.webRTCManager?.onPartnerDrewPath?(path)
                 } else {
                     print("OOPS draw-path")
                 }

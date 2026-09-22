@@ -49,6 +49,7 @@ class WebRTCManager: NSObject, ObservableObject {
     
     public var onGuestJoin: ((String) -> Void)?
     public var onGuestLeave: ((String) -> Void)?
+    public var onPartnerDrewPath: ((UserPath) -> Void)?
     
     
     
@@ -62,6 +63,7 @@ class WebRTCManager: NSObject, ObservableObject {
         captureMode: MediaCaptureMode = .video,
         onGuestJoin: ((String) -> Void)? = nil,
         onGuestLeave: ((String) -> Void)? = nil,
+        onPartnerDrewPath: ((UserPath) -> Void)? = nil,
     ) {
         super.init()
         
@@ -69,6 +71,7 @@ class WebRTCManager: NSObject, ObservableObject {
         self.isMicrophoneEnabled = true
         self.onGuestJoin = onGuestJoin
         self.onGuestLeave = onGuestLeave
+        self.onPartnerDrewPath = onPartnerDrewPath
         
         print("📱 WebRTCManager init started")
 
